@@ -36,6 +36,11 @@ input:focus-visible, button:focus-visible { outline: 2px solid var(--holo); outl
 .chips { display: flex; flex-wrap: wrap; gap: 8px; }
 .chips button { font: 500 13px var(--mono); color: var(--ink); background: rgba(127,233,255,.05); border: 1px solid var(--line); padding: 9px 12px; min-height: 40px; cursor: pointer; }
 .chips button[aria-checked="true"] { background: var(--gold); color: #140a00; border-color: var(--gold); }
+.chips button .sw { display: inline-block; width: 12px; height: 12px; border-radius: 3px; margin-right: 6px; vertical-align: -1px; border: 1px solid rgba(255,255,255,.35); }
+.chips button[aria-pressed="true"] { background: var(--gold); color: #140a00; border-color: var(--gold); }
+.cntrow { display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: center; margin: 0 0 10px; width: 100%; }
+.cntrow em { font-style: normal; font: 600 12px var(--mono); color: var(--ink); width: 100%; display: flex; align-items: center; gap: 6px; }
+.dt { display: inline-block; width: 14px; height: 14px; border-radius: 3px; border: 1px solid #555; }
 .chips button.off { opacity: .4; text-decoration: line-through; border-style: dashed; }
 #cwrap { margin-top: 14px; display: flex; justify-content: center; }
 #ccv { display: block; touch-action: none; cursor: move; outline: 1px solid var(--line2); }
@@ -147,7 +152,10 @@ input:focus-visible, button:focus-visible { outline: 2px solid var(--holo); outl
 <h2 id="crophead">Cadrage</h2>
 <div id="arwarn" class="warn" hidden></div>
 <div id="cwrap"><canvas id="ccv" aria-label="Cadrage : glisse pour déplacer, pince pour zoomer"></canvas></div>
-<div id="cropbox"><div class="row"><span class="zl">ZOOM</span><input id="czoom" type="range" min="1" max="3" step="0.01" value="1" aria-label="Zoom du cadrage"></div><div class="hint">Déplace le cadre lumineux sur la zone à garder · tire ses coins pour l'agrandir ou le réduire · aperçu en dés ci-dessous</div><canvas id="cpv" aria-hidden="true"></canvas><label class="chk"><input type="checkbox" id="o-orient" checked> <span><b>Détail max : orienter les dés 2, 3 et 6</b><small>Les points suivent les contours du visage (lunettes, yeux, bouche…). Le plan indique le sens de chaque dé par de petits traits.</small></span></label><div class="row" style="margin-top:10px"><span class="info" id="cropstate"></span><button class="btn" id="cropreset" type="button">Revenir au cadrage du client</button></div></div>
+<div id="cropbox"><div class="row"><span class="zl">ZOOM</span><input id="czoom" type="range" min="1" max="3" step="0.01" value="1" aria-label="Zoom du cadrage"></div><div class="hint">Déplace le cadre lumineux sur la zone à garder · tire ses coins pour l'agrandir ou le réduire · aperçu en dés ci-dessous</div><canvas id="cpv" aria-hidden="true"></canvas><label class="chk"><input type="checkbox" id="o-orient" checked> <span><b>Détail max : orienter les dés 2, 3 et 6</b><small>Les points suivent les contours du visage (lunettes, yeux, bouche…). Le plan indique le sens de chaque dé par de petits traits.</small></span></label><div id="mixbox"><label>Dés utilisés</label><div class="chips" id="o-white" role="radiogroup" aria-label="Dés utilisés"></div><div class="hint" id="o-white-h"></div>
+<label>Dés de couleur pour les détails</label><div class="chips" id="o-cols" role="group" aria-label="Dés de couleur"></div>
+<div id="o-amtw" hidden><label>Quantité de couleur</label><div class="chips" id="o-amt" role="radiogroup" aria-label="Quantité de couleur"></div></div>
+<div class="hint">Les zones bien colorées de la photo (yeux, lèvres, vêtements…) reçoivent un dé de la couleur la plus proche. Le plan, l’image HD, la 3D et le mode chantier en tiennent compte.</div></div><div class="row" style="margin-top:10px"><span class="info" id="cropstate"></span><button class="btn" id="cropreset" type="button">Revenir au cadrage du client</button></div></div>
 </section>
 
 <section class="card">
@@ -336,7 +344,16 @@ function blurGrid(G, C, R, s) {
   return o;
 }
 /* returns {F: faces 0..6, O: 1 where a 2/3/6 should be turned a quarter, V: tone 0..1 per die} */
-function diceFaces(img, sx, sy, sw, sh, C, R, K = 4, orient = false) {
+/* sRGB 0–255 → CIE Lab (D65) */
+function labOf(r, g, b) {
+  const f = v => { v /= 255; return v <= .04045 ? v / 12.92 : Math.pow((v + .055) / 1.055, 2.4); };
+  const R = f(r), G = f(g), B = f(b), X = (R * .4124 + G * .3576 + B * .1805) / .95047, Y = R * .2126 + G * .7152 + B * .0722, Z = (R * .0193 + G * .1192 + B * .9505) / 1.08883;
+  const h = t => t > .008856 ? Math.cbrt(t) : 7.787 * t + 16 / 116, fx = h(X), fy = h(Y), fz = h(Z);
+  return [116 * fy - 16, 500 * (fx - fy), 200 * (fy - fz)];
+}
+/* mix (optional, workshop only): {tonal: [[type, face, level]…], hi: brightest level, colors: [{t, a, b, lv: [7 levels]}], thr: min chroma}
+   → black + white dice share one tonal scale; strongly coloured areas get a coloured die (no error spread, so they stay crisp details) */
+function diceFaces(img, sx, sy, sw, sh, C, R, K = 4, orient = false, mix = null) {
   const W = C * K, H = R * K, cv = document.createElement('canvas'); cv.width = W; cv.height = H;
   const g = cv.getContext('2d', {willReadFrequently: true}); g.imageSmoothingQuality = 'high';
   drawSrc(g, img, sx, sy, sw, sh, 0, 0, W, H);
@@ -348,15 +365,37 @@ function diceFaces(img, sx, sy, sw, sh, C, R, K = 4, orient = false) {
   const B = blurGrid(G, C, R, 1.0);
   for (let i = 0; i < G.length; i++) G[i] = G[i] + .9 * (G[i] - B[i]);
   const srt = Array.from(G).sort((a, b) => a - b), lo = srt[Math.floor(srt.length * .02)], hi = srt[Math.floor(srt.length * .98)];
-  const V = new Float32Array(C * R), T = new Float64Array(C * R), F = new Uint8Array(C * R), a = FACE_LV[0], b = FACE_LV[6];
+  const V = new Float32Array(C * R), T = new Float64Array(C * R), F = new Uint8Array(C * R), D = new Uint8Array(C * R), a = FACE_LV[0], b = mix && mix.hi ? mix.hi : FACE_LV[6];
+  if (mix && mix.colors && mix.colors.length) {
+    const S = new Float32Array(C * R * 3);
+    for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) { const c = (Math.floor(y / K) * C + Math.floor(x / K)) * 3, o = (y * W + x) * 4; S[c] += d[o]; S[c + 1] += d[o + 1]; S[c + 2] += d[o + 2]; }
+    const n = K * K;
+    for (let i = 0; i < C * R; i++) {
+      const [Lc, ac, bc] = labOf(S[i * 3] / n, S[i * 3 + 1] / n, S[i * 3 + 2] / n), ch = Math.hypot(ac, bc);
+      if (ch < mix.thr || Lc < 12) continue;
+      let best = null, bd = 1e9;
+      for (const col of mix.colors) { const dh = Math.abs(Math.atan2(ac * col.b - bc * col.a, ac * col.a + bc * col.b)); if (dh < bd) { bd = dh; best = col; } }
+      if (best && bd < .6) D[i] = best.t;
+    }
+  }
   for (let i = 0; i < G.length; i++) { V[i] = Math.pow(Math.max(0, Math.min(1, (G[i] - lo) / Math.max(.05, hi - lo))), .9); T[i] = a + V[i] * (b - a); }
   /* serpentine Floyd–Steinberg, 75 % strength: smooth tones without grainy flat areas */
   for (let y = 0; y < R; y++) {
     const dir = y % 2 ? -1 : 1;
     for (let n = 0; n < C; n++) {
-      const x = dir > 0 ? n : C - 1 - n, i = y * C + x, o = T[i]; let k = 0, best = 9;
-      for (let f = 0; f < 7; f++) { const e = Math.abs(FACE_LV[f] - o); if (e < best) { best = e; k = f; } }
-      F[i] = k; const e = (o - FACE_LV[k]) * .75;
+      const x = dir > 0 ? n : C - 1 - n, i = y * C + x, o = T[i]; let k = 0, best = 9, e;
+      if (D[i]) {   /* coloured die: its own face scale, no error spread */
+        const lv = mix.colors.find(c => c.t === D[i]).lv, mn = Math.min(...lv), mx = Math.max(...lv), tg = mn + V[i] * (mx - mn);
+        for (let f = 0; f < 7; f++) { const q = Math.abs(lv[f] - tg); if (q < best) { best = q; k = f; } }
+        F[i] = k; continue;
+      }
+      if (mix && mix.tonal) {
+        let tt = 0; for (const [ty, f, lv] of mix.tonal) { const q = Math.abs(lv - o); if (q < best) { best = q; k = f; tt = ty; e = lv; } }
+        F[i] = k; D[i] = tt; e = (o - e) * .75;
+      } else {
+        for (let f = 0; f < 7; f++) { const q = Math.abs(FACE_LV[f] - o); if (q < best) { best = q; k = f; } }
+        F[i] = k; e = (o - FACE_LV[k]) * .75;
+      }
       if (x + dir >= 0 && x + dir < C) T[i + dir] += e * 7 / 16;
       if (y + 1 < R) { if (x - dir >= 0 && x - dir < C) T[i + C - dir] += e * 3 / 16; T[i + C] += e * 5 / 16; if (x + dir >= 0 && x + dir < C) T[i + C + dir] += e / 16; }
     }
@@ -379,7 +418,7 @@ function diceFaces(img, sx, sy, sw, sh, C, R, K = 4, orient = false) {
       else if (f === 6) O[i] = Jyy[i] > Jxx[i] ? 1 : 0;       /* 1 = rows instead of columns */
     }
   }
-  return {F, O, V};
+  return {F, O, V, D};
 }
 
 /* ---- 3D dice relief (shared by the site's gallery and the workshop's 3D viewer) ----
@@ -464,6 +503,29 @@ const PIPS = {0: [], 1: [[0, 0]], 2: [[-1, -1], [1, 1]], 3: [[-1, -1], [0, 0], [
 const DICE_OPTS = [5000, 6000, 7500, 9000, 10000], SIZE_OPTS = [10, 12, 14, 16];
 const COL = {0: ['#000000', '#ffffff'], 1: ['#3d1c6e', '#ffffff'], 2: ['#1f5fc4', '#ffffff'], 3: ['#14a39a', '#ffffff'], 4: ['#74c24a', '#111111'], 5: ['#f3c623', '#111111'], 6: ['#f7f7f5', '#111111']};
 const SITE = 'jlfdice.fr';
+/* dice bodies: 0 = black with white pips (the classic), 1 = white with black pips, 2+ = coloured dice for details */
+const DTYPES = [
+  {n: 'noir', s: '', body: '#141417', pip: '#f2f1ec'}, {n: 'blanc', s: 'B', body: '#eeede8', pip: '#17171a'},
+  {n: 'rouge', s: 'R', body: '#c4162c', pip: '#ffffff'}, {n: 'bleu', s: 'Bl', body: '#1f4fbf', pip: '#ffffff'},
+  {n: 'vert', s: 'V', body: '#1d8a4b', pip: '#ffffff'}, {n: 'jaune', s: 'J', body: '#f2c400', pip: '#17171a'},
+  {n: 'orange', s: 'O', body: '#ee6a12', pip: '#ffffff'}, {n: 'violet', s: 'Vi', body: '#6b2c93', pip: '#ffffff'}];
+const hexRgb = h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16));
+const lstar = h => labOf(...hexRgb(h))[0] / 100;
+/* how bright each face of each die type looks from afar, on the same scale as FACE_LV (black dice match it exactly) */
+const TYPE_LV = DTYPES.map((d, t) => t === 0 ? FACE_LV.slice() : FACE_LV.map(v => { const cov = (v - FACE_LV[0]) / (.95 - FACE_LV[0]), Lb = lstar(d.body), Lp = lstar(d.pip); return Lb + cov * (Lp - Lb); }));
+const MIX = (() => { try { return Object.assign({white: false, colors: [], amt: 'mid'}, JSON.parse(localStorage.getItem('jlfd-mix') || '{}')); } catch (e) { return {white: false, colors: [], amt: 'mid'}; } })();
+const saveMix = () => { try { localStorage.setItem('jlfd-mix', JSON.stringify(MIX)); } catch (e) {} };
+const AMT_THR = {low: 48, mid: 34, high: 24};
+function mixParams() {
+  if (!MIX.white && !MIX.colors.length) return null;
+  const tonal = []; for (let f = 0; f < 7; f++) tonal.push([0, f, TYPE_LV[0][f]]);
+  if (MIX.white) for (let f = 0; f < 7; f++) tonal.push([1, f, TYPE_LV[1][f]]);
+  const colors = MIX.colors.map(t => { const [, a, b] = labOf(...hexRgb(DTYPES[t].body)); return {t, a, b, lv: TYPE_LV[t]}; });
+  return {tonal, hi: Math.max(...tonal.map(x => x[2])), colors, thr: AMT_THR[MIX.amt] || 34};
+}
+const mixLabel = D => { const used = new Set(D || []); const w = used.has(1), c = [...used].filter(t => t > 1).sort((a, b) => a - b).map(t => DTYPES[t].n);
+  if (!w && !c.length) return 'Dés à jouer noirs à points blancs, posés un par un à la main';
+  return 'Dés à jouer noirs' + (w ? ' et blancs' : '') + (c.length ? ', touches de couleur (' + c.join(', ') + ')' : '') + ', posés à la main'; };
 
 /* ---------- grid: same rules as the public app ---------- */
 function gridDims(n, sh) {
@@ -486,8 +548,8 @@ function cropRect(img, ar, cr) {
 const ORIENT = () => !!($('o-orient') && $('o-orient').checked);
 function computeGrid(img, C, R, cr, KK) {
   const [sx, sy, sw, sh] = cropRect(img, C / R, cr);
-  const r = diceFaces(img, sx, sy, sw, sh, C, R, KK || 4, ORIENT());
-  return {G: r.F, O: r.O};
+  const mp = mixParams(), r = diceFaces(img, sx, sy, sw, sh, C, R, KK || 4, ORIENT(), mp);
+  return {G: r.F, O: r.O, D: mp ? r.D : null};
 }
 function cropCanvas(img, C, R, cr, maxSide = 3000) {
   const [sx, sy, sw, sh] = cropRect(img, C / R, cr), k = Math.min(1, maxSide / Math.max(sw, sh));
@@ -498,11 +560,12 @@ function cropCanvas(img, C, R, cr, maxSide = 3000) {
 /* ---------- HD dice render ---------- */
 /* photoreal dice: bevelled black body lit from the top-left, concave white pips, each die slightly turned like a hand-placed one */
 const VARS = 6, tileCache = new Map();
-function diceTile(v, s, k, turn) {
+function diceTile(v, s, k, turn, t = 0) {
   const ss = s < 16 ? 6 : 4, S = s * ss, c = mk(S, S), g = c.getContext('2d');
   const h = n => { const x = Math.sin((v * 31 + k * 7 + n) * 91.7) * 43758.5; return x - Math.floor(x); };
   const rr = (x, y, w, hh, r) => { g.beginPath(); g.moveTo(x + r, y); g.arcTo(x + w, y, x + w, y + hh, r); g.arcTo(x + w, y + hh, x, y + hh, r); g.arcTo(x, y + hh, x, y, r); g.arcTo(x, y, x + w, y, r); g.closePath(); };
   g.fillStyle = '#020203'; g.fillRect(0, 0, S, S);
+  const TY = DTYPES[t], [br, bg, bb] = hexRgb(TY.body), sh = (k2, add) => `rgb(${Math.round(Math.min(255, br * k2 + add))},${Math.round(Math.min(255, bg * k2 + add))},${Math.round(Math.min(255, bb * k2 + add))})`, darkPip = lstar(TY.pip) < .5;
   g.save(); g.translate(S / 2 + (h(1) - .5) * S * .03, S / 2 + (h(2) - .5) * S * .03); g.rotate((h(3) - .5) * .09);
   const m = S * .92, o = -m / 2, R0 = m * .2;
   /* contact shadow */
@@ -510,12 +573,14 @@ function diceTile(v, s, k, turn) {
   rr(o, o, m, m, R0); g.fillStyle = '#101013'; g.fill(); g.shadowColor = 'transparent';
   /* body: lit edge top-left, dark edge bottom-right */
   let gr = g.createLinearGradient(o, o, o + m, o + m); const lift = (h(4) - .5) * 10;
-  gr.addColorStop(0, `rgb(${70 + lift},${70 + lift},${78 + lift})`); gr.addColorStop(.35, '#1d1d22'); gr.addColorStop(1, '#060607');
+  if (t === 0) { gr.addColorStop(0, `rgb(${70 + lift},${70 + lift},${78 + lift})`); gr.addColorStop(.35, '#1d1d22'); gr.addColorStop(1, '#060607'); }
+  else { gr.addColorStop(0, sh(1.1, 30 + lift)); gr.addColorStop(.35, sh(.82, 0)); gr.addColorStop(1, sh(.38, 0)); }
   rr(o, o, m, m, R0); g.fillStyle = gr; g.fill();
   /* flat top face */
   const f = m * .82, fo = -f / 2;
   gr = g.createRadialGradient(-f * .25, -f * .3, f * .05, 0, 0, f * .8);
-  gr.addColorStop(0, `rgb(${40 + lift},${40 + lift},${46 + lift})`); gr.addColorStop(1, '#141417');
+  if (t === 0) { gr.addColorStop(0, `rgb(${40 + lift},${40 + lift},${46 + lift})`); gr.addColorStop(1, '#141417'); }
+  else { gr.addColorStop(0, sh(1.05, 12 + lift)); gr.addColorStop(1, sh(.86, 0)); }
   rr(fo, fo, f, f, R0 * .75); g.fillStyle = gr; g.fill();
   /* glossy sheen */
   gr = g.createLinearGradient(fo, fo, fo + f * .7, fo + f * .7); gr.addColorStop(0, 'rgba(255,255,255,.10)'); gr.addColorStop(1, 'rgba(255,255,255,0)');
@@ -527,20 +592,22 @@ function diceTile(v, s, k, turn) {
     const x = px * sp, y = py * sp;
     g.beginPath(); g.arc(x, y, pr * 1.12, 0, Math.PI * 2); g.fillStyle = 'rgba(0,0,0,.65)'; g.fill();
     gr = g.createRadialGradient(x + pr * .35, y + pr * .4, pr * .1, x, y, pr);
-    gr.addColorStop(0, '#ffffff'); gr.addColorStop(.6, '#ecebe4'); gr.addColorStop(1, '#a9a8a2');
+    if (darkPip) { gr.addColorStop(0, '#3a3a3f'); gr.addColorStop(.6, '#141417'); gr.addColorStop(1, '#050506'); }
+    else { gr.addColorStop(0, '#ffffff'); gr.addColorStop(.6, '#ecebe4'); gr.addColorStop(1, '#a9a8a2'); }
     g.beginPath(); g.arc(x, y, pr, 0, Math.PI * 2); g.fillStyle = gr; g.fill();
     g.beginPath(); g.arc(x, y, pr, Math.PI * .95, Math.PI * 1.75); g.strokeStyle = 'rgba(0,0,0,.45)'; g.lineWidth = pr * .22; g.stroke();
   }
   g.restore();
-  const t = mk(s, s), tg = t.getContext('2d'); tg.imageSmoothingQuality = 'high'; tg.drawImage(c, 0, 0, s, s); return t;
+  const out = mk(s, s), tg = out.getContext('2d'); tg.imageSmoothingQuality = 'high'; tg.drawImage(c, 0, 0, s, s); return out;
 }
-function tiles(s) {
-  if (!tileCache.has(s)) tileCache.set(s, [0, 1, 2, 3, 4, 5, 6].map(v => Array.from({length: VARS * 2}, (_, k) => k < VARS || v === 2 || v === 3 || v === 6 ? diceTile(v, s, k % VARS, k >= VARS) : null)));
-  return tileCache.get(s);
+function tiles(s, t = 0) {
+  const key = s + '_' + t;
+  if (!tileCache.has(key)) tileCache.set(key, [0, 1, 2, 3, 4, 5, 6].map(v => Array.from({length: VARS * 2}, (_, k) => k < VARS || v === 2 || v === 3 || v === 6 ? diceTile(v, s, k % VARS, k >= VARS, t) : null)));
+  return tileCache.get(key);
 }
-function diceRender(G, C, R, px, O) {
-  const T = tiles(px), c = mk(C * px, R * px), g = c.getContext('2d');
-  for (let y = 0; y < R; y++) for (let x = 0; x < C; x++) { const i = y * C + x, k = ((x * 73856093) ^ (y * 19349663)) >>> 0; g.drawImage(T[G[i]][k % VARS + (O && O[i] ? VARS : 0)], x * px, y * px); }
+function diceRender(G, C, R, px, O, D) {
+  const c = mk(C * px, R * px), g = c.getContext('2d');
+  for (let y = 0; y < R; y++) for (let x = 0; x < C; x++) { const i = y * C + x, k = ((x * 73856093) ^ (y * 19349663)) >>> 0; g.drawImage(tiles(px, D ? D[i] : 0)[G[i]][k % VARS + (O && O[i] ? VARS : 0)], x * px, y * px); }
   return c;
 }
 /* the finished piece hung on a dark wall: frame, spotlight, gilt plaque — for the result view and Instagram */
@@ -650,18 +717,19 @@ const MM = 72 / 25.4;
 
 /* ---------- blueprint: 2 landscape A3 pages, colour-coded (port of the workshop script) ---------- */
 async function blueprint(J) {
-  const {G, O, C, R, die, ref, code, client, cropC, diceSmall, cnt} = J;
+  const {G, O, D, C, R, die, ref, code, client, cropC, diceSmall, cnt, cntT} = J;
+  const extraT = cntT ? cntT.map((cn, t) => t && cn.some(n => n) ? t : 0).filter(Boolean) : [], XT = extraT.length;
   const PW = 420 * MM, PH = 297 * MM, pdf = new PDF(PW, PH), INK = '#111316', GREY = '#6b7078', RED = '#e2483d', GS = 10;
   const title = 'Portrait sur mesure' + (client ? ' · ' + client : '');
   const today = new Date().toLocaleDateString('fr-FR');
-  const dieIcon = (x, y, s, v, stroke) => {
-    pdf.fill(INK); if (stroke) { pdf.stroke(stroke); pdf.lw(.4); }
-    pdf.roundRect(x, y, s, s, s * .17, true, !!stroke); pdf.fill('#ffffff');
+  const dieIcon = (x, y, s, v, stroke, t = 0) => {
+    pdf.fill(t ? DTYPES[t].body : INK); if (stroke || t === 1) { pdf.stroke(stroke || GREY); pdf.lw(.4); }
+    pdf.roundRect(x, y, s, s, s * .17, true, !!(stroke || t === 1)); pdf.fill(t ? DTYPES[t].pip : '#ffffff');
     for (const [px, py] of PIPS[v]) pdf.circle(x + s / 2 + px * s * .26, y + s / 2 - py * s * .26, s * .09);
   };
   const page = (r0, r1, part) => {
     pdf.page(); const rows = r1 - r0;
-    const left = 16 * MM, right = 16 * MM, top = (O ? 39 : 34) * MM, bottom = 30 * MM;
+    const left = 16 * MM, right = 16 * MM, top = ((O ? 39 : 34) + (XT ? 5 : 0)) * MM, bottom = (30 + 7 * XT + (XT ? 4 : 0)) * MM;
     const cell = Math.min((PW - left - right - 12 * MM) / C, (PH - top - bottom) / rows);
     const gw = cell * C, gh = cell * rows, gx = (PW - gw) / 2, gyT = PH - top;
     pdf.fill(INK).text(`Plan de fabrication ${part}/2 · ${title}`, 16 * MM, PH - 14 * MM, 16, true);
@@ -672,7 +740,15 @@ async function blueprint(J) {
     pdf.image(cropC, PW - 16 * MM - 2 * tw - 3 * MM, PH - 8 * MM - th, tw, th, .85);
     pdf.image(diceSmall, PW - 16 * MM - tw, PH - 8 * MM - th, tw, th, .85);
     pdf.stroke(RED).lw(.8).rect(PW - 16 * MM - tw, PH - 8 * MM - th + th * (1 - r1 / R), tw, th * rows / R, false, true);
-    const y = 15 * MM; pdf.fill(INK).text('Légende et quantités (avec 3 % de marge)', gx, y + 7.5 * MM, 9, true);
+    if (XT) pdf.fill(RED).text('Triangle dans le coin d’une case = dé blanc ou de couleur (voir la légende en bas) · sans triangle = dé noir.', 16 * MM, PH - (O ? 35 : 30) * MM, 8.5, true);
+    extraT.forEach((t, j) => {
+      const yy = (15 + 7 * (XT - 1 - j)) * MM, cn = cntT[t], tot = cn.reduce((a, b) => a + b, 0), T = DTYPES[t];
+      pdf.fill(T.body).stroke('#777777').lw(.4).op(`${gx.toFixed(2)} ${(yy + 6 * MM).toFixed(2)} m ${(gx + 6 * MM).toFixed(2)} ${(yy + 6 * MM).toFixed(2)} l ${gx.toFixed(2)} ${yy.toFixed(2)} l h B`);
+      dieIcon(gx + 7.5 * MM, yy, 6 * MM, 5, null, t);
+      pdf.fill(INK).text(`Dés ${T.n}${T.n === 'orange' ? '' : 's'} : ${fmt(tot)} -> ${fmt(cn.reduce((a, b) => a + Math.ceil(b * 1.03), 0))} avec marge`, gx + 15 * MM, yy + 3.4 * MM, 8, true);
+      pdf.text(cn.map((n, k) => n ? `${k === 0 ? 'vide' : 'face ' + k} : ${fmt(Math.ceil(n * 1.03))}` : '').filter(Boolean).join('   ·   '), gx + 15 * MM, yy + .3 * MM, 7.5);
+    });
+    const y = (15 + 7 * XT) * MM; pdf.fill(INK).text(XT ? 'Dés noirs : légende et quantités (avec 3 % de marge)' : 'Légende et quantités (avec 3 % de marge)', gx, y + 7.5 * MM, 9, true);
     for (let k = 0; k < 7; k++) {
       const [bg, fg] = COL[k], x = gx + k * 40 * MM;
       pdf.fill(bg).stroke('#999999').lw(.4).rect(x, y, 6 * MM, 6 * MM, true, true);
@@ -693,6 +769,8 @@ async function blueprint(J) {
         else { pdf.line(x, yy + cell, x + t, yy + cell - t); pdf.line(x + cell - t, yy + t, x + cell, yy); }
       }
       pdf.fill(fg).op(`BT /F2 ${fs.toFixed(2)} Tf ${(x + cell / 2 - dw / 2).toFixed(2)} ${(yy + cell * .28).toFixed(2)} Td (${v}) Tj ET`);
+      const tp = D ? D[r * C + col] : 0;
+      if (tp) { const k2 = cell * .44; pdf.fill(DTYPES[tp].body).stroke(tp === 1 || tp === 5 ? '#111316' : '#ffffff').lw(Math.max(.2, cell * .05)).op(`${x.toFixed(2)} ${(yy + cell).toFixed(2)} m ${(x + k2).toFixed(2)} ${(yy + cell).toFixed(2)} l ${x.toFixed(2)} ${(yy + cell - k2).toFixed(2)} l h B`); }
     }
     pdf.stroke('#ffffff').lw(.2);
     for (let col = 0; col <= C; col++) pdf.line(gx + col * cell, gyT, gx + col * cell, gyT - gh);
@@ -743,7 +821,7 @@ async function certificate(J, F) {
   font(600, 46, DISP); txt("Certificat d'authenticité", X, 196, INK);
   font(400, 16, SERIF); wrap("Je soussigné, JLF D'ICE, certifie que l'œuvre décrite ci-dessous est une création originale, entièrement assemblée à la main avec des dés à jouer, et qu'il s'agit d'une pièce unique.", X, 228, RW, 24, BODY);
   const fields = [
-    [true, 'ŒUVRE', F.title], [true, 'TECHNIQUE', 'Dés à jouer noirs à points blancs, posés un par un à la main'],
+    [true, 'ŒUVRE', F.title], [true, 'TECHNIQUE', mixLabel(J.D)],
     [false, 'NOMBRE DE DÉS', `${fmt(J.C * J.R)} dés · grille ${J.C} × ${J.R}`], [false, 'TAILLE DES DÉS', `${J.die} mm`],
     [false, 'DIMENSIONS', `${cm1(J.C, J.die)} × ${cm1(J.R, J.die)} cm`], [false, 'DATE DE RÉALISATION', F.date],
     [false, 'ÉDITION', 'Pièce unique · 1/1'], [false, 'ACQUÉREUR', F.buyer || '________________________']];
@@ -871,8 +949,8 @@ function drawCrop() {
     const iw = IMG.naturalWidth, ih = IMG.naturalHeight; let w = Math.min(box.width, 520), h = w * ih / iw; if (h > 480) { h = 480; w = h * iw / ih; }
     const cv = $('ccv'); cv.style.width = w + 'px'; cv.style.height = h + 'px'; SEL.draw();
     /* live preview: every die of the real grid */
-    const pv = $('cpv'), {G, O} = computeGrid(IMG, C, R, CROP, 2), pg = pv.getContext('2d');
-    const cssW = Math.min($('cwrap').getBoundingClientRect().width || 340, 520), t = Math.max(4, Math.min(16, Math.floor(cssW * Math.min(devicePixelRatio || 1, 3) / C))); pv.width = C * t; pv.height = R * t; pv.style.width = (C * t / Math.min(devicePixelRatio || 1, 3)) + 'px'; pg.drawImage(diceRender(G, C, R, t, O), 0, 0);
+    const pv = $('cpv'), {G, O, D} = computeGrid(IMG, C, R, CROP, 2), pg = pv.getContext('2d');
+    const cssW = Math.min($('cwrap').getBoundingClientRect().width || 340, 520), t = Math.max(4, Math.min(16, Math.floor(cssW * Math.min(devicePixelRatio || 1, 3) / C))); pv.width = C * t; pv.height = R * t; pv.style.width = (C * t / Math.min(devicePixelRatio || 1, 3)) + 'px'; pg.drawImage(diceRender(G, C, R, t, O, D), 0, 0);
   });
 }
 {
@@ -918,17 +996,17 @@ async function run() {
     const F = {num: $('f-num').value.trim() || nextNum(), title: $('f-title').value.trim() || 'Portrait sur mesure', buyer: $('f-buyer').value.trim(), date: frDate($('f-date').value), place: $('f-place').value.trim(), sticker: $('f-sticker').value.trim()};
     store.set('jlfd-place', F.place);
     let s = step('Conversion de la photo en dés…'); await tick();
-    const {G, O} = computeGrid(IMG, C, R, crop), cnt = [0, 0, 0, 0, 0, 0, 0]; G.forEach(v => cnt[v]++);
+    const {G, O, D} = computeGrid(IMG, C, R, crop), cntT = DTYPES.map(() => [0, 0, 0, 0, 0, 0, 0]); G.forEach((v, i) => cntT[D ? D[i] : 0][v]++); const cnt = cntT[0];
     s.textContent = `✓ ${fmt(C * R)} dés calculés`;
     s = step('Image HD en dés…'); await tick();
-    const px = hdPx(C, R), diceHD = diceRender(G, C, R, px, O), cropC = cropCanvas(IMG, C, R, crop);
+    const px = hdPx(C, R), diceHD = diceRender(G, C, R, px, O, D), cropC = cropCanvas(IMG, C, R, crop);
     const diceSmall = mk(C * 8, R * 8); diceSmall.getContext('2d').drawImage(diceHD, 0, 0, C * 8, R * 8);
     const hdBlob = await new Promise(r => diceHD.toBlob(r, 'image/png'));
     const origBlob = await new Promise(r => cropC.toBlob(r, 'image/jpeg', .95));
     s.textContent = `✓ Image HD ${diceHD.width} × ${diceHD.height}px`;
     const mock = framedMockup(diceHD, 2400, F.title), mockBlob = await new Promise(r => mock.toBlob(r, 'image/jpeg', .92));
     s = step('Plan de fabrication (2 pages A3)…'); await tick();
-    const J = {G, O, C, R, die, ref, code, client, cropC, diceSmall, cnt, diceHD};
+    const J = {G, O, D, C, R, die, ref, code, client, cropC, diceSmall, cnt, cntT, diceHD};
     const bp = await blueprint(J);
     s.textContent = '✓ Plan de fabrication PDF';
     s = step("Certificat d'authenticité…"); await tick();
@@ -937,7 +1015,7 @@ async function run() {
     if (!$('f-num').dataset.touched || F.num === nextNum()) { const n = parseInt(F.num.replace(/\D/g, ''), 10); if (n) store.set('jlfd-cert', String(n)); }
     $('f-num').dataset.touched = ''; refresh();
     const mark = i => !O || ![2, 3, 6].includes(G[i]) ? '' : G[i] === 6 ? (O[i] ? '-' : '|') : (O[i] ? '/' : '\\');
-    const csv = Array.from({length: R}, (_, r) => Array.from({length: C}, (_, x) => G[r * C + x] + mark(r * C + x)).join(';')).join('\n');
+    const csv = Array.from({length: R}, (_, r) => Array.from({length: C}, (_, x) => G[r * C + x] + (D ? DTYPES[D[r * C + x]].s : '') + mark(r * C + x)).join(';')).join('\n');
     OUTF = [
       {name: `Plan_fabrication_${ref}.pdf`, blob: bp, label: 'Plan de fabrication', sub: 'PDF · 2 pages A3 paysage, code couleur'},
       {name: `version_des_HD_${ref}.png`, blob: hdBlob, label: 'Image HD en dés', sub: `PNG · ${diceHD.width} × ${diceHD.height}px`},
@@ -951,8 +1029,9 @@ async function run() {
     if (window._hdURL) URL.revokeObjectURL(window._hdURL); window._hdURL = URL.createObjectURL(hdBlob);
     $('res-cert').src = URL.createObjectURL(cert.png);
     $('res-info').textContent = `${fmt(C * R)} dés de ${die} mm · grille ${C} × ${R} · ≈ ${cm1(C, die)} × ${cm1(R, die)} cm · réf. #${ref}`;
-    $('res-cnt').innerHTML = cnt.map((n, k) => `<span><i style="background:${COL[k][0]};color:${COL[k][1]}">${k}</i>${fmt(n)} <b>→ ${fmt(Math.ceil(n * 1.03))}</b></span>`).join('');
-    renderFiles(); studioReady({G, O, C, R, die, ref, title: F.title, client});
+    $('res-cnt').innerHTML = cntT.map((cn, t) => { const tot = cn.reduce((a, b) => a + b, 0); if (!tot) return '';
+      return `<div class="cntrow"><em><i class="dt" style="background:${DTYPES[t].body};border-color:${t ? DTYPES[t].body : '#555'}"></i>Dés ${DTYPES[t].n}${DTYPES[t].n === 'orange' ? '' : 's'} · ${fmt(tot)}</em>` + cn.map((n, k) => n ? `<span><i style="background:${COL[k][0]};color:${COL[k][1]}">${k}</i>${fmt(n)} <b>→ ${fmt(Math.ceil(n * 1.03))}</b></span>` : '').join('') + '</div>'; }).join('');
+    renderFiles(); studioReady({G, O, D, C, R, die, ref, title: F.title, client});
     $('result').hidden = false; $('result').scrollIntoView({behavior: 'smooth', block: 'start'});
   } catch (e) { console.error(e); step('✗ Erreur : ' + (e && e.message || e)).classList.add('bad'); }
   $('go').disabled = false;
@@ -984,6 +1063,16 @@ $('zimg').addEventListener('click', e => {
 $('zclose').addEventListener('click', () => { $('zoom').hidden = true; $('zimg').removeAttribute('src'); });
 try { $('o-orient').checked = store.get('jlfd-orient', '1') === '1'; } catch (e) {}
 $('o-orient').addEventListener('change', () => { store.set('jlfd-orient', $('o-orient').checked ? '1' : '0'); drawCrop(); });
+function renderMix() {
+  chips('o-white', ['0', '1'], MIX.white ? '1' : '0', v => v === '1' ? 'Noirs + blancs' : 'Noirs uniquement', v => { MIX.white = v === '1'; saveMix(); renderMix(); drawCrop(); });
+  $('o-white-h').textContent = MIX.white ? 'Dés blancs à points noirs pour les zones claires : plus de contraste et des blancs lumineux.' : '';
+  const box = $('o-cols');
+  box.innerHTML = DTYPES.map((d, t) => t < 2 ? '' : `<button type="button" aria-pressed="${MIX.colors.includes(t)}" data-t="${t}"><i class="sw" style="background:${d.body}"></i>${d.n[0].toUpperCase() + d.n.slice(1)}</button>`).join('');
+  box.querySelectorAll('button').forEach(b => b.addEventListener('click', () => { const t = +b.dataset.t; MIX.colors = MIX.colors.includes(t) ? MIX.colors.filter(x => x !== t) : [...MIX.colors, t].sort((a, b) => a - b); saveMix(); renderMix(); drawCrop(); }));
+  $('o-amtw').hidden = !MIX.colors.length;
+  chips('o-amt', ['low', 'mid', 'high'], MIX.amt, v => ({low: 'Discrète', mid: 'Moyenne', high: 'Forte'})[v], v => { MIX.amt = v; saveMix(); renderMix(); drawCrop(); });
+}
+renderMix();
 renderOpts(); setMode('order');
 
 
@@ -999,11 +1088,11 @@ function actx() { if (!ACX.ctx) { try { ACX.ctx = new (window.AudioContext || wi
 const S3 = (() => {
   if (!HAS3D) return null;
   const RELIEF3 = {value: 1};
-  function flatBoard(G, O, C, R) {
+  function flatBoard(G, O, C, R, Dt) {
     const D = Math.max(6, Math.min(16, Math.floor(2048 / Math.max(C, R)))), c = mk(C * D, R * D), g = c.getContext('2d');
     g.fillStyle = '#050506'; g.fillRect(0, 0, c.width, c.height);
     for (let y = 0; y < R; y++) for (let x = 0; x < C; x++) {
-      const i = y * C + x, v = G[i], X = x * D, Y = y * D; g.fillStyle = '#121214'; g.fillRect(X + .5, Y + .5, D - 1, D - 1); g.fillStyle = '#f0efea';
+      const i = y * C + x, v = G[i], X = x * D, Y = y * D, ty = DTYPES[Dt ? Dt[i] : 0]; g.fillStyle = Dt && Dt[i] ? ty.body : '#121214'; g.fillRect(X + .5, Y + .5, D - 1, D - 1); g.fillStyle = Dt && Dt[i] ? ty.pip : '#f0efea';
       for (let [px, py] of PIPS[v]) { if (O && O[i]) [px, py] = v === 6 ? [py, px] : [-px, py]; g.beginPath(); g.arc(X + D / 2 + px * D * .26, Y + D / 2 + py * D * .26, D * .095, 0, 7); g.fill(); }
     }
     return c;
@@ -1022,30 +1111,31 @@ const S3 = (() => {
     return new THREE.PMREMGenerator(renderer).fromScene(es, .02).texture;
   }
   function piece(job, renderer) {
-    const {G, O, C, R} = job, n = C * R, u = 48 / R, BW = C * u, BH = 48;
+    const {G, O, C, R} = job, Dt = job.D, n = C * R, u = 48 / R, BW = C * u, BH = 48;
     RELIEF3.value = renderer.capabilities.isWebGL2 ? 1 : 0;
-    const board = new THREE.CanvasTexture(flatBoard(G, O, C, R)); board.anisotropy = renderer.capabilities.getMaxAnisotropy();
+    const board = new THREE.CanvasTexture(flatBoard(G, O, C, R, Dt)); board.anisotropy = renderer.capabilities.getMaxAnisotropy();
     const mat = new THREE.MeshStandardMaterial({map: board, roughness: .32, metalness: 0, envMapIntensity: .6});
     mat.userData.uBuild = {value: 1};
-    mat.customProgramCacheKey = () => 'atl-dice-' + C + 'x' + R + '-' + RELIEF3.value;
+    mat.customProgramCacheKey = () => 'atl-dice2-' + C + 'x' + R + '-' + RELIEF3.value;
     mat.onBeforeCompile = shd => {
       shd.uniforms.uBuild = mat.userData.uBuild;
-      shd.vertexShader = shd.vertexShader.replace('#include <common>', '#include <common>\nattribute vec2 aCell; varying float vFront; uniform float uBuild;')
+      shd.vertexShader = shd.vertexShader.replace('#include <common>', '#include <common>\nattribute vec2 aCell; attribute vec3 aBody; attribute vec3 aPip; varying vec3 vBody; varying vec3 vPipC; varying float vFront; uniform float uBuild;')
         .replace('#include <begin_vertex>', '#include <begin_vertex>\n' + buildGLSL(C, R, u))
-        .replace('#include <uv_vertex>', `#include <uv_vertex>\n vFront = step(0.5, normal.z);\n vUv = vec2((aCell.x + uv.x) / ${C.toFixed(1)}, 1.0 - (aCell.y + 1.0 - uv.y) / ${R.toFixed(1)});`);
-      shd.fragmentShader = shd.fragmentShader.replace('#include <common>', '#include <common>\nvarying float vFront;')
-        .replace('#include <map_fragment>', '#include <map_fragment>\n if (vFront < 0.5) diffuseColor.rgb = vec3(0.025);');
-      if (RELIEF3.value) patchDiceRelief(shd, RELIEF3, C, R);
+        .replace('#include <uv_vertex>', `#include <uv_vertex>\n vFront = step(0.5, normal.z); vBody = aBody; vPipC = aPip;\n vUv = vec2((aCell.x + uv.x) / ${C.toFixed(1)}, 1.0 - (aCell.y + 1.0 - uv.y) / ${R.toFixed(1)});`);
+      shd.fragmentShader = shd.fragmentShader.replace('#include <common>', '#include <common>\nvarying float vFront; varying vec3 vBody; varying vec3 vPipC;')
+        .replace('#include <map_fragment>', '#include <map_fragment>\n if (vFront < 0.5) diffuseColor.rgb = vBody * .5;');
+      if (RELIEF3.value) { patchDiceRelief(shd, RELIEF3, C, R); shd.fragmentShader = shd.fragmentShader.replace('vec3(.05 + vDkH * .014)', '(vBody + vDkH * .014)').replace('vec3(.9, .89, .86)', 'vPipC'); }
     };
-    const geo = new THREE.BoxGeometry(1, 1, 1), cell = new Float32Array(n * 2), face = new Float32Array(n), rot = new Float32Array(n);
+    const geo = new THREE.BoxGeometry(1, 1, 1), cell = new Float32Array(n * 2), face = new Float32Array(n), rot = new Float32Array(n), bodyA = new Float32Array(n * 3), pipA = new Float32Array(n * 3);
+    const lin = DTYPES.map(d => [new THREE.Color(d.body).convertSRGBToLinear(), new THREE.Color(d.pip).convertSRGBToLinear()]); lin[0] = [new THREE.Color(.05, .05, .05), new THREE.Color(.9, .89, .86)];
     const mesh = new THREE.InstancedMesh(geo, mat, n), m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), e = new THREE.Euler(), v = new THREE.Vector3(), s = new THREE.Vector3(.94 * u, .94 * u, .62 * u);
     for (let i = 0; i < n; i++) {
       const cx = i % C, cy = Math.floor(i / C), h = k => { const z = Math.sin((i + 1) * 12.9898 + k * 78.233) * 43758.5453; return z - Math.floor(z) - .5; };
       e.set(h(1) * .06, h(2) * .06, h(3) * .05); q.setFromEuler(e);
       m4.compose(v.set((cx + .5 - C / 2 + h(4) * .05) * u, (R / 2 - cy - .5 + h(5) * .05) * u, (.32 + h(6) * .03) * u), q, s);
-      mesh.setMatrixAt(i, m4); cell[i * 2] = cx; cell[i * 2 + 1] = cy; face[i] = G[i]; rot[i] = O ? O[i] : 0;
+      mesh.setMatrixAt(i, m4); cell[i * 2] = cx; cell[i * 2 + 1] = cy; face[i] = G[i]; rot[i] = O ? O[i] : 0; const [cb, cp] = lin[Dt ? Dt[i] : 0]; bodyA.set([cb.r, cb.g, cb.b], i * 3); pipA.set([cp.r, cp.g, cp.b], i * 3);
     }
-    geo.setAttribute('aCell', new THREE.InstancedBufferAttribute(cell, 2)); geo.setAttribute('aFace', new THREE.InstancedBufferAttribute(face, 1)); geo.setAttribute('aRot', new THREE.InstancedBufferAttribute(rot, 1));
+    geo.setAttribute('aCell', new THREE.InstancedBufferAttribute(cell, 2)); geo.setAttribute('aFace', new THREE.InstancedBufferAttribute(face, 1)); geo.setAttribute('aRot', new THREE.InstancedBufferAttribute(rot, 1)); geo.setAttribute('aBody', new THREE.InstancedBufferAttribute(bodyA, 3)); geo.setAttribute('aPip', new THREE.InstancedBufferAttribute(pipA, 3));
     mesh.frustumCulled = false;
     const grp = new THREE.Group(); grp.add(mesh);
     const back = new THREE.Mesh(new THREE.BoxGeometry(BW + .6, BH + .6, 1), new THREE.MeshStandardMaterial({color: 0x050506, roughness: .9})); back.position.z = -.5; grp.add(back);
@@ -1238,16 +1328,16 @@ function chOpen() {
 }
 function chClose() { $('chantier').hidden = true; if (CH.wake) { try { CH.wake.release(); } catch (e) {} CH.wake = null; } if (window.speechSynthesis) speechSynthesis.cancel(); }
 function chSeg() { const {C, R} = CH.job, per = Math.ceil(C / 10), row = Math.floor(CH.i / per), seg = CH.i % per, c0 = seg * 10, c1 = Math.min(C, c0 + 10); return {row, c0, c1, per, total: per * R}; }
-function dieSVG(v, turned) {
-  const pts = (PIPS[v] || []).map(([px, py]) => turned ? (v === 6 ? [py, px] : [-px, py]) : [px, py]);
-  return `<svg viewBox="0 0 10 10" aria-hidden="true"><rect x=".4" y=".4" width="9.2" height="9.2" rx="1.8" fill="#0b0b0d" stroke="${COL[v][0] === '#000000' ? '#555' : COL[v][0]}" stroke-width=".7"/>${pts.map(([x, y]) => `<circle cx="${5 + x * 2.6}" cy="${5 + y * 2.6}" r=".95" fill="#f4f3ee"/>`).join('')}</svg>`;
+function dieSVG(v, turned, t = 0) {
+  const pts = (PIPS[v] || []).map(([px, py]) => turned ? (v === 6 ? [py, px] : [-px, py]) : [px, py]), T = DTYPES[t];
+  return `<svg viewBox="0 0 10 10" aria-hidden="true"><rect x=".4" y=".4" width="9.2" height="9.2" rx="1.8" fill="${t ? T.body : '#0b0b0d'}" stroke="${COL[v][0] === '#000000' ? '#555' : COL[v][0]}" stroke-width=".7"/>${pts.map(([x, y]) => `<circle cx="${5 + x * 2.6}" cy="${5 + y * 2.6}" r=".95" fill="${t ? T.pip : '#f4f3ee'}"/>`).join('')}</svg>`;
 }
 function chRender() {
-  const {G, O, C, R} = CH.job, s = chSeg(), done = CH.i >= s.total;
+  const {G, O, C, R} = CH.job, Dt = CH.job.D, s = chSeg(), done = CH.i >= s.total;
   $('chrow').textContent = done ? 'TERMINÉ' : `Rangée ${s.row + 1} / ${R}`;
   $('chcols').textContent = done ? 'Tous les dés sont posés' : `Colonnes ${s.c0 + 1} à ${s.c1}`;
   let html = '';
-  if (!done) for (let x = s.c0; x < s.c1; x++) { const i = s.row * C + x, v = G[i], tn = O && O[i] && ORW[v]; html += `<div class="chd"><div class="chf">${dieSVG(v, tn)}</div><b style="background:${COL[v][0]};color:${COL[v][1]}">${v}</b>${ORW[v] && O ? `<small>${ORW[v][O[i] ? 1 : 0]}</small>` : '<small>&nbsp;</small>'}</div>`; }
+  if (!done) for (let x = s.c0; x < s.c1; x++) { const i = s.row * C + x, v = G[i], tn = O && O[i] && ORW[v], ty = Dt ? Dt[i] : 0, lab = [ty ? DTYPES[ty].n.toUpperCase() : '', ORW[v] && O ? ORW[v][O[i] ? 1 : 0] : ''].filter(Boolean).join(' · '); html += `<div class="chd${ty ? ' cht' : ''}"><div class="chf">${dieSVG(v, tn, ty)}</div><b style="background:${COL[v][0]};color:${COL[v][1]}">${v}</b><small${ty ? ` style="color:${ty === 1 ? '#f4f3ee' : DTYPES[ty].body}"` : ''}>${lab || '&nbsp;'}</small></div>`; }
   $('chdice').innerHTML = html;
   const placed = Math.min(C * R, s.row * C + (done ? 0 : s.c0)), pct = placed / (C * R);
   $('chbar').style.width = (pct * 100).toFixed(2) + '%';
@@ -1260,15 +1350,15 @@ function fmtDur(sec) { const h = Math.floor(sec / 3600), m = Math.round((sec % 3
 function chMini(s) {
   const {G, C, R} = CH.job, cv = $('chmini'), k = Math.max(1, Math.floor(260 / Math.max(C, R))), g = cv.getContext('2d');
   if (cv.width !== C * k) { cv.width = C * k; cv.height = R * k; }
-  if (!CH.mini || CH.mini.job !== CH.job) { const m = mk(C, R), mg = m.getContext('2d'), id = mg.createImageData(C, R), LV = [10, 50, 85, 120, 160, 200, 240]; for (let i = 0; i < C * R; i++) { const v = LV[G[i]]; id.data.set([v, v, v, 255], i * 4); } mg.putImageData(id, 0, 0); CH.mini = {job: CH.job, cv: m}; }
+  if (!CH.mini || CH.mini.job !== CH.job) { const m = mk(C, R), mg = m.getContext('2d'), id = mg.createImageData(C, R), LV = [10, 50, 85, 120, 160, 200, 240]; const Dt = CH.job.D; for (let i = 0; i < C * R; i++) { const t = Dt ? Dt[i] : 0; if (t > 1) { id.data.set([...hexRgb(DTYPES[t].body), 255], i * 4); continue; } const v = t === 1 ? 255 - LV[G[i]] * .35 : LV[G[i]]; id.data.set([v, v, v, 255], i * 4); } mg.putImageData(id, 0, 0); CH.mini = {job: CH.job, cv: m}; }
   g.imageSmoothingEnabled = false; g.drawImage(CH.mini.cv, 0, 0, C * k, R * k);
   g.fillStyle = 'rgba(0,0,0,.55)'; g.fillRect(0, (s.row + 1) * k, C * k, (R - s.row - 1) * k); g.fillRect(s.c1 * k, s.row * k, (C - s.c1) * k, k);
   g.strokeStyle = '#ffb347'; g.lineWidth = 2; g.strokeRect(s.c0 * k - 1, s.row * k - 1, (s.c1 - s.c0) * k + 2, k + 2);
 }
 function chSay(s) {
   if (!window.speechSynthesis) return; speechSynthesis.cancel();
-  const {G, O, C} = CH.job, words = [];
-  for (let x = s.c0; x < s.c1; x++) { const i = s.row * C + x, v = G[i]; words.push(NUMW[v] + (O && ORW[v] ? ' ' + ORW[v][O[i] ? 1 : 0] : '')); }
+  const {G, O, C} = CH.job, Dt = CH.job.D, words = [];
+  for (let x = s.c0; x < s.c1; x++) { const i = s.row * C + x, v = G[i], t = Dt ? Dt[i] : 0; words.push(NUMW[v] + (t ? ' ' + DTYPES[t].n : '') + (O && ORW[v] ? ' ' + ORW[v][O[i] ? 1 : 0] : '')); }
   const u = new SpeechSynthesisUtterance(`Rangée ${s.row + 1}, colonnes ${s.c0 + 1} à ${s.c1}. ${words.join(', ')}.`); u.lang = 'fr-FR'; u.rate = 1.02; speechSynthesis.speak(u);
 }
 function chStep(d) {
