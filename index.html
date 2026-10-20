@@ -149,6 +149,18 @@ html, body { height: 100%; margin: 0; overflow: hidden; background: #000; color:
 #dbottom .drow { display: flex; gap: 2.4cqw; justify-content: center; flex-wrap: wrap; }
 #frame.detail #dbottom button { pointer-events: auto; }
 #frame.exploded #readout::after { content: "DÉCOMPOSITION ACTIVE"; display: block; color: var(--warn); }
+
+#mkwrap { right: 7cqw; top: 11.2cqh; z-index: 6; }
+#mkbtn { font-size: 2.3cqw; padding: 1.6cqw 2.8cqw; color: var(--warn); border-color: rgba(255,179,71,.7); background: rgba(255,179,71,.08); box-shadow: 0 0 4cqw rgba(255,179,71,.18); animation: mkpulse 2.6s ease-in-out infinite; }
+@keyframes mkpulse { 50% { box-shadow: 0 0 7cqw rgba(255,179,71,.4); } }
+#frame.detail #mkwrap { opacity: 0; }
+#proc { position: absolute; inset: 0; z-index: 8; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2.4cqw; background: rgba(0,4,9,.82); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); text-align: center; padding: 0 10cqw; }
+#proc .ring { width: 22cqw; height: 22cqw; border-radius: 50%; border: 2px solid rgba(127,233,255,.2); border-top-color: var(--holo); border-right-color: var(--holo); animation: spinr .9s linear infinite; box-shadow: 0 0 6cqw rgba(127,233,255,.25); }
+@keyframes spinr { to { transform: rotate(360deg); } }
+#proc b { font-weight: 600; font-size: 4.4cqw; letter-spacing: .2em; text-transform: uppercase; }
+#proc span { font-size: 3cqw; color: var(--holo); letter-spacing: .2em; }
+#proc small { font: 400 2.3cqw var(--mono); color: var(--dim); letter-spacing: .1em; }
+@media (prefers-reduced-motion: reduce) { #mkbtn, #proc .ring { animation: none; } }
 </style>
 <template id="markup"><div id="frame" class="gate">
 <div id="bg"></div>
@@ -162,6 +174,7 @@ html, body { height: 100%; margin: 0; overflow: hidden; background: #000; color:
 <div class="hud" id="count">01 / 02<small>SIGNAL STABLE</small></div>
 <div class="hud" id="ticker"></div>
 <div class="hud menu-only" id="tools"><button class="tool" id="snd" type="button" aria-pressed="true">SON · ON</button><button class="tool" id="share" type="button">PARTAGER</button><button class="tool" id="gear" type="button" hidden>GÉRER</button></div>
+<div class="hud menu-only" id="mkwrap"><button class="btn" id="mkbtn" type="button">✦ Ton portrait en dés</button><input id="mkfile" type="file" accept="image/*" hidden></div>
 <button class="arrow hud menu-only" id="prev" type="button" aria-label="Œuvre précédente">‹</button>
 <button class="arrow hud menu-only" id="next" type="button" aria-label="Œuvre suivante">›</button>
 <div class="hud menu-only" id="swipehint">◂ glisser · toucher pour ouvrir ▸</div>
@@ -172,6 +185,7 @@ html, body { height: 100%; margin: 0; overflow: hidden; background: #000; color:
 <button class="btn" id="skip" type="button">Passer ›</button>
 <div id="gate"><span class="k">JLF D'ICE</span><h1>Archive</h1><div class="boot" id="boot"></div><button class="btn primary" id="enter" type="button" disabled>Initialiser ▸</button><small>Son recommandé</small></div>
 <div id="toast" role="status"></div>
+<div id="proc" hidden><div class="ring"></div><b id="proct">Analyse de l’image</b><span id="procs" class="mono">0 %</span><small>Ta photo reste sur ton appareil · rien n’est envoyé</small></div>
 <div id="panel" hidden>
   <h2>Gérer l'archive</h2>
   <p>Ces réglages sont visibles par tout le monde dès que tu publies.</p>
@@ -760,9 +774,9 @@ STATE.handle = STATE.handle || 'jlf2ice';
 STATE.items = STATE.items || {};
 const STATUS = {
   dispo: ['Disponible', '#6dffb4'], reserve: ['Réservé', '#ffb347'], vendu: ['Vendu', '#ff6f8a'],
-  privee: ['Collection privée', '#ffd48a'], bientot: ['Classifié', '#ff3d63'],
+  privee: ['Collection privée', '#ffd48a'], bientot: ['Classifié', '#ff3d63'], apercu: ['Aperçu généré', '#7fe9ff'],
 };
-const itemState = it => Object.assign(it.locked ? {status: 'bientot', hint: 'Une nouvelle œuvre est en cours. Personne ne l’a encore vue.'} : {status: 'dispo'}, STATE.items[it.key] || {});
+const itemState = it => it.custom ? {status: 'apercu'} : Object.assign(it.locked ? {status: 'bientot', hint: 'Une nouvelle œuvre est en cours. Personne ne l’a encore vue.'} : {status: 'dispo'}, STATE.items[it.key] || {});
 const igDM = () => `https://ig.me/m/${encodeURIComponent(STATE.handle)}`;
 const igProfile = () => `https://www.instagram.com/${encodeURIComponent(STATE.handle)}/`;
 
@@ -817,7 +831,7 @@ cone.position.set(0, -14, -10); cone.rotation.x = Math.PI;
 
 /* ---- laser scan that materialises each painting ---- */
 const reveal = ITEMS.map(() => ({t0: -9}));
-P.forEach((g, i) => {
+function equip(g, i) {
   const [c, r] = GR.dims[ITEMS[i].key], u = 48 / r, BW = c * u;
   const lc = mk(256, 8), lg = lc.getContext('2d'), gr = lg.createLinearGradient(0, 0, 256, 0);
   gr.addColorStop(0, 'rgba(127,233,255,0)'); gr.addColorStop(.1, 'rgba(200,250,255,1)'); gr.addColorStop(.9, 'rgba(200,250,255,1)'); gr.addColorStop(1, 'rgba(127,233,255,0)'); lg.fillStyle = gr; lg.fillRect(0, 0, 256, 8);
@@ -827,7 +841,8 @@ P.forEach((g, i) => {
   halo.scale.set(BW + 30, 7, 1); halo.position.z = 1.8; halo.visible = false; g.add(halo);
   g.userData.laser = laser; g.userData.halo = halo; g.userData.bw = BW;
   g.userData.box = [BW / 2 + 5.6, 24 + 5.6];
-});
+}
+P.forEach(equip);
 function scan(i) { reveal[i].t0 = tt; if (sound) SFX.scan(); }
 
 /* ---- info panel ---- */
@@ -835,14 +850,17 @@ function chipHTML(c) { return Array.isArray(c) ? `<span class="chip ${c[1]}">${c
 function esc(t) { return String(t).replace(/[&<>"]/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;'}[c])); }
 function renderInfo(i, scramble) {
   const it = ITEMS[i], st = itemState(it), [label, col] = STATUS[st.status] || STATUS.dispo;
-  infoEl.querySelector('.num').textContent = `OBJET ${it.num} // ${it.locked ? 'CLASSIFIÉ' : 'ARCHIVÉ'}`;
+  infoEl.querySelector('.num').textContent = it.custom ? 'OBJET ∞ // GÉNÉRÉ POUR TOI' : `OBJET ${it.num} // ${it.locked ? 'CLASSIFIÉ' : 'ARCHIVÉ'}`;
   const nm = infoEl.querySelector('.name'); if (scramble) decrypt(nm, it.name); else nm.textContent = it.name;
   infoEl.querySelector('.sub').textContent = it.sub;
   infoEl.querySelector('.meta').innerHTML = `<span class="chip" style="color:${col}"><span class="dot"></span><span style="color:var(--ink)">${esc(label)}</span></span>` + it.chips.map(chipHTML).join('');
   const hint = infoEl.querySelector('.hint'); hint.hidden = !it.locked || !st.hint; hint.textContent = st.hint || '';
   setTimeout(tickCountdown, 0);
   const acts = infoEl.querySelector('.actions');
-  if (it.locked) acts.innerHTML = `<a class="btn primary" href="${igProfile()}" target="_blank" rel="noopener">Être prévenu</a>`;
+  if (it.custom) {
+    acts.innerHTML = `<a class="btn primary" href="${igDM()}" target="_blank" rel="noopener">Commander ce tableau</a><button class="btn" type="button" data-open>Analyser</button><button class="btn" type="button" data-again>Autre photo</button>`;
+    acts.querySelector('[data-open]').addEventListener('click', openDetail); acts.querySelector('[data-again]').addEventListener('click', () => $('mkfile').click());
+  } else if (it.locked) acts.innerHTML = `<a class="btn primary" href="${igProfile()}" target="_blank" rel="noopener">Être prévenu</a>`;
   else {
     const sold = st.status === 'vendu' || st.status === 'privee';
     acts.innerHTML = `<button class="btn primary" type="button" data-open>Analyser</button>` +
@@ -916,6 +934,7 @@ $('tab-comp').addEventListener('click', () => setTab('comp'));
 /* ---- decompose: the piece bursts into its dice, then reassembles ---- */
 let exTarget = 0, exV = 0;
 function setExplode(on) {
+  buzz(on ? [20, 30, 60] : 25);
   exTarget = on ? 1 : 0; FRAME.classList.toggle('exploded', !!on); $('explode').textContent = on ? 'Recomposer' : 'Décomposer';
   if (sound) { if (on) { noiseSweep(200, 6000, 1.2, .09); blip(110, 55, 1.4, .18, 'sine'); } else { noiseSweep(6000, 300, 1.2, .08); blip(55, 110, 1.2, .12, 'sine'); } }
 }
@@ -934,11 +953,76 @@ function askTilt() {
   } catch (e) {}
 }
 
+/* ---- haptics (Android; ignored elsewhere) ---- */
+function buzz(p) { try { if (navigator.vibrate) navigator.vibrate(p); } catch (e) {} }
+
+/* ---- warp streaks between pieces ---- */
+let warpT0 = -9;
+const WN = 220, wpos = new Float32Array(WN * 6), wseed = [];
+for (let i = 0; i < WN; i++) { const a = Math.random() * 6.28, r = 20 + Math.random() * 160; wseed.push([Math.cos(a) * r, Math.sin(a) * r * 1.4, -Math.random() * 500]); }
+const wgeo = new THREE.BufferGeometry(); wgeo.setAttribute('position', new THREE.BufferAttribute(wpos, 3));
+const warp = new THREE.LineSegments(wgeo, new THREE.LineBasicMaterial({color: 0xaff3ff, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false}));
+warp.frustumCulled = false; scene.add(warp);
+function updateWarp() {
+  const k = Math.max(0, 1 - (tt - warpT0) / .7), e = k * k;
+  warp.visible = e > .01; if (!warp.visible) return;
+  warp.material.opacity = .75 * e;
+  const cz = camera.position.z;
+  for (let i = 0; i < WN; i++) {
+    const [x, y, z0] = wseed[i]; let z = ((z0 + tt * 900) % 500 + 500) % 500 - 500 + cz - 20;
+    wpos.set([x, y, z, x, y, z - 6 - 140 * e], i * 6);
+  }
+  wgeo.attributes.position.needsUpdate = true;
+}
+
+/* ---- "ton portrait en dés": turn the visitor's photo into a dice piece, locally ---- */
+function toGrid(img, C, Rr) {
+  const cv2 = mk(C, Rr), g2 = cv2.getContext('2d'), ar = C / Rr, iw = img.naturalWidth || img.width, ih = img.naturalHeight || img.height;
+  let sw = iw, sh = iw / ar; if (sh > ih) { sh = ih; sw = ih * ar; }
+  g2.drawImage(img, (iw - sw) / 2, Math.max(0, (ih - sh) / 2 - sh * .04), sw, sh, 0, 0, C, Rr);
+  const d = g2.getImageData(0, 0, C, Rr).data, L = new Float32Array(C * Rr);
+  for (let i = 0; i < C * Rr; i++) L[i] = (.2126 * d[i * 4] + .7152 * d[i * 4 + 1] + .0722 * d[i * 4 + 2]) / 255;
+  const srt = Array.from(L).sort((x, y) => x - y), lo = srt[Math.floor(srt.length * .02)], hi = srt[Math.floor(srt.length * .98)] || 1;
+  let s = '';
+  for (let i = 0; i < L.length; i++) { const v = Math.pow(clamp((L[i] - lo) / Math.max(.05, hi - lo)), .9); s += v < .06 ? '0' : String(Math.min(6, 1 + Math.floor(v * 6))); }
+  return s;
+}
+function buildPortrait(img) {
+  const C2 = 40, R2 = 52;
+  GR.custom = toGrid(img, C2, R2); GR.dims.custom = [C2, R2];
+  let idx = ITEMS.findIndex(it => it.custom);
+  const item = {key: 'custom', custom: true, num: '∞', name: 'Ton portrait', sub: 'Aperçu généré à partir de ta photo', chips: [['Sur mesure', 'gold'], 'Dés à jouer', 'Fait main'], plaque: ['Ton portrait', "JLF D'ICE", 'Sur mesure']};
+  if (idx >= 0) { scene.remove(P[idx]); P[idx].traverse(o => { if (o.geometry) o.geometry.dispose(); }); ITEMS[idx] = item; }
+  else { idx = ITEMS.length; ITEMS.push(item); reveal.push({t0: -9}); }
+  const g = painting(item); g.userData.mat.userData.uReveal.value = -30; P[idx] = g; equip(g, idx);
+  return idx;
+}
+$('mkbtn').addEventListener('click', () => { $('mkfile').value = ''; $('mkfile').click(); });
+$('mkfile').addEventListener('change', () => {
+  const f = $('mkfile').files && $('mkfile').files[0]; if (!f) return;
+  const url = URL.createObjectURL(f), img = new Image();
+  $('proc').hidden = false; $('proct').textContent = 'Analyse de l’image'; $('procs').textContent = '0 %'; if (sound) SFX.scan();
+  const t0 = performance.now(), steps = ['Analyse de l’image', 'Détection des contrastes', 'Placement des dés', 'Assemblage'];
+  const tick = setInterval(() => { const k = Math.min(1, (performance.now() - t0) / 1900); $('procs').textContent = Math.round(k * 100) + ' %'; $('proct').textContent = steps[Math.min(3, Math.floor(k * 4))]; }, 60);
+  img.onload = () => {
+    let idx;
+    try { idx = buildPortrait(img); } catch (e) { clearInterval(tick); $('proc').hidden = true; toast('<b>ERREUR</b>Cette image n’a pas pu être lue. Essaie une autre photo.', true); return; }
+    setTimeout(() => {
+      clearInterval(tick); $('proc').hidden = true; URL.revokeObjectURL(url);
+      if (mode === 'detail') closeDetail();
+      if (sel === idx) { showInfo(idx); scan(idx); } else goTo(idx);
+      buzz([30, 40, 80]); toast('<b style="color:var(--holo)">PORTRAIT GÉNÉRÉ</b>Voici ta photo transformée en tableau de dés.');
+    }, Math.max(0, 1900 - (performance.now() - t0)));
+  };
+  img.onerror = () => { clearInterval(tick); $('proc').hidden = true; toast('<b>FORMAT NON LU</b>Choisis une photo JPEG ou PNG.', true); };
+  img.src = url;
+});
+
 /* ---- navigation ---- */
 function goTo(i) {
   i = Math.max(0, Math.min(ITEMS.length - 1, i));
   if (i === sel) return;
-  sel = i; touchedOnce(); if (sound) SFX.move();
+  sel = i; touchedOnce(); if (sound) SFX.move(); buzz(12); warpT0 = tt;
   glitch(); showInfo(i); retT0 = tt;
   setTimeout(() => { if (sel !== i || mode !== 'menu') return; if (ITEMS[i].locked) { spinT0 = tt; if (sound) SFX.mystery(); } else scan(i); }, 380);
 }
@@ -947,7 +1031,7 @@ function openDetail() {
   if (mode !== 'menu') return;
   const it = ITEMS[sel];
   if (it.locked) {
-    shakeT0 = tt; spinT0 = tt; glitch(); glitch('denied', 900); if (sound) SFX.deny();
+    shakeT0 = tt; spinT0 = tt; glitch(); glitch('denied', 900); if (sound) SFX.deny(); buzz([40, 60, 40]);
     toast(`<b>ACCÈS REFUSÉ</b>${esc(itemState(it).hint || 'Révélation bientôt')}`, true); return;
   }
   mode = 'detail'; touchedOnce(); FRAME.classList.add('detail');
@@ -1110,7 +1194,7 @@ function loop(now) {
   if (mode === 'detail') $('readout').innerHTML = `ROT ${(yaw * 57.3 >= 0 ? '+' : '−') + Math.abs(((yaw * 57.3) % 360)).toFixed(1).padStart(5, '0')}°<br>INCL ${(pitch * 57.3 >= 0 ? '+' : '−') + Math.abs(pitch * 57.3).toFixed(1).padStart(4, '0')}°<br>ZOOM ×${zoom.toFixed(2)}<br>MATIÈRE · DÉS À JOUER`;
   if ((tickT += dt) > .25) { tickT = 0; ticker(); }
   cone.position.x = (sel - s) * SPACING * 0; cone.material.opacity = .14 + .04 * Math.sin(tt * 2);
-  gridMat.uniforms.uTime.value = tt;
+  gridMat.uniforms.uTime.value = tt; updateWarp();
   sweepL.position.set(Math.sin(tt * .8) * 70 * (1 - detK) + Math.sin(tt * 1.2) * 30 * detK, 40 + Math.cos(tt * .5) * 15, 110 - 40 * detK);
   const hp = hazeGeo.attributes.position;
   for (let i = 0; i < HZ; i++) { let x = hp.getX(i) + .06 * speed; if (x > 210) x = -210; hp.setX(i, x); hp.setY(i, hp.getY(i) + Math.sin(tt * .3 + hseed[i]) * .02); }
