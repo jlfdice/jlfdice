@@ -1259,15 +1259,90 @@ function cropRect(img, ar, cr = CROP) {
   const cw = sw / cr.z, ch = sh / cr.z;
   return [cr.px * (iw - cw), cr.py * (ih - ch), cw, ch];
 }
+/* ---- photo → dice faces, tuned for maximum detail ----
+   local contrast (CLAHE) → area average per die → unsharp mask → levels → error diffusion
+   on the real brightness of each face; optional per-die orientation for faces 2, 3 and 6. */
+const FACE_LV = [0.075, 0.105, 0.128, 0.158, 0.180, 0.211, 0.238];   /* mean brightness of each face as seen from afar */
+function claheL(L, w, h, tx, ty, clip) {
+  const N = 256, maps = [], tw = w / tx, th = h / ty;
+  for (let j = 0; j < ty; j++) for (let i = 0; i < tx; i++) {
+    const x0 = Math.floor(i * tw), x1 = Math.floor((i + 1) * tw), y0 = Math.floor(j * th), y1 = Math.floor((j + 1) * th), hist = new Float32Array(N);
+    let n = 0;
+    for (let y = y0; y < y1; y++) for (let x = x0; x < x1; x++) { hist[L[y * w + x]]++; n++; }
+    const lim = Math.max(1, clip * n / N); let ex = 0;
+    for (let k = 0; k < N; k++) if (hist[k] > lim) { ex += hist[k] - lim; hist[k] = lim; }
+    const add = ex / N, map = new Float32Array(N); let acc = 0;
+    for (let k = 0; k < N; k++) { acc += hist[k] + add; map[k] = acc / Math.max(1, n); }
+    maps.push(map);
+  }
+  const out = new Float32Array(w * h);
+  for (let y = 0; y < h; y++) {
+    const fy = Math.min(ty - 1, Math.max(0, (y + .5) / th - .5)), j0 = Math.floor(fy), j1 = Math.min(ty - 1, j0 + 1), wy = fy - j0;
+    for (let x = 0; x < w; x++) {
+      const fx = Math.min(tx - 1, Math.max(0, (x + .5) / tw - .5)), i0 = Math.floor(fx), i1 = Math.min(tx - 1, i0 + 1), wx = fx - i0, v = L[y * w + x];
+      out[y * w + x] = (maps[j0 * tx + i0][v] * (1 - wx) + maps[j0 * tx + i1][v] * wx) * (1 - wy) + (maps[j1 * tx + i0][v] * (1 - wx) + maps[j1 * tx + i1][v] * wx) * wy;
+    }
+  }
+  return out;
+}
+function blurGrid(G, C, R, s) {
+  const r = Math.ceil(s * 3), k = []; let sum = 0;
+  for (let i = -r; i <= r; i++) { const v = Math.exp(-i * i / (2 * s * s)); k.push(v); sum += v; }
+  const t = new Float32Array(C * R), o = new Float32Array(C * R);
+  for (let y = 0; y < R; y++) for (let x = 0; x < C; x++) { let a = 0; for (let i = -r; i <= r; i++) a += G[y * C + Math.min(C - 1, Math.max(0, x + i))] * k[i + r]; t[y * C + x] = a / sum; }
+  for (let y = 0; y < R; y++) for (let x = 0; x < C; x++) { let a = 0; for (let i = -r; i <= r; i++) a += t[Math.min(R - 1, Math.max(0, y + i)) * C + x] * k[i + r]; o[y * C + x] = a / sum; }
+  return o;
+}
+/* returns {F: faces 0..6, O: 1 where a 2/3/6 should be turned a quarter, V: tone 0..1 per die} */
+function diceFaces(img, sx, sy, sw, sh, C, R, K = 4, orient = false) {
+  const W = C * K, H = R * K, cv = document.createElement('canvas'); cv.width = W; cv.height = H;
+  const g = cv.getContext('2d', {willReadFrequently: true}); g.imageSmoothingQuality = 'high';
+  g.drawImage(img, sx, sy, sw, sh, 0, 0, W, H);
+  const d = g.getImageData(0, 0, W, H).data, L8 = new Uint8Array(W * H);
+  for (let i = 0; i < W * H; i++) L8[i] = Math.round(.2126 * d[i * 4] + .7152 * d[i * 4 + 1] + .0722 * d[i * 4 + 2]);
+  const L = claheL(L8, W, H, Math.max(2, Math.round(C / 10)), Math.max(2, Math.round(R / 10)), 1.3);
+  let G = new Float32Array(C * R);
+  for (let y = 0; y < R; y++) for (let x = 0; x < C; x++) { let a = 0; for (let j = 0; j < K; j++) for (let i = 0; i < K; i++) a += L[(y * K + j) * W + x * K + i]; G[y * C + x] = a / (K * K); }
+  const B = blurGrid(G, C, R, 1.0);
+  for (let i = 0; i < G.length; i++) G[i] = G[i] + .9 * (G[i] - B[i]);
+  const srt = Array.from(G).sort((a, b) => a - b), lo = srt[Math.floor(srt.length * .02)], hi = srt[Math.floor(srt.length * .98)];
+  const V = new Float32Array(C * R), T = new Float64Array(C * R), F = new Uint8Array(C * R), a = FACE_LV[0], b = FACE_LV[6];
+  for (let i = 0; i < G.length; i++) { V[i] = Math.pow(Math.max(0, Math.min(1, (G[i] - lo) / Math.max(.05, hi - lo))), .9); T[i] = a + V[i] * (b - a); }
+  /* serpentine Floyd–Steinberg, 75 % strength: smooth tones without grainy flat areas */
+  for (let y = 0; y < R; y++) {
+    const dir = y % 2 ? -1 : 1;
+    for (let n = 0; n < C; n++) {
+      const x = dir > 0 ? n : C - 1 - n, i = y * C + x, o = T[i]; let k = 0, best = 9;
+      for (let f = 0; f < 7; f++) { const e = Math.abs(FACE_LV[f] - o); if (e < best) { best = e; k = f; } }
+      F[i] = k; const e = (o - FACE_LV[k]) * .75;
+      if (x + dir >= 0 && x + dir < C) T[i + dir] += e * 7 / 16;
+      if (y + 1 < R) { if (x - dir >= 0 && x - dir < C) T[i + C - dir] += e * 3 / 16; T[i + C] += e * 5 / 16; if (x + dir >= 0 && x + dir < C) T[i + C + dir] += e / 16; }
+    }
+  }
+  let O = null;
+  if (orient) {
+    /* structure tensor per die: lay the pip line of 2, 3 and 6 along the local contour */
+    const xx = new Float32Array(C * R), yy = new Float32Array(C * R), xy = new Float32Array(C * R), at = (x, y) => L[Math.min(H - 1, Math.max(0, y)) * W + Math.min(W - 1, Math.max(0, x))];
+    for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+      const gx = at(x + 1, y - 1) + 2 * at(x + 1, y) + at(x + 1, y + 1) - at(x - 1, y - 1) - 2 * at(x - 1, y) - at(x - 1, y + 1);
+      const gy = at(x - 1, y + 1) + 2 * at(x, y + 1) + at(x + 1, y + 1) - at(x - 1, y - 1) - 2 * at(x, y - 1) - at(x + 1, y - 1);
+      const c = Math.floor(y / K) * C + Math.floor(x / K); xx[c] += gx * gx; yy[c] += gy * gy; xy[c] += gx * gy;
+    }
+    const Jxx = blurGrid(xx, C, R, .8), Jyy = blurGrid(yy, C, R, .8), Jxy = blurGrid(xy, C, R, .8);
+    O = new Uint8Array(C * R);
+    for (let i = 0; i < C * R; i++) {
+      const f = F[i], coh = Math.sqrt((Jxx[i] - Jyy[i]) ** 2 + 4 * Jxy[i] ** 2) / (Jxx[i] + Jyy[i] + 1e-6);
+      if (coh < .2) continue;
+      if (f === 2 || f === 3) O[i] = Jxy[i] > 0 ? 1 : 0;      /* 1 = '/' instead of '\' */
+      else if (f === 6) O[i] = Jyy[i] > Jxx[i] ? 1 : 0;       /* 1 = rows instead of columns */
+    }
+  }
+  return {F, O, V};
+}
 function faces(img, C, Rr, cr) {
-  const cv2 = mk(C, Rr), g2 = cv2.getContext('2d'), [sx, sy, sw, sh] = cropRect(img, C / Rr, cr);
-  g2.drawImage(img, sx, sy, sw, sh, 0, 0, C, Rr);
-  const d = g2.getImageData(0, 0, C, Rr).data, L = new Float32Array(C * Rr);
-  for (let i = 0; i < C * Rr; i++) L[i] = (.2126 * d[i * 4] + .7152 * d[i * 4 + 1] + .0722 * d[i * 4 + 2]) / 255;
-  const srt = Array.from(L).sort((x, y) => x - y), lo = srt[Math.floor(srt.length * .02)], hi = srt[Math.floor(srt.length * .98)] || 1;
-  const F = new Uint8Array(L.length);
-  for (let i = 0; i < L.length; i++) { const v = Math.pow(clamp((L[i] - lo) / Math.max(.05, hi - lo)), .85); F[i] = v < .05 ? 0 : Math.min(6, 1 + Math.floor(v * 6)); }
-  return [F, L];
+  /* same detail pipeline as the workshop: local contrast, sharpening, error diffusion on the real face brightness */
+  const [sx, sy, sw, sh] = cropRect(img, C / Rr, cr), r = diceFaces(img, sx, sy, sw, sh, C, Rr, 3, false);
+  return [r.F, r.V];
 }
 const fmtN = n => n.toLocaleString(LOC()).replace(/ | /g, ' ');
 /* whole-dice rectangle close to 3:4 whose count is as near as possible to n, never above 10 000 */
