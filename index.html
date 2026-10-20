@@ -171,6 +171,9 @@ html, body { height: 100%; margin: 0; overflow: hidden; background: #000; color:
 #send img { width: 100%; max-width: 100%; border: 1px solid var(--line); }
 #send ol { margin: 0; padding-left: 5cqw; font: 400 3cqw/1.6 var(--mono); color: #d6f6ff; }
 #send .row { display: flex; gap: 2.4cqw; flex-wrap: wrap; }
+
+.dsel .dl2 { margin-top: 1.8cqw; }
+.dsel .dopt { padding: 1.2cqw 1.9cqw; font-size: 2.4cqw; }
 </style>
 <template id="markup"><div id="frame" class="gate">
 <div id="bg"></div>
@@ -188,7 +191,7 @@ html, body { height: 100%; margin: 0; overflow: hidden; background: #000; color:
 <button class="arrow hud menu-only" id="prev" type="button" aria-label="Œuvre précédente">‹</button>
 <button class="arrow hud menu-only" id="next" type="button" aria-label="Œuvre suivante">›</button>
 <div class="hud menu-only" id="swipehint">◂ glisser · toucher pour ouvrir ▸</div>
-<div class="hud out menu-only" id="info" aria-live="polite"><div class="num"></div><div class="name"></div><div class="sub"></div><div class="meta"></div><div class="countdown" hidden></div><div class="dsel" id="dsel" hidden><span class="dl">Nombre de dés</span><div class="dopts" role="radiogroup" aria-label="Nombre de dés"></div><span class="dinfo" id="dinfo"></span></div><div class="hint" hidden></div><div class="actions"></div></div>
+<div class="hud out menu-only" id="info" aria-live="polite"><div class="num"></div><div class="name"></div><div class="sub"></div><div class="meta"></div><div class="countdown" hidden></div><div class="dsel" id="dsel" hidden><span class="dl">Nombre de dés</span><div class="dopts" role="radiogroup" aria-label="Nombre de dés"></div><span class="dl dl2">Taille des dés</span><div class="dopts sopts" role="radiogroup" aria-label="Taille des dés"></div><span class="dinfo" id="dinfo"></span></div><div class="hint" hidden></div><div class="actions"></div></div>
 <div id="detailbar"><button class="btn" id="back" type="button">‹ Retour</button><span class="dt"><b id="dtitle">La Joconde</b><small>ANALYSE EN COURS</small></span></div>
 <div id="readout"></div>
 <div id="dbottom"><div id="about"><div class="tabs" role="tablist"><button class="tab on" type="button" role="tab" data-tab="orig" id="tab-orig">Œuvre originale</button><button class="tab" type="button" role="tab" data-tab="comp" id="tab-comp">Composition</button></div><p id="abouttxt"></p><div id="comp" hidden></div></div><small>Glisser pour pivoter · pincer pour zoomer</small><div class="drow"><button class="btn" id="explode" type="button">Décomposer</button><a class="btn primary" id="dorder" target="_blank" rel="noopener">Commander</a></div></div>
@@ -991,8 +994,8 @@ function updateWarp() {
 }
 
 /* ---- "crée le tien": the visitor's photo becomes a dice piece, locally, then goes to the artist ---- */
-const DICE_OPTS = [5000, 7500, 10000, 15000, 20000];
-let diceN = 5000, lastImg = null, lastRef = '';
+const DICE_OPTS = [5000, 6000, 7500, 9000, 10000], SIZE_OPTS = [10, 12, 14, 16];
+let diceN = 5000, dieMM = 10, lastImg = null, lastFile = null, lastRef = '';
 const fmtN = n => n.toLocaleString('fr-FR').replace(/ | /g, ' ');
 function gridDims(n) { const C = Math.round(Math.sqrt(n * 3 / 4)); return [C, Math.round(n / C)]; }
 function toGrid(img, C, Rr) {
@@ -1025,12 +1028,16 @@ function setCustom(grid, C, Rr, generated) {
   g.position.x = (CUSTOM - s) * SPACING; g.scale.setScalar(.0001);
 }
 setCustom(plusGrid(40, 52), 40, 52, false);
+const cm = (n, mm) => (n * mm / 10).toFixed(1).replace('.', ',');
+function workshopCode() { const [C, Rr] = GR.dims.custom; return `JLFD-C${C}-R${Rr}-D${dieMM}-${lastRef}`; }
 function renderDiceSel() {
-  const box = $('dsel').querySelector('.dopts');
+  const box = $('dsel').querySelector('.dopts'), sbox = $('dsel').querySelector('.sopts');
   box.innerHTML = DICE_OPTS.map(n => `<button class="dopt" type="button" role="radio" aria-checked="${n === diceN}" data-n="${n}">${fmtN(n)}</button>`).join('');
+  sbox.innerHTML = SIZE_OPTS.map(n => `<button class="dopt" type="button" role="radio" aria-checked="${n === dieMM}" data-s="${n}">${n} mm</button>`).join('');
   box.querySelectorAll('.dopt').forEach(b => b.addEventListener('click', () => { diceN = +b.dataset.n; renderDiceSel(); if (lastImg) generate(lastImg); }));
+  sbox.querySelectorAll('.dopt').forEach(b => b.addEventListener('click', () => { dieMM = +b.dataset.s; renderDiceSel(); }));
   const [C, Rr] = gridDims(diceN);
-  $('dinfo').textContent = `${fmtN(C * Rr)} dés · grille ${C} × ${Rr}`;
+  $('dinfo').textContent = `${fmtN(C * Rr)} dés · ${C} × ${Rr} · format ≈ ${cm(C, dieMM)} × ${cm(Rr, dieMM)} cm`;
 }
 function generate(img) {
   lastImg = img; lastRef = Math.random().toString(36).slice(2, 6).toUpperCase();
@@ -1051,6 +1058,7 @@ function generate(img) {
 $('mkgo').addEventListener('click', () => { if (mode === 'detail') closeDetail(); goTo(CUSTOM); });
 $('mkfile').addEventListener('change', () => {
   const f = $('mkfile').files && $('mkfile').files[0]; if (!f) return;
+  lastFile = f;
   const url = URL.createObjectURL(f), img = new Image();
   img.onload = () => generate(img);
   img.onerror = () => toast('<b>FORMAT NON LU</b>Choisis une photo JPEG ou PNG.', true);
@@ -1073,27 +1081,32 @@ function orderSheet() {
   g.strokeStyle = 'rgba(127,233,255,.6)'; g.lineWidth = 2; g.strokeRect(70, top, bw, bh); g.strokeRect(W - 70 - bw, top, bw, bh);
   g.fillStyle = '#5f8597'; g.font = '500 22px "JetBrains Mono", monospace'; g.fillText('TA PHOTO', 70, top + bh + 40); g.fillText('APERÇU EN DÉS', W - 70 - bw, top + bh + 40);
   const y0 = top + bh + 110; g.font = '500 30px "JetBrains Mono", monospace';
-  [['NOMBRE DE DÉS', fmtN(C * Rr)], ['GRILLE', `${C} × ${Rr}`], ['RÉFÉRENCE', '#' + lastRef], ['DATE', new Date().toLocaleDateString('fr-FR')]].forEach(([k, v], i) => {
-    g.fillStyle = '#5f8597'; g.fillText(k, 70, y0 + i * 52); g.fillStyle = '#e9fbff'; g.fillText(v, 470, y0 + i * 52);
+  [['NOMBRE DE DÉS', fmtN(C * Rr)], ['GRILLE', `${C} × ${Rr}`], ['TAILLE DES DÉS', `${dieMM} mm`], ['FORMAT FINAL', `≈ ${cm(C, dieMM)} × ${cm(Rr, dieMM)} cm`], ['RÉFÉRENCE', '#' + lastRef], ['DATE', new Date().toLocaleDateString('fr-FR')]].forEach(([k, v], i) => {
+    g.fillStyle = '#5f8597'; g.fillText(k, 70, y0 + i * 46); g.fillStyle = '#e9fbff'; g.fillText(v, 470, y0 + i * 46);
   });
+  g.fillStyle = '#7fe9ff'; g.font = '500 24px "JetBrains Mono", monospace'; g.fillText('CODE ATELIER  ' + workshopCode(), 70, H - 115);
   g.fillStyle = '#ffb347'; g.font = '500 24px "JetBrains Mono", monospace'; g.fillText('@' + STATE.handle, 70, H - 70);
   return new Promise(res => c.toBlob(b => res(b), 'image/png'));
 }
 async function sendToArtist() {
   if (!lastImg) { pickPhoto(); return; }
   const [C, Rr] = GR.dims.custom;
-  const text = `Bonjour ! Je voudrais un portrait en dés sur mesure : ${fmtN(C * Rr)} dés (grille ${C} × ${Rr}), réf. #${lastRef}. Voici ma photo et l’aperçu.`;
+  const text = `Bonjour ! Je voudrais un portrait en dés sur mesure : ${fmtN(C * Rr)} dés de ${dieMM} mm (grille ${C} × ${Rr}, ≈ ${cm(C, dieMM)} × ${cm(Rr, dieMM)} cm). Code atelier : ${workshopCode()}. Je t’envoie la fiche et ma photo originale.`;
   let blob = null; try { blob = await orderSheet(); } catch (e) {}
   if (blob) {
     const file = new File([blob], `commande-jlfdice-${lastRef}.png`, {type: 'image/png'});
-    try { if (navigator.canShare && navigator.canShare({files: [file]})) { await navigator.share({files: [file], text}); toast('<b style="color:var(--holo)">PRÊT</b>Choisis Instagram, puis la conversation avec @' + esc(STATE.handle) + '.'); return; } }
+    const files = lastFile ? [file, lastFile] : [file];
+    try {
+      const share = navigator.canShare && navigator.canShare({files}) ? files : (navigator.canShare && navigator.canShare({files: [file]}) ? [file] : null);
+      if (share) { await navigator.share({files: share, text}); toast('<b style="color:var(--holo)">PRÊT</b>Choisis Instagram, puis la conversation avec @' + esc(STATE.handle) + '.'); return; }
+    }
     catch (e) { if (e && e.name === 'AbortError') return; }
   }
   /* no file sharing here: show the sheet so it can be saved, then open the conversation */
   try { await navigator.clipboard.writeText(text); } catch (e) {}
   $('sendimg').src = blob ? URL.createObjectURL(blob) : '';
   $('sendimg').hidden = !blob;
-  $('sendsteps').innerHTML = `<li>Enregistre cette fiche : appui long dessus → « Enregistrer l’image », ou fais une capture d’écran.</li><li>Ouvre la conversation avec @${esc(STATE.handle)}.</li><li>Joins la fiche et ta photo. Ton message est déjà copié : colle-le.</li>`;
+  $('sendsteps').innerHTML = `<li>Enregistre cette fiche : appui long dessus → « Enregistrer l’image », ou fais une capture d’écran.</li><li>Ouvre la conversation avec @${esc(STATE.handle)}.</li><li>Envoie la fiche <b>et ta photo originale</b> (en pleine qualité). Ton message est déjà copié : colle-le.</li>`;
   $('sendig').href = igDM(); $('send').hidden = false;
 }
 $('sendclose').addEventListener('click', () => { $('send').hidden = true; });
