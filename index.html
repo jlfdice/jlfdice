@@ -148,7 +148,6 @@ html, body { height: 100%; margin: 0; overflow: hidden; background: #000; color:
 #comp .note { grid-column: 1 / -1; color: var(--dim); font-size: 2.2cqw; letter-spacing: .08em; margin-top: .6cqw; }
 #dbottom .drow { display: flex; gap: 2.4cqw; justify-content: center; flex-wrap: wrap; }
 #frame.detail #dbottom button { pointer-events: auto; }
-#frame.exploded #readout::after { content: "DÉCOMPOSITION ACTIVE"; display: block; color: var(--warn); }
 
 .tool.hot { color: var(--warn); border-color: rgba(255,179,71,.65); background: rgba(255,179,71,.08); }
 #proc { position: absolute; inset: 0; z-index: 8; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2.4cqw; background: rgba(0,4,9,.82); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); text-align: center; padding: 0 10cqw; }
@@ -174,6 +173,11 @@ html, body { height: 100%; margin: 0; overflow: hidden; background: #000; color:
 
 .dsel .dl2 { margin-top: 1.8cqw; }
 .dsel .dopt { padding: 1.2cqw 1.9cqw; font-size: 2.4cqw; }
+
+#langs { position: absolute; top: 5cqh; right: 7cqw; display: flex; gap: 1.4cqw; }
+#langs button { font: 500 2.4cqw var(--mono); letter-spacing: .14em; color: var(--dim); background: rgba(127,233,255,.05); border: 1px solid var(--line); padding: 1.2cqw 2.2cqw; cursor: pointer; }
+#langs button[aria-pressed="true"] { color: #001018; background: var(--holo); border-color: var(--holo); }
+#langs button:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
 </style>
 <template id="markup"><div id="frame" class="gate">
 <div id="bg"></div>
@@ -182,24 +186,24 @@ html, body { height: 100%; margin: 0; overflow: hidden; background: #000; color:
 <div id="intro-ui"><div id="blackout"></div></div>
 <div id="fx"></div><div id="deny"></div>
 <span class="corner tl"></span><span class="corner tr"></span><span class="corner bl"></span><span class="corner br"></span>
-<div id="ihud"><b>Approche</b><span id="ih1">DISTANCE HORIZON · —</span><br><span id="ih2">CAPTURE GRAVITATIONNELLE · 0 %</span><div class="bar"><i id="ihbar"></i></div></div>
-<div class="hud" id="top"><div><span class="t1">Archive</span><span class="t2" id="t2">JLF D'ICE</span></div></div>
+<div id="ihud"><b data-i="ui.approach">Approche</b><span id="ih1">DISTANCE HORIZON · —</span><br><span id="ih2">CAPTURE GRAVITATIONNELLE · 0 %</span><div class="bar"><i id="ihbar"></i></div></div>
+<div class="hud" id="top"><div><span class="t1" data-i="ui.archive">Archive</span><span class="t2" id="t2">JLF D'ICE</span></div></div>
 <div class="hud" id="count">01 / 02<small>SIGNAL STABLE</small></div>
 <div class="hud" id="ticker"></div>
-<div class="hud menu-only" id="tools"><button class="tool" id="snd" type="button" aria-pressed="true">SON · ON</button><button class="tool" id="share" type="button">PARTAGER</button><button class="tool hot" id="mkgo" type="button">✦ CRÉER</button><button class="tool" id="gear" type="button" hidden>GÉRER</button></div>
+<div class="hud menu-only" id="tools"><button class="tool" id="snd" type="button" aria-pressed="true">SON · ON</button><button class="tool" id="share" type="button" data-i="ui.share">PARTAGER</button><button class="tool" id="lang" type="button" aria-label="Langue / Language / Idioma">FR</button><button class="tool hot" id="mkgo" type="button" data-i="ui.create">✦ CRÉER</button><button class="tool" id="gear" type="button" hidden>GÉRER</button></div>
 <input id="mkfile" type="file" accept="image/*" hidden>
 <button class="arrow hud menu-only" id="prev" type="button" aria-label="Œuvre précédente">‹</button>
 <button class="arrow hud menu-only" id="next" type="button" aria-label="Œuvre suivante">›</button>
-<div class="hud menu-only" id="swipehint">◂ glisser · toucher pour ouvrir ▸</div>
-<div class="hud out menu-only" id="info" aria-live="polite"><div class="num"></div><div class="name"></div><div class="sub"></div><div class="meta"></div><div class="countdown" hidden></div><div class="dsel" id="dsel" hidden><span class="dl">Nombre de dés</span><div class="dopts" role="radiogroup" aria-label="Nombre de dés"></div><span class="dl dl2">Taille des dés</span><div class="dopts sopts" role="radiogroup" aria-label="Taille des dés"></div><span class="dinfo" id="dinfo"></span></div><div class="hint" hidden></div><div class="actions"></div></div>
-<div id="detailbar"><button class="btn" id="back" type="button">‹ Retour</button><span class="dt"><b id="dtitle">La Joconde</b><small>ANALYSE EN COURS</small></span></div>
+<div class="hud menu-only" id="swipehint" data-i="ui.swipe">◂ glisser · toucher pour ouvrir ▸</div>
+<div class="hud out menu-only" id="info" aria-live="polite"><div class="num"></div><div class="name"></div><div class="sub"></div><div class="meta"></div><div class="countdown" hidden></div><div class="dsel" id="dsel" hidden><span class="dl" data-i="ui.nDice">Nombre de dés</span><div class="dopts" role="radiogroup" aria-label="Nombre de dés"></div><span class="dl dl2" data-i="ui.sizeDice">Taille des dés</span><div class="dopts sopts" role="radiogroup" aria-label="Taille des dés"></div><span class="dinfo" id="dinfo"></span></div><div class="hint" hidden></div><div class="actions"></div></div>
+<div id="detailbar"><button class="btn" id="back" type="button" data-i="ui.back">‹ Retour</button><span class="dt"><b id="dtitle">La Joconde</b><small data-i="ui.analysing">ANALYSE EN COURS</small></span></div>
 <div id="readout"></div>
-<div id="dbottom"><div id="about"><div class="tabs" role="tablist"><button class="tab on" type="button" role="tab" data-tab="orig" id="tab-orig">Œuvre originale</button><button class="tab" type="button" role="tab" data-tab="comp" id="tab-comp">Composition</button></div><p id="abouttxt"></p><div id="comp" hidden></div></div><small>Glisser pour pivoter · pincer pour zoomer</small><div class="drow"><button class="btn" id="explode" type="button">Décomposer</button><a class="btn primary" id="dorder" target="_blank" rel="noopener">Commander</a></div></div>
-<button class="btn" id="skip" type="button">Passer ›</button>
-<div id="gate"><span class="k">JLF D'ICE</span><h1>Archive</h1><div class="boot" id="boot"></div><button class="btn primary" id="enter" type="button" disabled>Initialiser ▸</button><small>Son recommandé</small></div>
+<div id="dbottom"><div id="about"><div class="tabs" role="tablist"><button class="tab on" type="button" role="tab" data-tab="orig" id="tab-orig" data-i="ui.tabOrig">Œuvre originale</button><button class="tab" type="button" role="tab" data-tab="comp" id="tab-comp" data-i="ui.tabComp">Composition</button></div><p id="abouttxt"></p><div id="comp" hidden></div></div><small data-i="ui.rotate">Glisser pour pivoter · pincer pour zoomer</small><div class="drow"><button class="btn" id="explode" type="button">Décomposer</button><a class="btn primary" id="dorder" target="_blank" rel="noopener" data-i="ui.orderPiece">Commander</a></div></div>
+<button class="btn" id="skip" type="button" data-i="ui.skip">Passer ›</button>
+<div id="gate"><div id="langs" role="group" aria-label="Langue / Language / Idioma"><button type="button" data-l="fr">FR</button><button type="button" data-l="en">EN</button><button type="button" data-l="es">ES</button></div><span class="k">JLF D'ICE</span><h1 data-i="ui.archive">Archive</h1><div class="boot" id="boot"></div><button class="btn primary" id="enter" type="button" disabled data-i="ui.init">Initialiser ▸</button><small data-i="ui.soundRec">Son recommandé</small></div>
 <div id="toast" role="status"></div>
-<div id="send" hidden><h2>Envoyer à JLF D’ICE</h2><img id="sendimg" alt="Fiche de commande avec ta photo et l’aperçu en dés"><ol id="sendsteps"></ol><div class="row"><a class="btn primary" id="sendig" target="_blank" rel="noopener">Ouvrir la conversation</a><button class="btn" id="sendclose" type="button">Fermer</button></div></div>
-<div id="proc" hidden><div class="ring"></div><b id="proct">Analyse de l’image</b><span id="procs" class="mono">0 %</span><small>Ta photo reste sur ton appareil · rien n’est envoyé</small></div>
+<div id="send" hidden><h2 data-i="ui.sendTitle">Envoyer à JLF D’ICE</h2><img id="sendimg" alt="Fiche de commande avec ta photo et l’aperçu en dés"><ol id="sendsteps"></ol><div class="row"><a class="btn primary" id="sendig" target="_blank" rel="noopener" data-i="ui.openConv">Ouvrir la conversation</a><button class="btn" id="sendclose" type="button" data-i="ui.close">Fermer</button></div></div>
+<div id="proc" hidden><div class="ring"></div><b id="proct">Analyse de l’image</b><span id="procs" class="mono">0 %</span><small data-i="ui.privacy">Ta photo reste sur ton appareil · rien n’est envoyé</small></div>
 <div id="panel" hidden>
   <h2>Gérer l'archive</h2>
   <p>Ces réglages sont visibles par tout le monde dès que tu publies.</p>
@@ -786,18 +790,100 @@ function crack(delay, vol) {
 const STATE = (() => { try { return JSON.parse(document.getElementById('state').textContent); } catch (e) { return {}; } })();
 STATE.handle = STATE.handle || 'jlf2ice';
 STATE.items = STATE.items || {};
+/* ---- languages ---- */
+const I18N = {
+  fr: {
+    'st.dispo': 'Disponible', 'st.reserve': 'Réservé', 'st.vendu': 'Vendu', 'st.privee': 'Collection privée', 'st.bientot': 'Classifié', 'st.apercu': 'Aperçu généré', 'st.surmesure': 'Sur mesure',
+    hintDefault: 'Une nouvelle œuvre est en cours. Personne ne l’a encore vue.', objects: 'OBJETS', object: 'OBJET', toCreate: 'À CRÉER', forYou: 'GÉNÉRÉ POUR TOI', classified: 'CLASSIFIÉ', archived: 'ARCHIVÉ',
+    send: 'Envoyer à JLF D’ICE', analyse: 'Analyser', other: 'Autre photo', notify: 'Être prévenu', similar: 'Pièce similaire', order: 'Commander', pick: 'Choisir une photo',
+    sigCrypt: 'SIGNAL CRYPTÉ', sigOk: 'SIGNAL STABLE', tagLocked: 'CLASSIFIÉ · ACCÈS RESTREINT', tagFree: 'EMPLACEMENT LIBRE', tagLock: 'CIBLE VERROUILLÉE', ref: 'RÉF.', piece: 'PIÈCE 1/1',
+    revealIn: 'Révélation dans', dd: 'J', shareText: 'Des tableaux faits uniquement avec des dés.', copied: 'LIEN COPIÉ', link: 'LIEN',
+    blank: 'Faces vides', compNote: 'Plus une face a de points, plus la zone paraît claire.', explode: 'Décomposer', implode: 'Recomposer', exActive: 'DÉCOMPOSITION ACTIVE',
+    dice: 'dés', grid: 'grille', format: 'format', analysing: 'Analyse de l’image', contrast: 'Détection des contrastes', placing: 'Placement de {n} dés', assembling: 'Assemblage',
+    err: 'ERREUR', errRead: 'Cette image n’a pas pu être lue. Essaie une autre photo.', badFmt: 'FORMAT NON LU', badFmtTxt: 'Choisis une photo JPEG ou PNG.',
+    done: 'PORTRAIT GÉNÉRÉ', doneTxt: '{n} dés · ta photo devient un tableau.', ready: 'PRÊT', readyTxt: 'Choisis Instagram, puis la conversation avec @{h}.',
+    dm: 'Bonjour ! Je voudrais un portrait en dés sur mesure : {n} dés de {mm} mm (grille {c} × {r}, ≈ {w} × {hh} cm). Code atelier : {code}. Je t’envoie la fiche et ma photo originale.',
+    step1: 'Enregistre cette fiche : appui long dessus → « Enregistrer l’image », ou fais une capture d’écran.', step2: 'Ouvre la conversation avec @{h}.', step3: 'Envoie la fiche <b>et ta photo originale</b> (en pleine qualité). Ton message est déjà copié : colle-le.',
+    denied: 'ACCÈS REFUSÉ', soon: 'Révélation bientôt', boot: ['> connexion au signal', '> déchiffrement de l’archive', '> {n} objets détectés', '> {k} objet classifié', '> prêt'],
+    material: 'MATIÈRE · DÉS À JOUER', human: 'ÉCHELLE · 1,75 M',
+    'ui.archive': 'Archive', 'ui.sound': 'SON', 'ui.share': 'PARTAGER', 'ui.create': '✦ CRÉER', 'ui.swipe': '◂ glisser · toucher pour ouvrir ▸', 'ui.back': '‹ Retour', 'ui.analysing': 'ANALYSE EN COURS',
+    'ui.data': 'Données · œuvre originale', 'ui.tabOrig': 'Œuvre originale', 'ui.tabComp': 'Composition', 'ui.rotate': 'Glisser pour pivoter · pincer pour zoomer', 'ui.orderPiece': 'Commander',
+    'ui.skip': 'Passer ›', 'ui.init': 'Initialiser ▸', 'ui.soundRec': 'Son recommandé', 'ui.approach': 'Approche', 'ui.dist': 'DISTANCE HORIZON', 'ui.capture': 'CAPTURE GRAVITATIONNELLE',
+    'ui.nDice': 'Nombre de dés', 'ui.sizeDice': 'Taille des dés', 'ui.privacy': 'Ta photo reste sur ton appareil · rien n’est envoyé', 'ui.sendTitle': 'Envoyer à JLF D’ICE', 'ui.openConv': 'Ouvrir la conversation', 'ui.close': 'Fermer',
+    'chip.Dés à jouer': 'Dés à jouer', 'chip.Fait main': 'Fait main', 'chip.Confidentiel': 'Confidentiel', 'chip.Pièce unique': 'Pièce unique', 'chip.Sur mesure': 'Sur mesure',
+    'it.mona.name': 'La Joconde', 'it.mona.sub': 'd’après Léonard de Vinci', 'it.mystery.name': '? ? ?', 'it.mystery.sub': 'Tableau mystère',
+    'it.custom.name': 'Ton portrait', 'it.custom.sub': 'Aperçu généré à partir de ta photo', 'it.ph.name': 'Crée le tien', 'it.ph.sub': 'Transforme ta photo en tableau de dés',
+    'it.mona.about': 'Léonard de Vinci, vers 1503-1519. Huile sur panneau de peuplier, 77 × 53 cm, musée du Louvre. Portrait présumé de Lisa Gherardini, célèbre pour son sourire insaisissable peint en sfumato. Volée en 1911 et retrouvée deux ans plus tard, elle est devenue le tableau le plus connu au monde.',
+  },
+  en: {
+    'st.dispo': 'Available', 'st.reserve': 'Reserved', 'st.vendu': 'Sold', 'st.privee': 'Private collection', 'st.bientot': 'Classified', 'st.apercu': 'Generated preview', 'st.surmesure': 'Made to order',
+    hintDefault: 'A new piece is in progress. No one has seen it yet.', objects: 'OBJECTS', object: 'OBJECT', toCreate: 'TO CREATE', forYou: 'GENERATED FOR YOU', classified: 'CLASSIFIED', archived: 'ARCHIVED',
+    send: 'Send to JLF D’ICE', analyse: 'Analyse', other: 'Another photo', notify: 'Get notified', similar: 'Similar piece', order: 'Order', pick: 'Choose a photo',
+    sigCrypt: 'ENCRYPTED SIGNAL', sigOk: 'STABLE SIGNAL', tagLocked: 'CLASSIFIED · RESTRICTED ACCESS', tagFree: 'FREE SLOT', tagLock: 'TARGET LOCKED', ref: 'REF.', piece: 'PIECE 1/1',
+    revealIn: 'Reveal in', dd: 'D', shareText: 'Paintings made only of dice.', copied: 'LINK COPIED', link: 'LINK',
+    blank: 'Blank faces', compNote: 'The more pips a face has, the lighter the area looks.', explode: 'Break apart', implode: 'Reassemble', exActive: 'BREAKDOWN ACTIVE',
+    dice: 'dice', grid: 'grid', format: 'size', analysing: 'Analysing the image', contrast: 'Detecting contrast', placing: 'Placing {n} dice', assembling: 'Assembling',
+    err: 'ERROR', errRead: 'This image could not be read. Try another photo.', badFmt: 'UNREADABLE FORMAT', badFmtTxt: 'Choose a JPEG or PNG photo.',
+    done: 'PORTRAIT GENERATED', doneTxt: '{n} dice · your photo becomes a painting.', ready: 'READY', readyTxt: 'Choose Instagram, then the chat with @{h}.',
+    dm: 'Hello! I would like a custom dice portrait: {n} dice of {mm} mm (grid {c} × {r}, ≈ {w} × {hh} cm). Workshop code: {code}. Sending you the order sheet and my original photo.',
+    step1: 'Save this sheet: long-press it → “Save image”, or take a screenshot.', step2: 'Open the chat with @{h}.', step3: 'Send the sheet <b>and your original photo</b> (full quality). Your message is already copied: paste it.',
+    denied: 'ACCESS DENIED', soon: 'Reveal coming soon', boot: ['> connecting to signal', '> decrypting archive', '> {n} objects detected', '> {k} object classified', '> ready'],
+    material: 'MATERIAL · PLAYING DICE', human: 'SCALE · 1.75 M',
+    'ui.archive': 'Archive', 'ui.sound': 'SOUND', 'ui.share': 'SHARE', 'ui.create': '✦ CREATE', 'ui.swipe': '◂ swipe · tap to open ▸', 'ui.back': '‹ Back', 'ui.analysing': 'ANALYSIS IN PROGRESS',
+    'ui.data': 'Data · original artwork', 'ui.tabOrig': 'Original', 'ui.tabComp': 'Composition', 'ui.rotate': 'Drag to rotate · pinch to zoom', 'ui.orderPiece': 'Order',
+    'ui.skip': 'Skip ›', 'ui.init': 'Initialise ▸', 'ui.soundRec': 'Sound recommended', 'ui.approach': 'Approach', 'ui.dist': 'DISTANCE TO HORIZON', 'ui.capture': 'GRAVITATIONAL CAPTURE',
+    'ui.nDice': 'Number of dice', 'ui.sizeDice': 'Dice size', 'ui.privacy': 'Your photo stays on your device · nothing is uploaded', 'ui.sendTitle': 'Send to JLF D’ICE', 'ui.openConv': 'Open the chat', 'ui.close': 'Close',
+    'chip.Dés à jouer': 'Playing dice', 'chip.Fait main': 'Handmade', 'chip.Confidentiel': 'Confidential', 'chip.Pièce unique': 'One of a kind', 'chip.Sur mesure': 'Made to order',
+    'it.mona.name': 'Mona Lisa', 'it.mona.sub': 'after Leonardo da Vinci', 'it.mystery.name': '? ? ?', 'it.mystery.sub': 'Mystery piece',
+    'it.custom.name': 'Your portrait', 'it.custom.sub': 'Preview generated from your photo', 'it.ph.name': 'Create yours', 'it.ph.sub': 'Turn your photo into a dice painting',
+    'it.mona.about': 'Leonardo da Vinci, c. 1503–1519. Oil on poplar panel, 77 × 53 cm, Louvre Museum. Believed to portray Lisa Gherardini, famous for her elusive smile painted in sfumato. Stolen in 1911 and recovered two years later, it became the most famous painting in the world.',
+  },
+  es: {
+    'st.dispo': 'Disponible', 'st.reserve': 'Reservado', 'st.vendu': 'Vendido', 'st.privee': 'Colección privada', 'st.bientot': 'Clasificado', 'st.apercu': 'Vista previa', 'st.surmesure': 'A medida',
+    hintDefault: 'Una nueva obra está en curso. Nadie la ha visto todavía.', objects: 'OBJETOS', object: 'OBJETO', toCreate: 'POR CREAR', forYou: 'GENERADO PARA TI', classified: 'CLASIFICADO', archived: 'ARCHIVADO',
+    send: 'Enviar a JLF D’ICE', analyse: 'Analizar', other: 'Otra foto', notify: 'Avísame', similar: 'Pieza similar', order: 'Encargar', pick: 'Elegir una foto',
+    sigCrypt: 'SEÑAL CIFRADA', sigOk: 'SEÑAL ESTABLE', tagLocked: 'CLASIFICADO · ACCESO RESTRINGIDO', tagFree: 'ESPACIO LIBRE', tagLock: 'OBJETIVO FIJADO', ref: 'REF.', piece: 'PIEZA 1/1',
+    revealIn: 'Revelación en', dd: 'D', shareText: 'Cuadros hechos solo con dados.', copied: 'ENLACE COPIADO', link: 'ENLACE',
+    blank: 'Caras vacías', compNote: 'Cuantos más puntos tiene una cara, más clara se ve la zona.', explode: 'Descomponer', implode: 'Recomponer', exActive: 'DESCOMPOSICIÓN ACTIVA',
+    dice: 'dados', grid: 'cuadrícula', format: 'formato', analysing: 'Analizando la imagen', contrast: 'Detectando contrastes', placing: 'Colocando {n} dados', assembling: 'Ensamblando',
+    err: 'ERROR', errRead: 'No se pudo leer esta imagen. Prueba con otra foto.', badFmt: 'FORMATO NO LEÍDO', badFmtTxt: 'Elige una foto JPEG o PNG.',
+    done: 'RETRATO GENERADO', doneTxt: '{n} dados · tu foto se convierte en un cuadro.', ready: 'LISTO', readyTxt: 'Elige Instagram y luego el chat con @{h}.',
+    dm: '¡Hola! Quisiera un retrato de dados a medida: {n} dados de {mm} mm (cuadrícula {c} × {r}, ≈ {w} × {hh} cm). Código de taller: {code}. Te envío la ficha y mi foto original.',
+    step1: 'Guarda esta ficha: mantén pulsado → «Guardar imagen», o haz una captura.', step2: 'Abre el chat con @{h}.', step3: 'Envía la ficha <b>y tu foto original</b> (en calidad completa). Tu mensaje ya está copiado: pégalo.',
+    denied: 'ACCESO DENEGADO', soon: 'Revelación próximamente', boot: ['> conectando a la señal', '> descifrando el archivo', '> {n} objetos detectados', '> {k} objeto clasificado', '> listo'],
+    material: 'MATERIAL · DADOS', human: 'ESCALA · 1,75 M',
+    'ui.archive': 'Archivo', 'ui.sound': 'SONIDO', 'ui.share': 'COMPARTIR', 'ui.create': '✦ CREAR', 'ui.swipe': '◂ desliza · toca para abrir ▸', 'ui.back': '‹ Volver', 'ui.analysing': 'ANÁLISIS EN CURSO',
+    'ui.data': 'Datos · obra original', 'ui.tabOrig': 'Obra original', 'ui.tabComp': 'Composición', 'ui.rotate': 'Desliza para girar · pellizca para ampliar', 'ui.orderPiece': 'Encargar',
+    'ui.skip': 'Saltar ›', 'ui.init': 'Iniciar ▸', 'ui.soundRec': 'Sonido recomendado', 'ui.approach': 'Aproximación', 'ui.dist': 'DISTANCIA AL HORIZONTE', 'ui.capture': 'CAPTURA GRAVITATORIA',
+    'ui.nDice': 'Número de dados', 'ui.sizeDice': 'Tamaño de los dados', 'ui.privacy': 'Tu foto se queda en tu dispositivo · no se envía nada', 'ui.sendTitle': 'Enviar a JLF D’ICE', 'ui.openConv': 'Abrir el chat', 'ui.close': 'Cerrar',
+    'chip.Dés à jouer': 'Dados de juego', 'chip.Fait main': 'Hecho a mano', 'chip.Confidentiel': 'Confidencial', 'chip.Pièce unique': 'Pieza única', 'chip.Sur mesure': 'A medida',
+    'it.mona.name': 'La Gioconda', 'it.mona.sub': 'según Leonardo da Vinci', 'it.mystery.name': '? ? ?', 'it.mystery.sub': 'Obra misteriosa',
+    'it.custom.name': 'Tu retrato', 'it.custom.sub': 'Vista previa generada con tu foto', 'it.ph.name': 'Crea el tuyo', 'it.ph.sub': 'Convierte tu foto en un cuadro de dados',
+    'it.mona.about': 'Leonardo da Vinci, h. 1503-1519. Óleo sobre tabla de álamo, 77 × 53 cm, Museo del Louvre. Se cree que retrata a Lisa Gherardini, famosa por su sonrisa esquiva pintada con sfumato. Robada en 1911 y recuperada dos años después, se convirtió en el cuadro más famoso del mundo.',
+  },
+};
+const LANGS = ['fr', 'en', 'es'];
+let LANG = (() => { try { const s = localStorage.getItem('jlfd-lang'); if (LANGS.includes(s)) return s; } catch (e) {} const n = (navigator.language || 'fr').slice(0, 2); return LANGS.includes(n) ? n : 'fr'; })();
+function t(k, v) { let s = (I18N[LANG] && I18N[LANG][k]) ?? I18N.fr[k] ?? k; if (v && typeof s === 'string') for (const [a, b] of Object.entries(v)) s = s.split('{' + a + '}').join(b); return s; }
+const LOC = () => ({fr: 'fr-FR', en: 'en-GB', es: 'es-ES'}[LANG]);
+const itName = it => it.custom ? t(it.placeholder ? 'it.ph.name' : 'it.custom.name') : t('it.' + it.key + '.name');
+const itSub = it => it.custom ? t(it.placeholder ? 'it.ph.sub' : 'it.custom.sub') : t('it.' + it.key + '.sub');
+const itAbout = it => it.about ? t('it.' + it.key + '.about') : '';
+const chipT = x => (I18N[LANG] && I18N[LANG]['chip.' + x]) ?? x;
+const chipL = c => Array.isArray(c) ? [chipT(c[0]), c[1]] : chipT(c);
+
 const STATUS = {
   dispo: ['Disponible', '#6dffb4'], reserve: ['Réservé', '#ffb347'], vendu: ['Vendu', '#ff6f8a'],
   privee: ['Collection privée', '#ffd48a'], bientot: ['Classifié', '#ff3d63'], apercu: ['Aperçu généré', '#7fe9ff'], surmesure: ['Sur mesure', '#ffb347'],
 };
-const itemState = it => it.custom ? {status: it.placeholder ? 'surmesure' : 'apercu'} : Object.assign(it.locked ? {status: 'bientot', hint: 'Une nouvelle œuvre est en cours. Personne ne l’a encore vue.'} : {status: 'dispo'}, STATE.items[it.key] || {});
+const itemState = it => it.custom ? {status: it.placeholder ? 'surmesure' : 'apercu'} : Object.assign(it.locked ? {status: 'bientot', hint: t('hintDefault')} : {status: 'dispo'}, STATE.items[it.key] || {});
 const igDM = () => `https://ig.me/m/${encodeURIComponent(STATE.handle)}`;
 const igProfile = () => `https://www.instagram.com/${encodeURIComponent(STATE.handle)}/`;
 
 const $ = id => document.getElementById(id);
 const infoEl = $('info'), countEl = $('count'), toastEl = $('toast'), retEl = $('reticle');
 const pad2 = n => String(n).padStart(2, '0');
-$('t2').textContent = `JLF D'ICE · ${pad2(ITEMS.filter(i => !i.custom).length)} OBJETS`;
+const setT2 = () => { $('t2').textContent = `JLF D'ICE · ${pad2(ITEMS.filter(i => !i.custom).length)} ${t('objects')}`; }; setT2();
 
 let mode = 'gate', sound = false, introT0 = 0, menuT0 = 0, last = performance.now(), tt = 0;
 let sel = 0, s = 0, off = 0, detK = 0, yaw = 0, pitch = 0, vyaw = 0, zoom = 1, spinT0 = -9, shakeT0 = -9, touched = false, retT0 = -9;
@@ -863,33 +949,33 @@ function scan(i) { reveal[i].t0 = tt; if (sound) SFX.scan(); }
 function chipHTML(c) { return Array.isArray(c) ? `<span class="chip ${c[1]}">${c[0]}</span>` : `<span class="chip">${c}</span>`; }
 function esc(t) { return String(t).replace(/[&<>"]/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;'}[c])); }
 function renderInfo(i, scramble) {
-  const it = ITEMS[i], st = itemState(it), [label, col] = STATUS[st.status] || STATUS.dispo;
-  infoEl.querySelector('.num').textContent = it.custom ? (it.placeholder ? 'OBJET ∞ // À CRÉER' : 'OBJET ∞ // GÉNÉRÉ POUR TOI') : `OBJET ${it.num} // ${it.locked ? 'CLASSIFIÉ' : 'ARCHIVÉ'}`;
-  const nm = infoEl.querySelector('.name'); if (scramble) decrypt(nm, it.name); else nm.textContent = it.name;
-  infoEl.querySelector('.sub').textContent = it.sub;
-  infoEl.querySelector('.meta').innerHTML = `<span class="chip" style="color:${col}"><span class="dot"></span><span style="color:var(--ink)">${esc(label)}</span></span>` + it.chips.map(chipHTML).join('');
+  const it = ITEMS[i], st = itemState(it), col = (STATUS[st.status] || STATUS.dispo)[1], label = t('st.' + (STATUS[st.status] ? st.status : 'dispo'));
+  infoEl.querySelector('.num').textContent = it.custom ? `${t('object')} ∞ // ${t(it.placeholder ? 'toCreate' : 'forYou')}` : `${t('object')} ${it.num} // ${t(it.locked ? 'classified' : 'archived')}`;
+  const nm = infoEl.querySelector('.name'); if (scramble) decrypt(nm, itName(it)); else nm.textContent = itName(it);
+  infoEl.querySelector('.sub').textContent = itSub(it);
+  infoEl.querySelector('.meta').innerHTML = `<span class="chip" style="color:${col}"><span class="dot"></span><span style="color:var(--ink)">${esc(label)}</span></span>` + it.chips.map(c => chipHTML(chipL(c))).join('');
   const hint = infoEl.querySelector('.hint'); hint.hidden = !it.locked || !st.hint; hint.textContent = st.hint || '';
   setTimeout(tickCountdown, 0);
   const acts = infoEl.querySelector('.actions');
   $('dsel').hidden = !it.custom; if (it.custom) renderDiceSel();
   if (it.custom && it.placeholder) {
-    acts.innerHTML = `<button class="btn primary" type="button" data-pick>Choisir une photo</button>`;
+    acts.innerHTML = `<button class="btn primary" type="button" data-pick>${t('pick')}</button>`;
     acts.querySelector('[data-pick]').addEventListener('click', pickPhoto);
   } else if (it.custom) {
-    acts.innerHTML = `<button class="btn primary" type="button" data-send>Envoyer à JLF D’ICE</button><button class="btn" type="button" data-open>Analyser</button><button class="btn" type="button" data-again>Autre photo</button>`;
+    acts.innerHTML = `<button class="btn primary" type="button" data-send>${t('send')}</button><button class="btn" type="button" data-open>${t('analyse')}</button><button class="btn" type="button" data-again>${t('other')}</button>`;
     acts.querySelector('[data-send]').addEventListener('click', sendToArtist); acts.querySelector('[data-open]').addEventListener('click', openDetail); acts.querySelector('[data-again]').addEventListener('click', pickPhoto);
-  } else if (it.locked) acts.innerHTML = `<a class="btn primary" href="${igProfile()}" target="_blank" rel="noopener">Être prévenu</a>`;
+  } else if (it.locked) acts.innerHTML = `<a class="btn primary" href="${igProfile()}" target="_blank" rel="noopener">${t('notify')}</a>`;
   else {
     const sold = st.status === 'vendu' || st.status === 'privee';
-    acts.innerHTML = `<button class="btn primary" type="button" data-open>Analyser</button>` +
-      `<a class="btn" href="${igDM()}" target="_blank" rel="noopener">${sold ? 'Pièce similaire' : 'Commander'}</a>`;
+    acts.innerHTML = `<button class="btn primary" type="button" data-open>${t('analyse')}</button>` +
+      `<a class="btn" href="${igDM()}" target="_blank" rel="noopener">${t(sold ? 'similar' : 'order')}</a>`;
     acts.querySelector('[data-open]').addEventListener('click', openDetail);
   }
-  countEl.innerHTML = `${pad2(i + 1)} / ${pad2(ITEMS.length)}<small>${it.locked ? 'SIGNAL CRYPTÉ' : 'SIGNAL STABLE'}</small>`;
+  countEl.innerHTML = `${pad2(i + 1)} / ${pad2(ITEMS.length)}<small>${t(it.locked ? 'sigCrypt' : 'sigOk')}</small>`;
   $('prev').disabled = i === 0; $('next').disabled = i === ITEMS.length - 1;
   retEl.classList.toggle('locked', !!it.locked);
-  retEl.querySelector('.tag').textContent = it.locked ? 'CLASSIFIÉ · ACCÈS RESTREINT' : it.placeholder ? 'EMPLACEMENT LIBRE' : 'CIBLE VERROUILLÉE';
-  retEl.querySelector('.tag2').textContent = `RÉF. ${it.num} · PIÈCE 1/1`;
+  retEl.querySelector('.tag').textContent = t(it.locked ? 'tagLocked' : it.placeholder ? 'tagFree' : 'tagLock');
+  retEl.querySelector('.tag2').textContent = `${t('ref')} ${it.num} · ${t('piece')}`;
 }
 let infoTimer = 0;
 function showInfo(i, animate = true) {
@@ -903,28 +989,28 @@ function toast(html, deny) { toastEl.innerHTML = html; toastEl.classList.toggle(
 function glitch(cls = 'glitch', ms = 340) { FRAME.classList.remove(cls); void FRAME.offsetWidth; FRAME.classList.add(cls); setTimeout(() => FRAME.classList.remove(cls), ms); }
 
 /* ---- countdown to the mystery reveal ---- */
-function fmtLeft(ms) { const s = Math.max(0, Math.floor(ms / 1000)), d = Math.floor(s / 86400), h = Math.floor(s % 86400 / 3600), m = Math.floor(s % 3600 / 60), x = s % 60; return `${pad2(d)}J ${pad2(h)}H ${pad2(m)}M ${pad2(x)}S`; }
+function fmtLeft(ms) { const s = Math.max(0, Math.floor(ms / 1000)), d = Math.floor(s / 86400), h = Math.floor(s % 86400 / 3600), m = Math.floor(s % 3600 / 60), x = s % 60; return `${pad2(d)}${t('dd')} ${pad2(h)}H ${pad2(m)}M ${pad2(x)}S`; }
 function tickCountdown() {
   const it = ITEMS[sel], el = infoEl.querySelector('.countdown'), st = itemState(it), at = st.revealAt ? Date.parse(st.revealAt) : NaN;
   if (!it.locked || !(at > Date.now())) { el.hidden = true; return; }
-  el.hidden = false; el.innerHTML = `<small>Révélation dans</small>${fmtLeft(at - Date.now())}`;
+  el.hidden = false; el.innerHTML = `<small>${t('revealIn')}</small>${fmtLeft(at - Date.now())}`;
 }
 setInterval(tickCountdown, 1000);
 
 /* ---- sound toggle ---- */
 let muted = false;
 $('snd').addEventListener('click', () => {
-  muted = !muted; $('snd').setAttribute('aria-pressed', String(!muted)); $('snd').textContent = muted ? 'SON · OFF' : 'SON · ON';
+  muted = !muted; $('snd').setAttribute('aria-pressed', String(!muted)); $('snd').textContent = `${t('ui.sound')} · ${muted ? 'OFF' : 'ON'}`;
   if (AC) { const t = AC.currentTime; master.gain.cancelScheduledValues(t); master.gain.setValueAtTime(master.gain.value, t); master.gain.linearRampToValueAtTime(muted ? 0 : .8, t + .25); }
 });
 
 /* ---- share ---- */
 const SITE = /github\.io$/.test(location.hostname) ? location.origin + location.pathname : (STATE.site || 'https://jlfdice.github.io/jlfdice/');
 $('share').addEventListener('click', async () => {
-  const data = {title: "JLF D'ICE — Archive", text: 'Des tableaux faits uniquement avec des dés.', url: SITE};
+  const data = {title: "JLF D'ICE — Archive", text: t('shareText'), url: SITE};
   try { if (navigator.share) { await navigator.share(data); return; } } catch (e) { if (e && e.name === 'AbortError') return; }
-  try { await navigator.clipboard.writeText(SITE); toast('<b style="color:var(--holo)">LIEN COPIÉ</b>' + esc(SITE)); }
-  catch (e) { toast('<b style="color:var(--holo)">LIEN</b>' + esc(SITE)); }
+  try { await navigator.clipboard.writeText(SITE); toast(`<b style="color:var(--holo)">${t('copied')}</b>` + esc(SITE)); }
+  catch (e) { toast(`<b style="color:var(--holo)">${t('link')}</b>` + esc(SITE)); }
 });
 
 /* ---- composition: share of each die face in the piece ---- */
@@ -936,7 +1022,7 @@ function composition(key) {
 function renderComp(it) {
   const p = composition(it.key), mx = Math.max(...p.slice(1)) || 1;
   $('comp').innerHTML = FACES.map((f, k) => `<span class="die" aria-hidden="true">${f}</span><span class="bar"><i style="width:0"></i></span><span>${(p[k + 1] * 100).toFixed(1).replace('.', ',')} %</span>`).join('') +
-    `<span class="note">${p[0] > .001 ? `Faces vides · ${(p[0] * 100).toFixed(1).replace('.', ',')} %<br>` : ''}Plus une face a de points, plus la zone paraît claire.</span>`;
+    `<span class="note">${p[0] > .001 ? `${t('blank')} · ${(p[0] * 100).toFixed(1).replace('.', ',')} %<br>` : ''}${t('compNote')}</span>`;
   requestAnimationFrame(() => requestAnimationFrame(() => [...$('comp').querySelectorAll('.bar i')].forEach((b, k) => b.style.width = (p[k + 1] / mx * 100) + '%')));
 }
 function setTab(t) {
@@ -953,7 +1039,7 @@ $('tab-comp').addEventListener('click', () => setTab('comp'));
 let exTarget = 0, exV = 0;
 function setExplode(on) {
   buzz(on ? [20, 30, 60] : 25);
-  exTarget = on ? 1 : 0; FRAME.classList.toggle('exploded', !!on); $('explode').textContent = on ? 'Recomposer' : 'Décomposer';
+  exTarget = on ? 1 : 0; FRAME.classList.toggle('exploded', !!on); $('explode').textContent = t(on ? 'implode' : 'explode');
   if (sound) { if (on) { noiseSweep(200, 6000, 1.2, .09); blip(110, 55, 1.4, .18, 'sine'); } else { noiseSweep(6000, 300, 1.2, .08); blip(55, 110, 1.2, .12, 'sine'); } }
 }
 $('explode').addEventListener('click', () => setExplode(!exTarget));
@@ -996,8 +1082,16 @@ function updateWarp() {
 /* ---- "crée le tien": the visitor's photo becomes a dice piece, locally, then goes to the artist ---- */
 const DICE_OPTS = [5000, 6000, 7500, 9000, 10000], SIZE_OPTS = [10, 12, 14, 16];
 let diceN = 5000, dieMM = 10, lastImg = null, lastFile = null, lastRef = '';
-const fmtN = n => n.toLocaleString('fr-FR').replace(/ | /g, ' ');
-function gridDims(n) { const C = Math.round(Math.sqrt(n * 3 / 4)); return [C, Math.round(n / C)]; }
+const fmtN = n => n.toLocaleString(LOC()).replace(/ | /g, ' ');
+/* whole-dice rectangle close to 3:4 whose count is as near as possible to n, never above 10 000 */
+function gridDims(n) {
+  let best = null;
+  for (let C = 30; C <= 130; C++) for (const Rr of [Math.floor(n / C), Math.ceil(n / C)]) {
+    const N = C * Rr, ar = C / Rr; if (ar < .72 || ar > .78 || N > 10000) continue;
+    const sc = Math.abs(N - n) + Math.abs(ar - .75) * 400; if (!best || sc < best[2]) best = [C, Rr, sc];
+  }
+  return best ? [best[0], best[1]] : [75, 100];
+}
 function toGrid(img, C, Rr) {
   const cv2 = mk(C, Rr), g2 = cv2.getContext('2d'), ar = C / Rr, iw = img.naturalWidth || img.width, ih = img.naturalHeight || img.height;
   let sw = iw, sh = iw / ar; if (sh > ih) { sh = ih; sw = ih * ar; }
@@ -1037,21 +1131,21 @@ function renderDiceSel() {
   box.querySelectorAll('.dopt').forEach(b => b.addEventListener('click', () => { diceN = +b.dataset.n; renderDiceSel(); if (lastImg) generate(lastImg); }));
   sbox.querySelectorAll('.dopt').forEach(b => b.addEventListener('click', () => { dieMM = +b.dataset.s; renderDiceSel(); }));
   const [C, Rr] = gridDims(diceN);
-  $('dinfo').textContent = `${fmtN(C * Rr)} dés · ${C} × ${Rr} · format ≈ ${cm(C, dieMM)} × ${cm(Rr, dieMM)} cm`;
+  $('dinfo').textContent = `${fmtN(C * Rr)} ${t('dice')} · ${C} × ${Rr} · ${t('format')} ≈ ${cm(C, dieMM)} × ${cm(Rr, dieMM)} cm`;
 }
 function generate(img) {
   lastImg = img; lastRef = Math.random().toString(36).slice(2, 6).toUpperCase();
-  $('proc').hidden = false; $('proct').textContent = 'Analyse de l’image'; $('procs').textContent = '0 %'; if (sound) SFX.scan();
-  const t0 = performance.now(), steps = ['Analyse de l’image', 'Détection des contrastes', `Placement de ${fmtN(diceN)} dés`, 'Assemblage'];
+  $('proc').hidden = false; $('proct').textContent = t('analysing'); $('procs').textContent = '0 %'; if (sound) SFX.scan();
+  const t0 = performance.now(), steps = [t('analysing'), t('contrast'), t('placing', {n: fmtN(diceN)}), t('assembling')];
   const tick = setInterval(() => { const k = Math.min(1, (performance.now() - t0) / 1900); $('procs').textContent = Math.round(k * 100) + ' %'; $('proct').textContent = steps[Math.min(3, Math.floor(k * 4))]; }, 60);
   setTimeout(() => {
     try { const [C, Rr] = gridDims(diceN); setCustom(toGrid(img, C, Rr), C, Rr, true); }
-    catch (e) { clearInterval(tick); $('proc').hidden = true; toast('<b>ERREUR</b>Cette image n’a pas pu être lue. Essaie une autre photo.', true); return; }
+    catch (e) { clearInterval(tick); $('proc').hidden = true; toast(`<b>${t('err')}</b>${t('errRead')}`, true); return; }
     setTimeout(() => {
       clearInterval(tick); $('proc').hidden = true;
       if (mode === 'detail') closeDetail();
       if (sel === CUSTOM) { showInfo(CUSTOM); setTimeout(() => scan(CUSTOM), 250); } else goTo(CUSTOM);
-      buzz([30, 40, 80]); toast(`<b style="color:var(--holo)">PORTRAIT GÉNÉRÉ</b>${fmtN(diceN)} dés · ta photo devient un tableau.`);
+      buzz([30, 40, 80]); toast(`<b style="color:var(--holo)">${t('done')}</b>${t('doneTxt', {n: fmtN(GR.dims.custom[0] * GR.dims.custom[1])})}`);
     }, Math.max(0, 1900 - (performance.now() - t0)));
   }, 60);
 }
@@ -1061,7 +1155,7 @@ $('mkfile').addEventListener('change', () => {
   lastFile = f;
   const url = URL.createObjectURL(f), img = new Image();
   img.onload = () => generate(img);
-  img.onerror = () => toast('<b>FORMAT NON LU</b>Choisis une photo JPEG ou PNG.', true);
+  img.onerror = () => toast(`<b>${t('badFmt')}</b>${t('badFmtTxt')}`, true);
   img.src = url;
 });
 function pickPhoto() { $('mkfile').value = ''; $('mkfile').click(); }
@@ -1091,14 +1185,14 @@ function orderSheet() {
 async function sendToArtist() {
   if (!lastImg) { pickPhoto(); return; }
   const [C, Rr] = GR.dims.custom;
-  const text = `Bonjour ! Je voudrais un portrait en dés sur mesure : ${fmtN(C * Rr)} dés de ${dieMM} mm (grille ${C} × ${Rr}, ≈ ${cm(C, dieMM)} × ${cm(Rr, dieMM)} cm). Code atelier : ${workshopCode()}. Je t’envoie la fiche et ma photo originale.`;
+  const text = t('dm', {n: fmtN(C * Rr), mm: dieMM, c: C, r: Rr, w: cm(C, dieMM), hh: cm(Rr, dieMM), code: workshopCode()});
   let blob = null; try { blob = await orderSheet(); } catch (e) {}
   if (blob) {
     const file = new File([blob], `commande-jlfdice-${lastRef}.png`, {type: 'image/png'});
     const files = lastFile ? [file, lastFile] : [file];
     try {
       const share = navigator.canShare && navigator.canShare({files}) ? files : (navigator.canShare && navigator.canShare({files: [file]}) ? [file] : null);
-      if (share) { await navigator.share({files: share, text}); toast('<b style="color:var(--holo)">PRÊT</b>Choisis Instagram, puis la conversation avec @' + esc(STATE.handle) + '.'); return; }
+      if (share) { await navigator.share({files: share, text}); toast(`<b style="color:var(--holo)">${t('ready')}</b>` + t('readyTxt', {h: esc(STATE.handle)})); return; }
     }
     catch (e) { if (e && e.name === 'AbortError') return; }
   }
@@ -1106,7 +1200,7 @@ async function sendToArtist() {
   try { await navigator.clipboard.writeText(text); } catch (e) {}
   $('sendimg').src = blob ? URL.createObjectURL(blob) : '';
   $('sendimg').hidden = !blob;
-  $('sendsteps').innerHTML = `<li>Enregistre cette fiche : appui long dessus → « Enregistrer l’image », ou fais une capture d’écran.</li><li>Ouvre la conversation avec @${esc(STATE.handle)}.</li><li>Envoie la fiche <b>et ta photo originale</b> (en pleine qualité). Ton message est déjà copié : colle-le.</li>`;
+  $('sendsteps').innerHTML = `<li>${t('step1')}</li><li>${t('step2', {h: esc(STATE.handle)})}</li><li>${t('step3')}</li>`;
   $('sendig').href = igDM(); $('send').hidden = false;
 }
 $('sendclose').addEventListener('click', () => { $('send').hidden = true; });
@@ -1126,11 +1220,11 @@ function openDetail() {
   if (it.placeholder) { pickPhoto(); return; }
   if (it.locked) {
     shakeT0 = tt; spinT0 = tt; glitch(); glitch('denied', 900); if (sound) SFX.deny(); buzz([40, 60, 40]);
-    toast(`<b>ACCÈS REFUSÉ</b>${esc(itemState(it).hint || 'Révélation bientôt')}`, true); return;
+    toast(`<b>${t('denied')}</b>${esc(itemState(it).hint || t('soon'))}`, true); return;
   }
   mode = 'detail'; touchedOnce(); FRAME.classList.add('detail');
-  $('dtitle').textContent = it.name; $('dorder').href = igDM();
-  $('abouttxt').textContent = it.about || ''; $('tab-orig').hidden = !it.about; setTab(it.about ? 'orig' : 'comp'); setExplode(false);
+  $('dtitle').textContent = itName(it); $('dorder').href = igDM();
+  $('abouttxt').textContent = itAbout(it); $('tab-orig').hidden = !it.about; setTab(it.about ? 'orig' : 'comp'); setExplode(false);
   yaw = -.35; pitch = 0; vyaw = .9; zoom = 1;
   if (sound) SFX.open();
 }
@@ -1190,11 +1284,15 @@ FRAME.addEventListener('pointerup', endPtr); FRAME.addEventListener('pointercanc
 FRAME.addEventListener('wheel', e => { if (mode === 'detail') { e.preventDefault(); zoom = Math.max(1, Math.min(2.2, zoom * Math.exp(-e.deltaY * .0015))); } else if (mode === 'menu' && Math.abs(e.deltaX) > 30) goTo(sel + Math.sign(e.deltaX)); }, {passive: false});
 
 /* ---- gate boot sequence ---- */
+let bootDone = false;
+const bootLines = () => { const real = ITEMS.filter(i => !i.custom); return t('boot').map(l => l.replace('{n}', real.length).replace('{k}', real.filter(i => i.locked).length)); };
+function bootFull() { const L = bootLines(); $('boot').innerHTML = L.map((l, i) => esc(l) + (i < L.length - 1 ? ' … <b>OK</b>' : '')).join('<br>'); }
 (function boot() {
-  const lines = ['> connexion au signal', '> déchiffrement de l’archive', `> ${ITEMS.length} objets détectés`, `> ${ITEMS.filter(i => i.locked).length} objet classifié`, '> prêt'];
+  const lines = bootLines();
   const el = $('boot'); let k = 0;
   const step = () => {
-    if (k >= lines.length) { $('enter').disabled = false; return; }
+    if (bootDone) return;
+    if (k >= lines.length) { $('enter').disabled = false; bootDone = true; return; }
     const done = k < lines.length - 1 ? ' <b>OK</b>' : '';
     el.innerHTML += (k ? '<br>' : '') + esc(lines[k]) + `<span id="bk${k}"></span>`;
     setTimeout(() => { const s = document.getElementById('bk' + k); if (s) s.innerHTML = done ? ' …' + done : ''; k++; step(); }, REDUCED ? 80 : 420);
@@ -1242,6 +1340,46 @@ function ticker() {
   $('ticker').textContent = `RA ${ra.toFixed(4)}H · DEC ${dec.toFixed(3)}° · SIGNAL ${(97 + Math.sin(tt * .7) * 2).toFixed(1)}% · T+${tt.toFixed(1)}S · ARCHIVE JLF D'ICE`;
 }
 
+/* ---- human scale: a 1.75 m hologram next to the made-to-order piece ---- */
+const humanCv = mk(360, 760), humanTex = new THREE.CanvasTexture(humanCv);
+function drawHuman() {
+  const g = humanCv.getContext('2d'); g.clearRect(0, 0, 360, 760);
+  g.save(); g.translate(0, 20);
+  g.beginPath(); g.arc(128, 62, 44, 0, 7);
+  g.moveTo(108, 104); g.lineTo(148, 104); g.lineTo(150, 124);
+  g.lineTo(212, 140); g.quadraticCurveTo(226, 146, 226, 166); g.lineTo(232, 380); g.lineTo(210, 384); g.lineTo(196, 196);
+  g.lineTo(190, 372); g.lineTo(184, 700); g.lineTo(140, 700); g.lineTo(132, 430); g.lineTo(124, 430); g.lineTo(116, 700); g.lineTo(72, 700); g.lineTo(66, 372);
+  g.lineTo(60, 196); g.lineTo(46, 384); g.lineTo(24, 380); g.lineTo(30, 166); g.quadraticCurveTo(30, 146, 44, 140); g.lineTo(106, 124); g.closePath();
+  g.fillStyle = 'rgba(127,233,255,.14)'; g.fill(); g.strokeStyle = 'rgba(160,240,255,.95)'; g.lineWidth = 4; g.shadowColor = 'rgba(127,233,255,.9)'; g.shadowBlur = 14; g.stroke();
+  g.restore(); g.shadowBlur = 0;
+  g.strokeStyle = 'rgba(255,179,71,.95)'; g.lineWidth = 3; g.beginPath(); g.moveTo(290, 2); g.lineTo(290, 720); g.moveTo(272, 2); g.lineTo(308, 2); g.moveTo(272, 720); g.lineTo(308, 720); g.stroke();
+  g.save(); g.translate(330, 361); g.rotate(-Math.PI / 2); g.fillStyle = '#ffb347'; g.font = '600 30px "JetBrains Mono", monospace'; g.textAlign = 'center'; g.fillText(t('human'), 0, 10); g.restore();
+  humanTex.needsUpdate = true;
+}
+const human = new THREE.Mesh(new THREE.PlaneGeometry(36 / 76 * 72, 72), new THREE.MeshBasicMaterial({map: humanTex, transparent: true, depthWrite: false, opacity: 0}));
+scene.add(human);
+let physK = 1;
+function physTarget() {
+  const [C, Rr] = ITEMS[CUSTOM] && !ITEMS[CUSTOM].placeholder ? GR.dims.custom : gridDims(diceN);
+  return {k: clamp(Rr * dieMM / 10 / 116.7, .4, 1.7), H: Rr * dieMM / 10};
+}
+
+/* ---- language switch ---- */
+function applyLang() {
+  document.documentElement.lang = LANG;
+  document.querySelectorAll('[data-i]').forEach(el => { el.textContent = t(el.dataset.i); });
+  $('lang').textContent = LANG.toUpperCase();
+  document.querySelectorAll('#langs button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.l === LANG)));
+  $('snd').textContent = `${t('ui.sound')} · ${muted ? 'OFF' : 'ON'}`;
+  setT2(); drawHuman(); if (bootDone) bootFull();
+  if (mode === 'menu' || mode === 'detail') renderInfo(sel);
+  if (mode === 'detail') { const it = ITEMS[sel]; $('dtitle').textContent = itName(it); $('abouttxt').textContent = itAbout(it); $('explode').textContent = t(exTarget ? 'implode' : 'explode'); if (!$('comp').hidden) renderComp(it); }
+  else $('explode').textContent = t('explode');
+}
+function setLang(l) { if (!LANGS.includes(l)) return; LANG = l; try { localStorage.setItem('jlfd-lang', l); } catch (e) {} applyLang(); }
+$('lang').addEventListener('click', () => setLang(LANGS[(LANGS.indexOf(LANG) + 1) % LANGS.length]));
+document.querySelectorAll('#langs button').forEach(b => b.addEventListener('click', () => setLang(b.dataset.l)));
+
 /* ---- main loop ---- */
 function loop(now) {
   const dt = Math.min(.05, Math.max(0, (now - last) / 1000)); last = now; tt += dt;
@@ -1250,7 +1388,7 @@ function loop(now) {
     if (mode === 'intro' && T >= INTRO) enterMenu(false);
     else {
       renderIntro(Math.min(T, INTRO - .001)); if (mode === 'gate') blackEl.style.opacity = 0;
-      if (mode === 'intro') { const k = clamp(T / (INTRO - .4)); $('ih1').textContent = `DISTANCE HORIZON · ${Math.round(4800 * Math.pow(1 - k, 2.2)).toLocaleString('fr-FR')} KM`; $('ih2').textContent = `CAPTURE GRAVITATIONNELLE · ${Math.round(100 * Math.pow(k, 1.6))} %`; $('ihbar').style.width = (100 * k) + '%'; }
+      if (mode === 'intro') { const k = clamp(T / (INTRO - .4)); $('ih1').textContent = `${t('ui.dist')} · ${Math.round(4800 * Math.pow(1 - k, 2.2)).toLocaleString(LOC())} KM`; $('ih2').textContent = `${t('ui.capture')} · ${Math.round(100 * Math.pow(k, 1.6))} %`; $('ihbar').style.width = (100 * k) + '%'; }
       requestAnimationFrame(loop); return;
     }
   }
@@ -1269,7 +1407,16 @@ function loop(now) {
     g.position.set(d * SPACING + Math.sin(tt * 60) * shake * 1.6 * (isSel ? 1 : 0), Math.sin(tt * 1.1 * speed + i * 2.1) * 1.4 * (1 - dk) + (focus - 1) * 4 + (ITEMS[i].about ? 11 : 0) * dk, focus * 14 - ad * 30 + 4 * dk);
     g.rotation.set(Math.sin(tt * .7 * speed + i) * .06 * (1 - dk) + dk * pitch, spin + Math.sin(tt * .55 * speed + i * 1.7) * (.1 + .08 * (1 - focus)) * (1 - dk) + dk * yaw - d * .35, Math.sin(tt * .4 + i) * .025 * (1 - dk));
     const sc = (.58 + .42 * focus) * edge * (1 + dk * ((ITEMS[i].about ? .08 : .3) + (zoom - 1) * .9)) * (isSel ? 1 : 1 - detK);
-    g.scale.setScalar(Math.max(.0001, sc)); g.visible = sc > .002;
+    /* made-to-order slot: real proportions next to a 1.75 m person, shrunk together so both stay on screen */
+    const fit = i === CUSTOM ? Math.min(1, 1.05 / physK, 64 / (2 * g.userData.box[0] * physK + 50)) : 1;
+    const pk = i === CUSTOM ? physK * fit : 1;
+    if (i === CUSTOM) g.position.x -= 13 * sc * fit * (1 - dk);
+    g.scale.setScalar(Math.max(.0001, sc * pk)); g.visible = sc > .002;
+    if (i === CUSTOM) {
+      const fw = g.userData.box[0] * sc * pk, fh = g.userData.box[1] * sc * pk;
+      human.scale.setScalar(Math.max(.0001, sc * fit)); human.position.set(g.position.x + fw + (6 + 17) * sc * fit, g.position.y - fh + 36 * sc * fit, g.position.z + 2);
+      human.material.opacity = (mode === 'menu' ? 1 : 0) * focus * focus * .95; human.visible = human.material.opacity > .01;
+    }
     const u = g.userData; u.glow.material.opacity = .45 * focus * focus * (1 - detK);
     if (ITEMS[i].locked) u.mat.emissiveIntensity = (.14 + .12 * Math.sin(tt * 3) + (Math.random() < .04 ? .3 : 0)) * (.4 + .6 * focus);
     /* laser materialisation */
@@ -1284,8 +1431,9 @@ function loop(now) {
   if (!camBase) camBase = camera.position.clone();
   parX += (tgX - parX) * (1 - Math.exp(-dt * 4)); parY += (tgY - parY) * (1 - Math.exp(-dt * 4));
   camera.position.set(camBase.x + parX * 14, camBase.y - parY * 9, camBase.z); camera.lookAt(0, 2, 0);
+  physK += (physTarget().k - physK) * (1 - Math.exp(-dt * 5));
   const g = P[sel]; g.updateMatrixWorld(); placeReticle(g, (1 - detK * .6) * (1 - exV));
-  if (mode === 'detail') $('readout').innerHTML = `ROT ${(yaw * 57.3 >= 0 ? '+' : '−') + Math.abs(((yaw * 57.3) % 360)).toFixed(1).padStart(5, '0')}°<br>INCL ${(pitch * 57.3 >= 0 ? '+' : '−') + Math.abs(pitch * 57.3).toFixed(1).padStart(4, '0')}°<br>ZOOM ×${zoom.toFixed(2)}<br>MATIÈRE · DÉS À JOUER`;
+  if (mode === 'detail') $('readout').innerHTML = `ROT ${(yaw * 57.3 >= 0 ? '+' : '−') + Math.abs(((yaw * 57.3) % 360)).toFixed(1).padStart(5, '0')}°<br>INCL ${(pitch * 57.3 >= 0 ? '+' : '−') + Math.abs(pitch * 57.3).toFixed(1).padStart(4, '0')}°<br>ZOOM ×${zoom.toFixed(2)}<br>${t('material')}${exV > .02 ? '<br><span style="color:var(--warn)">' + t('exActive') + '</span>' : ''}`;
   if ((tickT += dt) > .25) { tickT = 0; ticker(); }
   cone.position.x = (sel - s) * SPACING * 0; cone.material.opacity = .14 + .04 * Math.sin(tt * 2);
   gridMat.uniforms.uTime.value = tt; updateWarp();
@@ -1298,6 +1446,7 @@ function loop(now) {
   requestAnimationFrame(loop);
 }
 resize();
+applyLang();
 renderInfo(0);
 P.forEach((g, i) => { if (!ITEMS[i].locked) g.userData.mat.userData.uReveal.value = -30; });
 requestAnimationFrame(loop);
