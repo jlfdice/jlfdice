@@ -51,6 +51,9 @@ html, body { height: 100%; margin: 0; overflow: hidden; background: #000; color:
 #detailbar .dt b { font-weight: 600; font-size: 4.6cqw; }
 #detailbar .dt small { font-weight: 300; font-size: 3cqw; color: var(--dim); letter-spacing: .08em; }
 #dbottom { position: absolute; left: 6cqw; right: 6cqw; bottom: 5cqh; display: flex; flex-direction: column; align-items: center; gap: 3cqw; opacity: 0; transition: opacity .45s ease; pointer-events: none; }
+#about { align-self: stretch; padding: 3cqw 4cqw; border: 1px solid var(--line); border-radius: 2.4cqw; background: rgba(4,10,35,.72); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); }
+#about b { display: block; font-weight: 600; font-size: 2.8cqw; letter-spacing: .2em; text-transform: uppercase; color: var(--dim); margin-bottom: 1.2cqw; }
+#about p { margin: 0; font-size: 3.3cqw; font-weight: 300; line-height: 1.45; color: #dbe3fb; }
 #dbottom small { font-size: 3cqw; letter-spacing: .12em; text-transform: uppercase; color: var(--dim); text-align: center; }
 #frame.detail #top, #frame.detail #info, #frame.detail #count, #frame.detail .arrow, #frame.detail #swipehint { opacity: 0; }
 #frame.detail #detailbar, #frame.detail #dbottom { opacity: 1; }
@@ -92,7 +95,7 @@ html, body { height: 100%; margin: 0; overflow: hidden; background: #000; color:
 <div class="hud menu-only" id="swipehint">Glisse pour parcourir · touche pour ouvrir</div>
 <div class="hud out menu-only" id="info" aria-live="polite"><div class="num"></div><div class="name"></div><div class="sub"></div><div class="meta"></div><div class="hint" hidden></div><div class="actions"></div></div>
 <div id="detailbar"><button class="btn" id="back" type="button">‹ Retour</button><span class="dt"><b id="dtitle">La Joconde</b><small>Vue détaillée</small></span></div>
-<div id="dbottom"><small>Fais glisser pour tourner · pince pour zoomer</small><a class="btn primary" id="dorder" target="_blank" rel="noopener">Commander cette œuvre</a></div>
+<div id="dbottom"><div id="about" hidden><b>L’œuvre originale</b><p id="abouttxt"></p></div><small>Fais glisser pour tourner · pince pour zoomer</small><a class="btn primary" id="dorder" target="_blank" rel="noopener">Commander cette œuvre</a></div>
 <button class="btn" id="skip" type="button">Passer ›</button>
 <div id="gate"><span class="k">JLF D'ICE</span><h1>La collection</h1><small>Tableaux en dés · pièces uniques</small><button class="btn primary" id="enter" type="button">Entrer ▸</button><small>Avec le son</small></div>
 <div id="toast" role="status"></div>
@@ -119,7 +122,7 @@ const GR = {"cols": 40, "rows": 48, "vermeer": "00000010000000000000000000000110
 const C = GR.cols, R = GR.rows, N = C * R;
 const REDUCED = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const ITEMS = [
-  {key: 'mona', num: '001', name: 'La Joconde', sub: "d'après Léonard de Vinci", chips: ['Dés à jouer', 'Fait main', ['1/1', 'gold']], plaque: ['La Joconde', "JLF D'ICE", '1/1']},
+  {key: 'mona', num: '001', name: 'La Joconde', about: 'Léonard de Vinci, vers 1503-1519. Huile sur panneau de peuplier, 77 × 53 cm, musée du Louvre. Portrait présumé de Lisa Gherardini, célèbre pour son sourire insaisissable peint en sfumato. Volée en 1911 et retrouvée deux ans plus tard, elle est devenue le tableau le plus connu au monde.', sub: "d'après Léonard de Vinci", chips: ['Dés à jouer', 'Fait main', ['1/1', 'gold']], plaque: ['La Joconde', "JLF D'ICE", '1/1']},
   {key: 'mystery', num: '002', locked: true, name: '? ? ?', sub: 'Tableau mystère', chips: [['Confidentiel', 'gold']], plaque: ['? ? ?', "JLF D'ICE", '1/1']},
 ];
 
@@ -729,6 +732,7 @@ function openDetail() {
   if (it.locked) { shakeT0 = tt; spinT0 = tt; if (sound) SFX.mystery(); toast(itemState(it).hint || 'Révélation bientôt'); return; }
   mode = 'detail'; touchedOnce(); FRAME.classList.add('detail');
   $('dtitle').textContent = it.name; $('dorder').href = igDM();
+  $('about').hidden = !it.about; $('abouttxt').textContent = it.about || '';
   yaw = -.35; pitch = 0; vyaw = .9; zoom = 1;
   if (sound) SFX.open();
 }
@@ -827,9 +831,9 @@ function loop(now) {
     const d = i - s, ad = Math.abs(d), focus = clamp(1 - ad), edge = clamp((1.5 - ad) / .35);
     const isSel = i === sel, dk = isSel ? detK : 0;
     const spin = ITEMS[i].locked ? ease(clamp((tt - spinT0) / 1.9)) * Math.PI * 2 : 0;
-    g.position.set(d * SPACING + Math.sin(tt * 60) * shake * 1.6 * (isSel ? 1 : 0), Math.sin(tt * 1.1 * speed + i * 2.1) * 1.4 * (1 - dk) + (focus - 1) * 4, focus * 14 - ad * 30 + 4 * dk);
+    g.position.set(d * SPACING + Math.sin(tt * 60) * shake * 1.6 * (isSel ? 1 : 0), Math.sin(tt * 1.1 * speed + i * 2.1) * 1.4 * (1 - dk) + (focus - 1) * 4 + (ITEMS[i].about ? 11 : 0) * dk, focus * 14 - ad * 30 + 4 * dk);
     g.rotation.set(Math.sin(tt * .7 * speed + i) * .06 * (1 - dk) + dk * pitch, spin + Math.sin(tt * .55 * speed + i * 1.7) * (.1 + .08 * (1 - focus)) * (1 - dk) + dk * yaw - d * .35, Math.sin(tt * .4 + i) * .025 * (1 - dk));
-    const sc = (.58 + .42 * focus) * edge * (1 + dk * (.3 + (zoom - 1) * .9)) * (isSel ? 1 : 1 - detK);
+    const sc = (.58 + .42 * focus) * edge * (1 + dk * ((ITEMS[i].about ? .08 : .3) + (zoom - 1) * .9)) * (isSel ? 1 : 1 - detK);
     g.scale.setScalar(Math.max(.0001, sc)); g.visible = sc > .002;
     const u = g.userData; u.glow.material.opacity = .55 * focus * focus * (1 - detK);
     if (ITEMS[i].locked) u.mat.emissiveIntensity = (.12 + .1 * Math.sin(tt * 3)) * (.4 + .6 * focus);
