@@ -18,7 +18,7 @@ m = re.match(r'JLFD-C(\d+)-R(\d+)-D(\d+)(?:-X(\d+)Y(\d+)Z(\d+)(?:A\d+)?)?-([A-Z0
 if not m: raise SystemExit('Code atelier illisible : ' + A.code)
 C, R, DIE, REF = int(m[1]), int(m[2]), int(m[3]), m[7]
 # framing chosen by the client in the app (X/Y = position in %, Z = zoom in %); older codes have none
-CROP = (int(m[4]) / 100, int(m[5]) / 100, max(1, int(m[6]) / 100)) if m[4] else None
+CROP = (int(m[4]) / 100, int(m[5]) / 100, max(.2, int(m[6]) / 100)) if m[4] else None
 OUT = A.out or f'commande_{REF}'; os.makedirs(OUT, exist_ok=True)
 N = C * R
 

@@ -1262,6 +1262,20 @@ function cropRect(img, ar, cr = CROP) {
 /* ---- photo → dice faces, tuned for maximum detail ----
    local contrast (CLAHE) → area average per die → unsharp mask → levels → error diffusion
    on the real brightness of each face; optional per-die orientation for faces 2, 3 and 6. */
+/* draw a source window that may extend past the photo (zoomed out to show all of it): the outside is black, i.e. black dice */
+function drawSrc(g, img, sx, sy, sw, sh, dx, dy, dw, dh) {
+  const iw = img.naturalWidth || img.width, ih = img.naturalHeight || img.height;
+  g.fillStyle = '#000'; g.fillRect(dx, dy, dw, dh);
+  const x0 = Math.max(0, sx), y0 = Math.max(0, sy), x1 = Math.min(iw, sx + sw), y1 = Math.min(ih, sy + sh);
+  if (x1 <= x0 || y1 <= y0) return;
+  g.drawImage(img, x0, y0, x1 - x0, y1 - y0, dx + (x0 - sx) / sw * dw, dy + (y0 - sy) / sh * dh, (x1 - x0) / sw * dw, (y1 - y0) / sh * dh);
+}
+/* smallest zoom: the whole photo fits inside the painting's frame */
+function zoomMin(img, ar) {
+  const iw = img.naturalWidth || img.width, ih = img.naturalHeight || img.height;
+  let sw = iw, sh = iw / ar; if (sh > ih) { sh = ih; sw = ih * ar; }
+  return Math.min(sw / iw, sh / ih);
+}
 const FACE_LV = [0.075, 0.105, 0.128, 0.158, 0.180, 0.211, 0.238];   /* mean brightness of each face as seen from afar */
 function claheL(L, w, h, tx, ty, clip) {
   const N = 256, maps = [], tw = w / tx, th = h / ty;
@@ -1297,7 +1311,7 @@ function blurGrid(G, C, R, s) {
 function diceFaces(img, sx, sy, sw, sh, C, R, K = 4, orient = false) {
   const W = C * K, H = R * K, cv = document.createElement('canvas'); cv.width = W; cv.height = H;
   const g = cv.getContext('2d', {willReadFrequently: true}); g.imageSmoothingQuality = 'high';
-  g.drawImage(img, sx, sy, sw, sh, 0, 0, W, H);
+  drawSrc(g, img, sx, sy, sw, sh, 0, 0, W, H);
   const d = g.getImageData(0, 0, W, H).data, L8 = new Uint8Array(W * H);
   for (let i = 0; i < W * H; i++) L8[i] = Math.round(.2126 * d[i * 4] + .7152 * d[i * 4 + 1] + .0722 * d[i * 4 + 2]);
   const L = claheL(L8, W, H, Math.max(2, Math.round(C / 10)), Math.max(2, Math.round(R / 10)), 1.3);
@@ -1378,8 +1392,8 @@ function finishedView(art, W, H, Cn, Rn, mm) {
   const floor = H * .9; gr = g.createLinearGradient(0, floor, 0, H); gr.addColorStop(0, '#0d0d0f'); gr.addColorStop(1, '#030304'); g.fillStyle = gr; g.fillRect(0, floor, W, H - floor);
   g.fillStyle = 'rgba(255,255,255,.05)'; g.fillRect(0, floor, W, 1);
   /* scale: 175 cm person and the piece hung with its centre at 150 cm */
-  const pxcm = Math.min((floor - H * .08) / Math.max(185, 150 + hcm / 2 + 12), W * .62 / (wcm + 60));
-  const aw = wcm * pxcm, ah = hcm * pxcm, ax = W * .44 - aw / 2, ay = floor - 150 * pxcm - ah / 2, fr = Math.max(3, aw * .045);
+  const pxcm = Math.min((floor - H * .08) / Math.max(185, 150 + hcm / 2 + 12), W * .86 / (wcm + 80));
+  const aw = wcm * pxcm, ah = hcm * pxcm, gap = 175 * pxcm * .05, grpW = aw + gap + 175 * pxcm * .27, ax = (W - grpW) / 2 + aw * 0, ay = floor - 150 * pxcm - ah / 2, fr = Math.max(3, aw * .045);
   g.shadowColor = 'rgba(0,0,0,.75)'; g.shadowBlur = aw * .12; g.shadowOffsetY = aw * .05; g.fillStyle = '#0b0b0c'; g.fillRect(ax - fr, ay - fr, aw + 2 * fr, ah + 2 * fr); g.shadowColor = 'transparent';
   const X0 = ax - fr, Y0 = ay - fr, X1 = ax + aw + fr, Y1 = ay + ah + fr, bev = (pts, col) => { g.beginPath(); g.moveTo(...pts[0]); pts.slice(1).forEach(p => g.lineTo(...p)); g.closePath(); g.fillStyle = col; g.fill(); };
   bev([[X0, Y0], [X1, Y0], [ax + aw, ay], [ax, ay]], '#3c3c41'); bev([[X0, Y0], [ax, ay], [ax, ay + ah], [X0, Y1]], '#2a2a2e');
@@ -1389,7 +1403,7 @@ function finishedView(art, W, H, Cn, Rn, mm) {
   const pw = Math.max(18, aw * .22), ph = pw * .22; gr = g.createLinearGradient(0, Y1, pw, Y1 + ph); gr.addColorStop(0, '#8a6a2f'); gr.addColorStop(.5, '#e7c77a'); gr.addColorStop(1, '#7a5a22');
   g.fillStyle = gr; g.fillRect(ax + aw / 2 - pw / 2, Y1 + fr * .8, pw, ph);
   /* silhouette */
-  const hh = 175 * pxcm, hx = Math.min(W - hh * .2, X1 + Math.max(18, aw * .25) + hh * .13), fy = floor;
+  const hh = 175 * pxcm, hx = X1 + gap + hh * .13, fy = floor;
   g.fillStyle = 'rgba(127,233,255,.16)'; g.strokeStyle = 'rgba(127,233,255,.7)'; g.lineWidth = Math.max(1, W / 500);
   g.beginPath(); g.arc(hx, fy - hh * .93, hh * .065, 0, Math.PI * 2); g.fill(); g.stroke();
   g.beginPath(); g.moveTo(hx - hh * .11, fy - hh * .84); g.lineTo(hx + hh * .11, fy - hh * .84); g.lineTo(hx + hh * .13, fy - hh * .5); g.lineTo(hx + hh * .07, fy - hh * .5); g.lineTo(hx + hh * .06, fy); g.lineTo(hx + hh * .01, fy); g.lineTo(hx, fy - hh * .45);
@@ -1480,6 +1494,7 @@ function openCrop(img) {
 }
 function drawCrop() {
   if (!cImg || $('crop').hidden) return;
+  { const m = cropZMin(); $('czoom').min = m.toFixed(3); if (cWork.z < m) cWork.z = m; $('czoom').value = cWork.z; }
   const [C, Rr] = gridDims(diceN), ar = C / Rr, box = $('cwin').parentElement.getBoundingClientRect();
   const [F0, L0] = faces(cImg, C, Rr, cWork), art = boardCanvas(salted(F0, L0), C, Rr);   /* exactly the grid the painting will get */
   if (cStep === 'opts') {
@@ -1493,7 +1508,7 @@ function drawCrop() {
   $('cwin').style.width = w + 'px'; $('cwin').style.height = h + 'px';
   const d = Math.min(devicePixelRatio, 2); cropCv.width = Math.round(w * d); cropCv.height = Math.round(h * d);
   const [sx, sy, sw, sh] = cropRect(cImg, ar, cWork), g = cropCv.getContext('2d');
-  g.drawImage(cImg, sx, sy, sw, sh, 0, 0, cropCv.width, cropCv.height);
+  drawSrc(g, cImg, sx, sy, sw, sh, 0, 0, cropCv.width, cropCv.height);
   g.strokeStyle = 'rgba(127,233,255,.35)'; g.lineWidth = 1;
   for (let k = 1; k < 3; k++) { g.beginPath(); g.moveTo(cropCv.width * k / 3, 0); g.lineTo(cropCv.width * k / 3, cropCv.height); g.moveTo(0, cropCv.height * k / 3); g.lineTo(cropCv.width, cropCv.height * k / 3); g.stroke(); }
   /* live dice preview: the real dice, every one of them, drawn smooth */
@@ -1502,11 +1517,13 @@ function drawCrop() {
 }
 function cropPan(dx, dy) {
   const [, , sw, sh] = cropRect(cImg, cropCv.width / cropCv.height, cWork), iw = cImg.naturalWidth, ih = cImg.naturalHeight, r = $('cwin').getBoundingClientRect();
-  if (iw - sw > 1) cWork.px = clamp(cWork.px - dx * sw / r.width / (iw - sw));
-  if (ih - sh > 1) cWork.py = clamp(cWork.py - dy * sh / r.height / (ih - sh));
+  if (Math.abs(iw - sw) > 1) cWork.px = clamp(cWork.px - dx * sw / r.width / (iw - sw));
+  if (Math.abs(ih - sh) > 1) cWork.py = clamp(cWork.py - dy * sh / r.height / (ih - sh));
   reqCrop();
 }
-function cropZoom(z) { cWork.z = Math.max(1, Math.min(3, z)); $('czoom').value = cWork.z; reqCrop(); }
+/* zooming out is allowed down to the whole photo (the margins become black dice) */
+const cropZMin = () => { const [C, Rr] = gridDims(diceN); return cImg ? Math.min(1, zoomMin(cImg, C / Rr)) : 1; };
+function cropZoom(z) { cWork.z = Math.max(cropZMin(), Math.min(3, z)); $('czoom').value = cWork.z; reqCrop(); }
 {
   const cp = new Map(); let pd0 = 0, z0 = 1;
   const win = $('cwin');
@@ -1540,7 +1557,7 @@ function orderSheet() {
   g.fillStyle = '#e9fbff'; g.font = '600 64px "Chakra Petch", sans-serif'; g.fillText('PORTRAIT EN DÉS', 70, 190);
   const bw = 450, bh = Math.round(bw * Rr / C), top = 260;
   const [qx, qy, qw, qh] = cropRect(lastImg, C / Rr);
-  g.drawImage(lastImg, qx, qy, qw, qh, 70, top, bw, bh);
+  drawSrc(g, lastImg, qx, qy, qw, qh, 70, top, bw, bh);
   g.drawImage(boardCanvas(GR.custom, C, Rr), W - 70 - bw, top, bw, bh);
   g.strokeStyle = 'rgba(127,233,255,.6)'; g.lineWidth = 2; g.strokeRect(70, top, bw, bh); g.strokeRect(W - 70 - bw, top, bw, bh);
   g.fillStyle = '#5f8597'; g.font = '500 22px "JetBrains Mono", monospace'; g.fillText('TA PHOTO', 70, top + bh + 40); g.fillText('APERÇU EN DÉS', W - 70 - bw, top + bh + 40);
