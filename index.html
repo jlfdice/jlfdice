@@ -295,6 +295,7 @@ html, body { height: 100%; margin: 0; overflow: hidden; background: #000; color:
 .gatebar { position: absolute; left: 5cqw; right: 5cqw; top: 3cqh; width: auto; z-index: 5; }
 .inapp, .inapp * { text-transform: none; letter-spacing: normal; }
 #gate .inapp, #gate .inapp * { text-transform: none !important; letter-spacing: normal !important; }
+#sendig[hidden] { display: none !important; }
 </style>
 <template id="markup"><div id="frame" class="gate">
 <div id="bg"></div>
@@ -1855,7 +1856,13 @@ async function sendToArtist() {
   }
   $('sendimg').hidden = !blob; $('savesheet').hidden = !blob; $('sheetdl').hidden = !blob;
   $('sendsteps').innerHTML = `<li>${t('step1')}</li><li>${t('step2', {h: esc(STATE.handle)})}</li><li>${t('step3')}</li>`;
-  $('sendig').href = igDM(); $('send').hidden = false;
+  $('sendig').href = igDM(); $('sendig').hidden = false;
+  if (INAPP) {   /* already inside Instagram: no link to follow, the client just closes the page and writes to the artist */
+    const T = INAPP_SEND[inappLang()], h = esc(STATE.handle);
+    $('sendsteps').innerHTML = T.steps.map(x => `<li>${x.replace('{h}', h)}</li>`).join('');
+    $('sendig').hidden = true;
+  }
+  $('send').hidden = false;
 }
 /* inside the Claude viewer, files are handed over through the downloads capability */
 let DL = null;
@@ -2306,6 +2313,13 @@ document.addEventListener('click', e => {
   location.href = 'instagram://user?username=' + encodeURIComponent(STATE.handle);
   setTimeout(() => { if (!left && !document.hidden) location.href = h; }, 2500);
 }, true);
+
+const INAPP_SEND = {
+  fr: {steps: ['Appuie longuement sur la fiche → « Enregistrer l’image » (ou fais une capture d’écran).', 'Ferme cette page avec le <b>✕</b> en haut : tu reviens dans Instagram.', 'Va sur <b>@{h}</b> → « Message », puis envoie la fiche <b>et ta photo originale</b>. Ton message est déjà copié : colle-le.']},
+  en: {steps: ['Press and hold the sheet → “Save image” (or take a screenshot).', 'Close this page with the <b>✕</b> at the top: you’re back in Instagram.', 'Go to <b>@{h}</b> → “Message”, then send the sheet <b>and your original photo</b>. Your message is already copied: paste it.']},
+  es: {steps: ['Mantén pulsada la ficha → «Guardar imagen» (o haz una captura de pantalla).', 'Cierra esta página con la <b>✕</b> de arriba: vuelves a Instagram.', 'Ve a <b>@{h}</b> → «Mensaje» y envía la ficha <b>y tu foto original</b>. Tu mensaje ya está copiado: pégalo.']},
+  ru: {steps: ['Нажми и удерживай карточку → «Сохранить изображение» (или сделай скриншот).', 'Закрой эту страницу крестиком <b>✕</b> вверху — ты вернёшься в Instagram.', 'Открой <b>@{h}</b> → «Сообщение» и отправь карточку <b>и оригинал фото</b>. Сообщение уже скопировано — просто вставь его.']}
+};
 
 /* ================= IMMERSION LAYER =================
    WebGL background, cinematic post (bloom, lens, grain), mirror floor, dust in the light,
