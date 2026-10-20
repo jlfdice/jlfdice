@@ -1480,8 +1480,19 @@ async function sendToArtist() {
   $('sendsteps').innerHTML = `<li>${t('step1')}</li><li>${t('step2', {h: esc(STATE.handle)})}</li><li>${t('step3')}</li>`;
   $('sendig').href = igDM(); $('send').hidden = false;
 }
+/* inside the Claude viewer, files are handed over through the downloads capability */
+let DL = null;
+if (window.claude && window.claude.use) claude.use('downloads').then(d => { DL = d; }).catch(() => {});
+async function dlSheet() {
+  const b = sheet.blob; if (!b) return false;
+  if (!DL) return false;
+  try { await DL.save({filename: `commande-jlfdice-${lastRef}.png`, data: b}); toast(`<b style="color:var(--holo);margin:0">${t('saved')}</b>`); } catch (e) {}
+  return true;
+}
+$('sheetdl').addEventListener('click', e => { if (DL) { e.preventDefault(); dlSheet(); } });
 $('savesheet').addEventListener('click', async () => {
   const b = sheet.blob; if (!b) return;
+  if (DL) { dlSheet(); return; }
   const file = sheetFile(b), files = lastFile ? [file, lastFile] : [file];
   try {
     const share = navigator.canShare && navigator.canShare({files}) ? files : (navigator.canShare && navigator.canShare({files: [file]}) ? [file] : null);
