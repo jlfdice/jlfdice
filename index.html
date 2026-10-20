@@ -74,7 +74,7 @@ html, body { height: 100%; margin: 0; overflow: hidden; background: #000; color:
 #next { clip-path: polygon(0 0, 70% 0, 100% 50%, 70% 100%, 0 100%); }
 .arrow[disabled] { opacity: 0; pointer-events: none; }
 #prev { left: 2.4cqw; } #next { right: 2.4cqw; }
-#swipehint { left: 0; right: 0; top: 13.6cqh; text-align: center; font: 400 2.3cqw var(--mono); letter-spacing: .3em; text-transform: uppercase; color: var(--dim); }
+#swipehint { left: 0; right: 0; top: 16.4cqh; text-align: center; font: 400 2.3cqw var(--mono); letter-spacing: .3em; text-transform: uppercase; color: var(--dim); }
 #swipehint.gone { opacity: 0; }
 /* detail */
 #detailbar { position: absolute; top: 4.2cqh; left: 7cqw; right: 7cqw; display: flex; align-items: center; gap: 4cqw; opacity: 0; transition: opacity .45s ease; pointer-events: none; }
@@ -88,7 +88,7 @@ html, body { height: 100%; margin: 0; overflow: hidden; background: #000; color:
 #about { padding: 3cqw 3.6cqw; border: 1px solid var(--line); background: rgba(0,12,20,.78); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); clip-path: polygon(0 0, calc(100% - 3cqw) 0, 100% 3cqw, 100% 100%, 0 100%); }
 #about b { display: block; font: 500 2.2cqw var(--mono); letter-spacing: .24em; text-transform: uppercase; color: var(--holo); margin-bottom: 1.4cqw; }
 #about p { margin: 0; font-size: 3.2cqw; font-weight: 400; line-height: 1.45; color: #d6f6ff; }
-#frame.detail #top, #frame.detail #info, #frame.detail #count, #frame.detail .arrow, #frame.detail #swipehint, #frame.detail #ticker { opacity: 0; }
+#frame.detail #top, #frame.detail #info, #frame.detail #count, #frame.detail .arrow, #frame.detail #swipehint, #frame.detail #ticker, #frame.detail #tools { opacity: 0; }
 #frame.detail #detailbar, #frame.detail #dbottom, #frame.detail #readout { opacity: 1; }
 #frame.detail #detailbar button, #frame.detail #dbottom a { pointer-events: auto; }
 /* intro + gate */
@@ -121,7 +121,10 @@ html, body { height: 100%; margin: 0; overflow: hidden; background: #000; color:
 #toast.on { opacity: 1; transform: translate(-50%, -50%) scale(1); }
 #toast.deny { border-color: var(--deny); color: #ffd6de; }
 #toast b { display: block; color: var(--deny); font-size: 4cqw; letter-spacing: .3em; margin-bottom: 1cqw; }
-#gear { position: absolute; left: 7cqw; top: 12.6cqh; z-index: 6; font-size: 2.4cqw; padding: 1.6cqw 3cqw; }
+#tools { left: 7cqw; top: 11.2cqh; display: flex; gap: 1.6cqw; z-index: 6; }
+.tool { font: 500 2.1cqw var(--mono); letter-spacing: .16em; color: var(--holo); background: rgba(127,233,255,.06); border: 1px solid var(--line); padding: 1.2cqw 2cqw; cursor: pointer; }
+.tool[aria-pressed="false"] { color: var(--dim); }
+.tool:focus-visible, .tab:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
 #panel { position: absolute; inset: 0; z-index: 9; background: rgba(0,4,9,.95); display: flex; flex-direction: column; padding: 6cqh 7cqw 5cqh; gap: 4cqw; overflow-y: auto; touch-action: pan-y; user-select: text; -webkit-user-select: text; }
 #panel h2 { margin: 0; font-weight: 600; font-size: 5.4cqw; letter-spacing: .2em; text-transform: uppercase; color: var(--holo); }
 #panel p { margin: 0; color: var(--dim); font: 400 2.9cqw/1.5 var(--mono); }
@@ -132,6 +135,20 @@ html, body { height: 100%; margin: 0; overflow: hidden; background: #000; color:
 #panel .row { display: flex; gap: 2.4cqw; flex-wrap: wrap; margin-top: 1cqw; }
 #panel .msg { min-height: 1.5em; font: 400 2.9cqw var(--mono); color: var(--holo); }
 @media (prefers-reduced-motion: reduce) { #fx::after, .chip .dot { animation: none; } #frame.glitch #stage, #frame.glitch .hud .name { animation: none; } }
+
+#info .countdown { margin-top: 2.4cqw; font: 600 4.4cqw var(--mono); letter-spacing: .1em; color: var(--deny); text-shadow: 0 0 3cqw rgba(255,61,99,.6); font-variant-numeric: tabular-nums; }
+#info .countdown small { display: block; font: 400 2.2cqw var(--mono); letter-spacing: .24em; color: var(--dim); text-shadow: none; margin-bottom: .6cqw; }
+#about .tabs { display: flex; gap: 3cqw; margin-bottom: 1.8cqw; border-bottom: 1px solid var(--line); }
+.tab { font: 500 2.2cqw var(--mono); letter-spacing: .2em; text-transform: uppercase; color: var(--dim); background: none; border: 0; padding: 0 0 1.4cqw; cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; }
+.tab.on { color: var(--holo); border-bottom-color: var(--holo); }
+#comp { display: grid; grid-template-columns: auto 1fr auto; gap: 1.2cqw 2.4cqw; align-items: center; font: 400 2.5cqw var(--mono); color: #d6f6ff; font-variant-numeric: tabular-nums; }
+#comp .die { font-size: 4cqw; line-height: 1; color: var(--ink); }
+#comp .bar { height: 1.6cqw; background: rgba(127,233,255,.12); position: relative; }
+#comp .bar i { position: absolute; inset: 0 auto 0 0; background: linear-gradient(90deg, var(--holo-2), var(--holo)); box-shadow: 0 0 2cqw rgba(127,233,255,.5); transition: width .9s cubic-bezier(.2,.8,.2,1); }
+#comp .note { grid-column: 1 / -1; color: var(--dim); font-size: 2.2cqw; letter-spacing: .08em; margin-top: .6cqw; }
+#dbottom .drow { display: flex; gap: 2.4cqw; justify-content: center; flex-wrap: wrap; }
+#frame.detail #dbottom button { pointer-events: auto; }
+#frame.exploded #readout::after { content: "DÉCOMPOSITION ACTIVE"; display: block; color: var(--warn); }
 </style>
 <template id="markup"><div id="frame" class="gate">
 <div id="bg"></div>
@@ -144,14 +161,14 @@ html, body { height: 100%; margin: 0; overflow: hidden; background: #000; color:
 <div class="hud" id="top"><div><span class="t1">Archive</span><span class="t2" id="t2">JLF D'ICE</span></div></div>
 <div class="hud" id="count">01 / 02<small>SIGNAL STABLE</small></div>
 <div class="hud" id="ticker"></div>
-<button class="btn hud" id="gear" type="button" hidden>Gérer</button>
+<div class="hud menu-only" id="tools"><button class="tool" id="snd" type="button" aria-pressed="true">SON · ON</button><button class="tool" id="share" type="button">PARTAGER</button><button class="tool" id="gear" type="button" hidden>GÉRER</button></div>
 <button class="arrow hud menu-only" id="prev" type="button" aria-label="Œuvre précédente">‹</button>
 <button class="arrow hud menu-only" id="next" type="button" aria-label="Œuvre suivante">›</button>
 <div class="hud menu-only" id="swipehint">◂ glisser · toucher pour ouvrir ▸</div>
-<div class="hud out menu-only" id="info" aria-live="polite"><div class="num"></div><div class="name"></div><div class="sub"></div><div class="meta"></div><div class="hint" hidden></div><div class="actions"></div></div>
+<div class="hud out menu-only" id="info" aria-live="polite"><div class="num"></div><div class="name"></div><div class="sub"></div><div class="meta"></div><div class="countdown" hidden></div><div class="hint" hidden></div><div class="actions"></div></div>
 <div id="detailbar"><button class="btn" id="back" type="button">‹ Retour</button><span class="dt"><b id="dtitle">La Joconde</b><small>ANALYSE EN COURS</small></span></div>
 <div id="readout"></div>
-<div id="dbottom"><div id="about" hidden><b>Données · œuvre originale</b><p id="abouttxt"></p></div><small>Glisser pour pivoter · pincer pour zoomer</small><a class="btn primary" id="dorder" target="_blank" rel="noopener">Commander cette œuvre</a></div>
+<div id="dbottom"><div id="about"><div class="tabs" role="tablist"><button class="tab on" type="button" role="tab" data-tab="orig" id="tab-orig">Œuvre originale</button><button class="tab" type="button" role="tab" data-tab="comp" id="tab-comp">Composition</button></div><p id="abouttxt"></p><div id="comp" hidden></div></div><small>Glisser pour pivoter · pincer pour zoomer</small><div class="drow"><button class="btn" id="explode" type="button">Décomposer</button><a class="btn primary" id="dorder" target="_blank" rel="noopener">Commander</a></div></div>
 <button class="btn" id="skip" type="button">Passer ›</button>
 <div id="gate"><span class="k">JLF D'ICE</span><h1>Archive</h1><div class="boot" id="boot"></div><button class="btn primary" id="enter" type="button" disabled>Initialiser ▸</button><small>Son recommandé</small></div>
 <div id="toast" role="status"></div>
@@ -336,10 +353,20 @@ function painting(item, target) {
   const mat = new THREE.MeshStandardMaterial({map: board, roughness: .32, metalness: 0, envMapIntensity: .55,
     emissive: item.key === 'mystery' ? new THREE.Color(0xffffff) : new THREE.Color(0x000000), emissiveMap: item.key === 'mystery' ? board : null, emissiveIntensity: 0});
   mat.customProgramCacheKey = () => 'dice-' + c + 'x' + r;
-  mat.userData.uReveal = {value: 99};
+  mat.userData.uReveal = {value: 99}; mat.userData.uExplode = {value: 0}; mat.userData.uTimeE = {value: 0};
+  const uu = (48 / r).toFixed(4);
   mat.onBeforeCompile = shd => {
-    shd.uniforms.uReveal = mat.userData.uReveal;
-    shd.vertexShader = shd.vertexShader.replace('#include <common>', '#include <common>\nattribute vec2 aCell; varying float vFront; varying float vLocalY;')
+    shd.uniforms.uReveal = mat.userData.uReveal; shd.uniforms.uExplode = mat.userData.uExplode; shd.uniforms.uTimeE = mat.userData.uTimeE;
+    shd.vertexShader = shd.vertexShader.replace('#include <common>', '#include <common>\nattribute vec2 aCell; varying float vFront; varying float vLocalY; uniform float uExplode, uTimeE;')
+      .replace('#include <begin_vertex>', `#include <begin_vertex>
+ if (uExplode > 0.001) {
+   float hA = fract(sin(dot(aCell, vec2(12.9898, 78.233))) * 43758.5453), hB = fract(sin(dot(aCell, vec2(39.3468, 11.135))) * 24634.6345), hC = fract(sin(dot(aCell, vec2(73.156, 52.235))) * 34578.231);
+   vec3 ax = normalize(vec3(hA - .5, hB - .5, hC - .5) + 1e-3); float an = uExplode * (2. + hA * 9.) + uExplode * uTimeE * (hB - .5) * 2.;
+   transformed = transformed * cos(an) + cross(ax, transformed) * sin(an) + ax * dot(ax, transformed) * (1. - cos(an));
+   vec3 off = vec3((aCell.x / ${c.toFixed(1)} - .5) * 70. + (hA - .5) * 50., (.5 - aCell.y / ${r.toFixed(1)}) * 80. + (hB - .5) * 50., 10. + hC * 50.) + vec3(sin(uTimeE * .9 + hA * 6.28), cos(uTimeE * .7 + hB * 6.28), sin(uTimeE * .5 + hC * 6.28)) * 3.;
+   float e = uExplode * uExplode * (3. - 2. * uExplode);
+   transformed += off * e / vec3(.94 * ${uu}, .94 * ${uu}, .62 * ${uu});
+ }`)
       .replace('#include <project_vertex>', '#include <project_vertex>\n vLocalY = (instanceMatrix * vec4(transformed, 1.0)).y;')
       .replace('#include <uv_vertex>', `#include <uv_vertex>\n vFront = step(0.5, normal.z);\n vUv = vec2((aCell.x + uv.x) / ${c.toFixed(1)}, 1.0 - (aCell.y + 1.0 - uv.y) / ${r.toFixed(1)});`);
     shd.fragmentShader = shd.fragmentShader.replace('#include <common>', '#include <common>\nvarying float vFront; varying float vLocalY; uniform float uReveal;')
@@ -813,6 +840,7 @@ function renderInfo(i, scramble) {
   infoEl.querySelector('.sub').textContent = it.sub;
   infoEl.querySelector('.meta').innerHTML = `<span class="chip" style="color:${col}"><span class="dot"></span><span style="color:var(--ink)">${esc(label)}</span></span>` + it.chips.map(chipHTML).join('');
   const hint = infoEl.querySelector('.hint'); hint.hidden = !it.locked || !st.hint; hint.textContent = st.hint || '';
+  setTimeout(tickCountdown, 0);
   const acts = infoEl.querySelector('.actions');
   if (it.locked) acts.innerHTML = `<a class="btn primary" href="${igProfile()}" target="_blank" rel="noopener">Être prévenu</a>`;
   else {
@@ -838,6 +866,74 @@ let toastTimer = 0;
 function toast(html, deny) { toastEl.innerHTML = html; toastEl.classList.toggle('deny', !!deny); toastEl.classList.add('on'); clearTimeout(toastTimer); toastTimer = setTimeout(() => toastEl.classList.remove('on'), 2400); }
 function glitch(cls = 'glitch', ms = 340) { FRAME.classList.remove(cls); void FRAME.offsetWidth; FRAME.classList.add(cls); setTimeout(() => FRAME.classList.remove(cls), ms); }
 
+/* ---- countdown to the mystery reveal ---- */
+function fmtLeft(ms) { const s = Math.max(0, Math.floor(ms / 1000)), d = Math.floor(s / 86400), h = Math.floor(s % 86400 / 3600), m = Math.floor(s % 3600 / 60), x = s % 60; return `${pad2(d)}J ${pad2(h)}H ${pad2(m)}M ${pad2(x)}S`; }
+function tickCountdown() {
+  const it = ITEMS[sel], el = infoEl.querySelector('.countdown'), st = itemState(it), at = st.revealAt ? Date.parse(st.revealAt) : NaN;
+  if (!it.locked || !(at > Date.now())) { el.hidden = true; return; }
+  el.hidden = false; el.innerHTML = `<small>Révélation dans</small>${fmtLeft(at - Date.now())}`;
+}
+setInterval(tickCountdown, 1000);
+
+/* ---- sound toggle ---- */
+let muted = false;
+$('snd').addEventListener('click', () => {
+  muted = !muted; $('snd').setAttribute('aria-pressed', String(!muted)); $('snd').textContent = muted ? 'SON · OFF' : 'SON · ON';
+  if (AC) { const t = AC.currentTime; master.gain.cancelScheduledValues(t); master.gain.setValueAtTime(master.gain.value, t); master.gain.linearRampToValueAtTime(muted ? 0 : .8, t + .25); }
+});
+
+/* ---- share ---- */
+const SITE = /github\.io$/.test(location.hostname) ? location.origin + location.pathname : (STATE.site || 'https://jlfdice.github.io/jlfdice/');
+$('share').addEventListener('click', async () => {
+  const data = {title: "JLF D'ICE — Archive", text: 'Des tableaux faits uniquement avec des dés.', url: SITE};
+  try { if (navigator.share) { await navigator.share(data); return; } } catch (e) { if (e && e.name === 'AbortError') return; }
+  try { await navigator.clipboard.writeText(SITE); toast('<b style="color:var(--holo)">LIEN COPIÉ</b>' + esc(SITE)); }
+  catch (e) { toast('<b style="color:var(--holo)">LIEN</b>' + esc(SITE)); }
+});
+
+/* ---- composition: share of each die face in the piece ---- */
+const FACES = ['⚀', '⚁', '⚂', '⚃', '⚄', '⚅'];
+function composition(key) {
+  const s = GR[key] || '', n = [0, 0, 0, 0, 0, 0, 0]; for (const ch of s) n[+ch]++;
+  const tot = s.length || 1; return n.map(v => v / tot);
+}
+function renderComp(it) {
+  const p = composition(it.key), mx = Math.max(...p.slice(1)) || 1;
+  $('comp').innerHTML = FACES.map((f, k) => `<span class="die" aria-hidden="true">${f}</span><span class="bar"><i style="width:0"></i></span><span>${(p[k + 1] * 100).toFixed(1).replace('.', ',')} %</span>`).join('') +
+    `<span class="note">${p[0] > .001 ? `Faces vides · ${(p[0] * 100).toFixed(1).replace('.', ',')} %<br>` : ''}Plus une face a de points, plus la zone paraît claire.</span>`;
+  requestAnimationFrame(() => requestAnimationFrame(() => [...$('comp').querySelectorAll('.bar i')].forEach((b, k) => b.style.width = (p[k + 1] / mx * 100) + '%')));
+}
+function setTab(t) {
+  const it = ITEMS[sel];
+  $('tab-orig').classList.toggle('on', t === 'orig'); $('tab-comp').classList.toggle('on', t === 'comp');
+  $('tab-orig').setAttribute('aria-selected', String(t === 'orig')); $('tab-comp').setAttribute('aria-selected', String(t === 'comp'));
+  $('abouttxt').hidden = t !== 'orig'; $('comp').hidden = t !== 'comp';
+  if (t === 'comp') renderComp(it);
+}
+$('tab-orig').addEventListener('click', () => setTab('orig'));
+$('tab-comp').addEventListener('click', () => setTab('comp'));
+
+/* ---- decompose: the piece bursts into its dice, then reassembles ---- */
+let exTarget = 0, exV = 0;
+function setExplode(on) {
+  exTarget = on ? 1 : 0; FRAME.classList.toggle('exploded', !!on); $('explode').textContent = on ? 'Recomposer' : 'Décomposer';
+  if (sound) { if (on) { noiseSweep(200, 6000, 1.2, .09); blip(110, 55, 1.4, .18, 'sine'); } else { noiseSweep(6000, 300, 1.2, .08); blip(55, 110, 1.2, .12, 'sine'); } }
+}
+$('explode').addEventListener('click', () => setExplode(!exTarget));
+
+/* ---- depth parallax: tilt the phone, or move the mouse ---- */
+let camBase = null, parX = 0, parY = 0, tgX = 0, tgY = 0;
+addEventListener('resize', () => { camBase = camera.position.clone(); });
+addEventListener('pointermove', e => { if (e.pointerType !== 'mouse') return; const r = FRAME.getBoundingClientRect(); tgX = ((e.clientX - r.left) / r.width - .5) * 2; tgY = ((e.clientY - r.top) / r.height - .5) * 2; });
+function onTilt(e) { if (e.gamma == null) return; tgX = clamp(e.gamma / 25, -1, 1); tgY = clamp((e.beta - 50) / 25, -1, 1); }
+function askTilt() {
+  try {
+    const D = window.DeviceOrientationEvent;
+    if (D && typeof D.requestPermission === 'function') D.requestPermission().then(s => { if (s === 'granted') addEventListener('deviceorientation', onTilt); }).catch(() => {});
+    else if (D) addEventListener('deviceorientation', onTilt);
+  } catch (e) {}
+}
+
 /* ---- navigation ---- */
 function goTo(i) {
   i = Math.max(0, Math.min(ITEMS.length - 1, i));
@@ -856,11 +952,11 @@ function openDetail() {
   }
   mode = 'detail'; touchedOnce(); FRAME.classList.add('detail');
   $('dtitle').textContent = it.name; $('dorder').href = igDM();
-  $('about').hidden = !it.about; $('abouttxt').textContent = it.about || '';
+  $('abouttxt').textContent = it.about || ''; $('tab-orig').hidden = !it.about; setTab(it.about ? 'orig' : 'comp'); setExplode(false);
   yaw = -.35; pitch = 0; vyaw = .9; zoom = 1;
   if (sound) SFX.open();
 }
-function closeDetail() { if (mode !== 'detail') return; mode = 'menu'; FRAME.classList.remove('detail'); retT0 = tt; if (sound) SFX.close(); }
+function closeDetail() { if (mode !== 'detail') return; if (exTarget) setExplode(false); mode = 'menu'; FRAME.classList.remove('detail'); retT0 = tt; if (sound) SFX.close(); }
 $('prev').addEventListener('click', () => goTo(sel - 1));
 $('next').addEventListener('click', () => goTo(sel + 1));
 $('back').addEventListener('click', closeDetail);
@@ -930,6 +1026,7 @@ FRAME.addEventListener('wheel', e => { if (mode === 'detail') { e.preventDefault
 
 /* ---- intro ---- */
 function enterIntro() {
+  askTilt();
   try { initAudio(); sound = true; } catch (e) { sound = false; }
   if (sound) { OUT = INTROBUS; introSound(); OUT = SFXBUS; }
   mode = 'intro'; FRAME.classList.remove('gate'); FRAME.classList.add('intro'); introT0 = performance.now();
@@ -1004,7 +1101,12 @@ function loop(now) {
     u.laser.visible = u.halo.visible = scanning; u.laser.position.y = u.halo.position.y = y;
     u.halo.material.opacity = .9 * Math.sin(rp * Math.PI);
   });
-  const g = P[sel]; g.updateMatrixWorld(); placeReticle(g, 1 - detK * .6);
+  exV = clamp(exV + Math.sign(exTarget - exV) * dt / 1.3);
+  P.forEach((pg, i) => { pg.userData.mat.userData.uExplode.value = i === sel ? exV : 0; pg.userData.mat.userData.uTimeE.value = tt; });
+  if (!camBase) camBase = camera.position.clone();
+  parX += (tgX - parX) * (1 - Math.exp(-dt * 4)); parY += (tgY - parY) * (1 - Math.exp(-dt * 4));
+  camera.position.set(camBase.x + parX * 14, camBase.y - parY * 9, camBase.z); camera.lookAt(0, 2, 0);
+  const g = P[sel]; g.updateMatrixWorld(); placeReticle(g, (1 - detK * .6) * (1 - exV));
   if (mode === 'detail') $('readout').innerHTML = `ROT ${(yaw * 57.3 >= 0 ? '+' : '−') + Math.abs(((yaw * 57.3) % 360)).toFixed(1).padStart(5, '0')}°<br>INCL ${(pitch * 57.3 >= 0 ? '+' : '−') + Math.abs(pitch * 57.3).toFixed(1).padStart(4, '0')}°<br>ZOOM ×${zoom.toFixed(2)}<br>MATIÈRE · DÉS À JOUER`;
   if ((tickT += dt) > .25) { tickT = 0; ticker(); }
   cone.position.x = (sel - s) * SPACING * 0; cone.material.opacity = .14 + .04 * Math.sin(tt * 2);
@@ -1032,7 +1134,8 @@ function openPanel() {
     const st = itemState(it), fs = document.createElement('fieldset');
     const opts = Object.entries(STATUS).map(([k, [l]]) => `<option value="${k}"${k === st.status ? ' selected' : ''}>${esc(l)}</option>`).join('');
     fs.innerHTML = `<legend>OBJET ${it.num} · ${esc(it.name)}</legend><label for="s-${it.key}">Statut<select id="s-${it.key}">${opts}</select></label>` +
-      (it.locked ? `<label for="h-${it.key}">Texte du mystère<input id="h-${it.key}" type="text" maxlength="120" value="${esc(st.hint || '')}"></label>` : '');
+      (it.locked ? `<label for="h-${it.key}">Texte du mystère<input id="h-${it.key}" type="text" maxlength="120" value="${esc(st.hint || '')}"></label>` +
+        `<label for="d-${it.key}">Date de révélation (compte à rebours, facultatif)<input id="d-${it.key}" type="datetime-local" value="${st.revealAt ? new Date(Date.parse(st.revealAt) - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 16) : ''}"></label>` : '');
     box.appendChild(fs);
   });
   $('f-handle').value = STATE.handle; $('pmsg').textContent = ''; $('panel').hidden = false;
@@ -1055,7 +1158,7 @@ async function savePanel() {
   const h = $('f-handle').value.trim().replace(/^@/, '');
   if (!/^[A-Za-z0-9._]{1,30}$/.test(h)) { $('pmsg').textContent = 'Nom Instagram invalide : lettres, chiffres, points et _ uniquement.'; return; }
   next.handle = h; next.items = next.items || {};
-  ITEMS.forEach(it => { const o = {status: $('s-' + it.key).value}; const hi = $('h-' + it.key); if (hi) o.hint = hi.value.trim(); next.items[it.key] = o; });
+  ITEMS.forEach(it => { const o = {status: $('s-' + it.key).value}; const hi = $('h-' + it.key); if (hi) o.hint = hi.value.trim(); const di = $('d-' + it.key); if (di && di.value) o.revealAt = new Date(di.value).toISOString(); next.items[it.key] = o; });
   $('psave').disabled = true; $('pmsg').textContent = 'Publication…';
   try { await ART.publish(buildDocument(next)); $('pmsg').textContent = 'Publié. La page se recharge pour tout le monde.'; }
   catch (err) {
