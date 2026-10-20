@@ -1231,7 +1231,7 @@ $('snd').addEventListener('click', () => {
 });
 
 /* ---- share ---- */
-const SITE = /github\.io$/.test(location.hostname) ? location.origin + location.pathname : (STATE.site || 'https://jlfdice.github.io/jlfdice/');
+const SITE = /(github\.io|jlfdice\.fr)$/.test(location.hostname) ? location.origin + location.pathname : (STATE.site || 'https://jlfdice.fr/');
 $('share').addEventListener('click', async () => {
   const data = {title: "JLF D'ICE — Archive", text: t('shareText'), url: SITE};
   try { if (navigator.share) { await navigator.share(data); return; } } catch (e) { if (e && e.name === 'AbortError') return; }
