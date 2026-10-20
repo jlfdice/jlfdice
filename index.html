@@ -1355,9 +1355,9 @@ function gridDims(n, sh = shape) {
   }
   return best ? [best[0], best[1]] : (sh === 'square' ? [86, 86] : [75, 100]);
 }
-/* every public preview is deliberately "salted": about 30 % of the dice are shifted by one face. From a distance the portrait reads the same,
+/* every public preview is deliberately "salted": about 15 % of the dice are shifted by one face. From a distance the portrait reads the same,
    but the grid can't be copied die by die — the real build plan is recomputed in the workshop from the original photo. */
-function salted(F, L, p = .3) {
+function salted(F, L, p = .15) {
   let seed = 0; for (let i = 0; i < L.length; i += 97) seed = (seed * 31 + Math.round(L[i] * 255)) % 1000003;
   let s = '';
   for (let i = 0; i < F.length; i++) { let f = F[i]; const h = hashR(seed + i * 7.13); if (f > 0 && h < p) f = Math.max(1, Math.min(6, f + (h < p / 2 ? -1 : 1))); s += f; }
@@ -1481,11 +1481,11 @@ function openCrop(img) {
 function drawCrop() {
   if (!cImg || $('crop').hidden) return;
   const [C, Rr] = gridDims(diceN), ar = C / Rr, box = $('cwin').parentElement.getBoundingClientRect();
-  const [F0, L0] = faces(cImg, C, Rr, cWork), art = farArt(boardCanvas(salted(F0, L0), C, Rr), C, Rr);
+  const [F0, L0] = faces(cImg, C, Rr, cWork), art = boardCanvas(salted(F0, L0), C, Rr);   /* exactly the grid the painting will get */
   if (cStep === 'opts') {
     /* step 2: the finished piece on a wall, seen from afar — the dice are too small to be read one by one */
     let w = Math.min(box.width, 560), h = w * 1.15; if (h > box.height) { h = box.height; w = h / 1.15; }
-    const big = $('cbig'), d = Math.min(devicePixelRatio, 2); big.style.width = w + 'px'; big.style.height = h + 'px';
+    const big = $('cbig'), d = Math.min(devicePixelRatio || 1, 3); big.style.width = w + 'px'; big.style.height = h + 'px';
     big.width = Math.round(w * d); big.height = Math.round(h * d);
     big.getContext('2d').drawImage(finishedView(art, big.width, big.height, C, Rr, dieMM), 0, 0); return;
   }
