@@ -178,8 +178,7 @@ html, body { height: 100%; margin: 0; overflow: hidden; background: #000; color:
 #langs button[aria-pressed="true"] { color: #001018; background: var(--holo); border-color: var(--holo); }
 #langs button:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
 
-#stars { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 1; pointer-events: none; transition: opacity .5s; }
-#frame.intro #stars, #frame:not(.gate):not(.travel) #stars { opacity: 0; }
+#stars { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 1; pointer-events: none; }
 #frame.travel #gate { opacity: 0; transform: scale(1.4); pointer-events: none; }
 #frame.travel #gate, #frame.gate #gate { display: flex; }
 #gate .pick { margin: 3cqw 0 0; font: 400 2.4cqw var(--mono); letter-spacing: .12em; color: var(--holo); text-transform: uppercase; }
@@ -189,10 +188,12 @@ html, body { height: 100%; margin: 0; overflow: hidden; background: #000; color:
 .flag:hover, .flag:focus-visible { background: rgba(127,233,255,.16); transform: translateY(-.6cqw); outline: none; }
 .flag:focus-visible { box-shadow: 0 0 0 2px #fff; }
 #frame:not(.gate):not(.travel) #gate { display: none; }
+
+#comp .die.blk { display: inline-block; width: 3.2cqw; height: 3.2cqw; background: #000; border: 1px solid var(--line); border-radius: .6cqw; box-shadow: inset 0 0 0 .4cqw #111; }
 </style>
 <template id="markup"><div id="frame" class="gate">
 <div id="bg"></div>
-<canvas id="stage" aria-label="Archive 3D des tableaux en dés"></canvas>
+<canvas id="stage" aria-label="Archive 3D des tableaux en dés" data-ia="aria.stage"></canvas>
 <div id="reticle"><i></i><i></i><i></i><i></i><span class="tag">CIBLE VERROUILLÉE</span><span class="tag2"></span></div>
 <div id="intro-ui"><div id="blackout"></div></div>
 <div id="fx"></div><div id="deny"></div>
@@ -203,8 +204,8 @@ html, body { height: 100%; margin: 0; overflow: hidden; background: #000; color:
 <div class="hud" id="ticker"></div>
 <div class="hud menu-only" id="tools"><button class="tool" id="snd" type="button" aria-pressed="true">SON · ON</button><button class="tool" id="share" type="button" data-i="ui.share">PARTAGER</button><button class="tool" id="lang" type="button" aria-label="Langue / Language / Idioma">FR</button><button class="tool hot" id="mkgo" type="button" data-i="ui.create">✦ CRÉER</button><button class="tool" id="gear" type="button" hidden>GÉRER</button></div>
 <input id="mkfile" type="file" accept="image/*" hidden>
-<button class="arrow hud menu-only" id="prev" type="button" aria-label="Œuvre précédente">‹</button>
-<button class="arrow hud menu-only" id="next" type="button" aria-label="Œuvre suivante">›</button>
+<button class="arrow hud menu-only" id="prev" type="button" aria-label="Œuvre précédente" data-ia="aria.prev">‹</button>
+<button class="arrow hud menu-only" id="next" type="button" aria-label="Œuvre suivante" data-ia="aria.next">›</button>
 <div class="hud menu-only" id="swipehint" data-i="ui.swipe">◂ glisser · toucher pour ouvrir ▸</div>
 <div class="hud out menu-only" id="info" aria-live="polite"><div class="num"></div><div class="name"></div><div class="sub"></div><div class="meta"></div><div class="countdown" hidden></div><div class="dsel" id="dsel" hidden><span class="dl" data-i="ui.nDice">Nombre de dés</span><div class="dopts" role="radiogroup" aria-label="Nombre de dés"></div><span class="dl dl2" data-i="ui.shape">Forme</span><div class="dopts fopts" role="radiogroup" aria-label="Forme"></div><span class="dl dl2" data-i="ui.sizeDice">Taille des dés</span><div class="dopts sopts" role="radiogroup" aria-label="Taille des dés"></div><span class="dinfo" id="dinfo"></span></div><div class="hint" hidden></div><div class="actions"></div></div>
 <div id="detailbar"><button class="btn" id="back" type="button" data-i="ui.back">‹ Retour</button><span class="dt"><b id="dtitle">La Joconde</b><small data-i="ui.analysing">ANALYSE EN COURS</small></span></div>
@@ -353,11 +354,12 @@ function labelCanvas(item) {
   g.fillStyle = '#efe8d8'; g.fillRect(0, 0, 600, 380); g.strokeStyle = '#1b1b1b'; g.lineWidth = 3; g.strokeRect(16, 16, 568, 348);
   g.fillStyle = '#141414'; g.textAlign = 'center';
   g.font = '700 50px Georgia, serif'; g.fillText("JLF D'ICE", 300, 86);
-  g.font = 'italic 600 36px Georgia, serif'; g.fillText(item.key === 'mystery' ? '? ? ?' : item.name, 300, 146);
-  g.font = '400 25px "Exo 2", Arial, sans-serif'; g.fillText('Dés à jouer, assemblés à la main', 300, 204); g.fillText('Pièce unique · 1/1', 300, 244);
+  const LT = window.LABEL_TXT ? window.LABEL_TXT(item) : [item.key === 'mystery' ? '? ? ?' : item.name, 'Dés à jouer, assemblés à la main', 'Pièce unique · 1/1', 'signé au dos'];
+  g.font = 'italic 600 36px Georgia, serif'; g.fillText(LT[0], 300, 146);
+  g.font = '400 25px "Exo 2", Arial, sans-serif'; g.fillText(LT[1], 300, 204); g.fillText(LT[2], 300, 244);
   g.strokeStyle = '#1d2b6b'; g.lineWidth = 3; g.beginPath(); g.moveTo(190, 312);
   for (let x = 0; x <= 220; x += 4) g.lineTo(190 + x, 312 + Math.sin(x * .09) * 12 * Math.sin(x * .02) - x * .05); g.stroke();
-  g.font = '400 18px Arial, sans-serif'; g.fillStyle = '#555'; g.fillText('signé au dos', 300, 350);
+  g.font = '400 18px Arial, sans-serif'; g.fillStyle = '#555'; g.fillText(LT[3], 300, 350);
   return c;
 }
 let WOOD, KRAFT;
@@ -377,7 +379,7 @@ function backside(grp, hw, hh, item) {
   kraft.position.z = Z - .02; kraft.rotation.y = Math.PI; grp.add(kraft);
   // artist label
   const lab = new THREE.Mesh(new THREE.PlaneGeometry(12, 7.6), new THREE.MeshStandardMaterial({map: tex(labelCanvas(item)), color: 0xb4b4b4, roughness: .9, envMapIntensity: .3}));
-  lab.position.set(0, -hh * .42, Z - .05); lab.rotation.y = Math.PI; grp.add(lab);
+  lab.position.set(0, -hh * .42, Z - .05); lab.rotation.y = Math.PI; grp.add(lab); grp.userData.label = lab;
   // D-rings + hanging wire
   const ringY = hh * .5, ringX = hw * .7, zr = Z - .35;
   for (const sx of [-1, 1]) {
@@ -437,7 +439,7 @@ function painting(item, target) {
   pl.position.set(0, -(BHd / 2 + .3 + 2.75), 2.85); grp.add(pl);
   const glow = new THREE.Sprite(new THREE.SpriteMaterial({map: tex(glowCanvas(item.key === 'mystery' ? '255,80,110' : '80,210,255')), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, opacity: 0}));
   glow.scale.set(120, 120, 1); glow.position.z = -12; grp.add(glow);
-  grp.userData = {mat, glow}; (target || scene).add(grp); return grp;
+  Object.assign(grp.userData, {mat, glow, plaque: pl}); (target || scene).add(grp); return grp;
 }
 const P = ITEMS.map(it => painting(it));
 
@@ -828,6 +830,7 @@ const I18N = {
     'ui.data': 'Données · œuvre originale', 'ui.tabOrig': 'Œuvre originale', 'ui.tabComp': 'Composition', 'ui.rotate': 'Glisser pour pivoter · pincer pour zoomer', 'ui.orderPiece': 'Commander',
     'ui.skip': 'Passer ›', 'ui.init': 'Initialiser ▸', 'ui.soundRec': 'Son recommandé', 'ui.approach': 'Approche', 'ui.dist': 'DISTANCE HORIZON', 'ui.capture': 'CAPTURE GRAVITATIONNELLE',
     'ui.shape': 'Forme', 'shape.rect': 'Rectangle', 'shape.square': 'Carré',
+    'aria.stage': 'Archive 3D des tableaux en dés', 'aria.prev': 'Œuvre précédente', 'aria.next': 'Œuvre suivante', blackDice: 'Dés noirs', backL: ['Dés à jouer, assemblés à la main', 'Pièce unique · 1/1', 'signé au dos'], madeL: 'Sur mesure',
     'ui.nDice': 'Nombre de dés', 'ui.sizeDice': 'Taille des dés', 'ui.privacy': 'Ta photo reste sur ton appareil · rien n’est envoyé', 'ui.sendTitle': 'Envoyer à JLF D’ICE', 'ui.openConv': 'Ouvrir la conversation', 'ui.close': 'Fermer',
     'chip.Dés à jouer': 'Dés à jouer', 'chip.Fait main': 'Fait main', 'chip.Confidentiel': 'Confidentiel', 'chip.Pièce unique': 'Pièce unique', 'chip.Sur mesure': 'Sur mesure',
     'it.mona.name': 'La Joconde', 'it.mona.sub': 'd’après Léonard de Vinci', 'it.mystery.name': '? ? ?', 'it.mystery.sub': 'Tableau mystère',
@@ -852,6 +855,7 @@ const I18N = {
     'ui.data': 'Data · original artwork', 'ui.tabOrig': 'Original', 'ui.tabComp': 'Composition', 'ui.rotate': 'Drag to rotate · pinch to zoom', 'ui.orderPiece': 'Order',
     'ui.skip': 'Skip ›', 'ui.init': 'Initialise ▸', 'ui.soundRec': 'Sound recommended', 'ui.approach': 'Approach', 'ui.dist': 'DISTANCE TO HORIZON', 'ui.capture': 'GRAVITATIONAL CAPTURE',
     'ui.shape': 'Shape', 'shape.rect': 'Rectangle', 'shape.square': 'Square',
+    'aria.stage': '3D archive of dice paintings', 'aria.prev': 'Previous piece', 'aria.next': 'Next piece', blackDice: 'Black dice', backL: ['Playing dice, assembled by hand', 'One of a kind · 1/1', 'signed on the back'], madeL: 'Made to order',
     'ui.nDice': 'Number of dice', 'ui.sizeDice': 'Dice size', 'ui.privacy': 'Your photo stays on your device · nothing is uploaded', 'ui.sendTitle': 'Send to JLF D’ICE', 'ui.openConv': 'Open the chat', 'ui.close': 'Close',
     'chip.Dés à jouer': 'Playing dice', 'chip.Fait main': 'Handmade', 'chip.Confidentiel': 'Confidential', 'chip.Pièce unique': 'One of a kind', 'chip.Sur mesure': 'Made to order',
     'it.mona.name': 'Mona Lisa', 'it.mona.sub': 'after Leonardo da Vinci', 'it.mystery.name': '? ? ?', 'it.mystery.sub': 'Mystery piece',
@@ -876,6 +880,7 @@ const I18N = {
     'ui.data': 'Datos · obra original', 'ui.tabOrig': 'Obra original', 'ui.tabComp': 'Composición', 'ui.rotate': 'Desliza para girar · pellizca para ampliar', 'ui.orderPiece': 'Encargar',
     'ui.skip': 'Saltar ›', 'ui.init': 'Iniciar ▸', 'ui.soundRec': 'Sonido recomendado', 'ui.approach': 'Aproximación', 'ui.dist': 'DISTANCIA AL HORIZONTE', 'ui.capture': 'CAPTURA GRAVITATORIA',
     'ui.shape': 'Forma', 'shape.rect': 'Rectángulo', 'shape.square': 'Cuadrado',
+    'aria.stage': 'Archivo 3D de cuadros de dados', 'aria.prev': 'Obra anterior', 'aria.next': 'Obra siguiente', blackDice: 'Dados negros', backL: ['Dados de juego, montados a mano', 'Pieza única · 1/1', 'firmado al dorso'], madeL: 'A medida',
     'ui.nDice': 'Número de dados', 'ui.sizeDice': 'Tamaño de los dados', 'ui.privacy': 'Tu foto se queda en tu dispositivo · no se envía nada', 'ui.sendTitle': 'Enviar a JLF D’ICE', 'ui.openConv': 'Abrir el chat', 'ui.close': 'Cerrar',
     'chip.Dés à jouer': 'Dados de juego', 'chip.Fait main': 'Hecho a mano', 'chip.Confidentiel': 'Confidencial', 'chip.Pièce unique': 'Pieza única', 'chip.Sur mesure': 'A medida',
     'it.mona.name': 'La Gioconda', 'it.mona.sub': 'según Leonardo da Vinci', 'it.mystery.name': '? ? ?', 'it.mystery.sub': 'Obra misteriosa',
@@ -897,7 +902,7 @@ const STATUS = {
   dispo: ['Disponible', '#6dffb4'], reserve: ['Réservé', '#ffb347'], vendu: ['Vendu', '#ff6f8a'],
   privee: ['Collection privée', '#ffd48a'], bientot: ['Classifié', '#ff3d63'], apercu: ['Aperçu généré', '#7fe9ff'], surmesure: ['Sur mesure', '#ffb347'],
 };
-const itemState = it => it.custom ? {status: it.placeholder ? 'surmesure' : 'apercu'} : Object.assign(it.locked ? {status: 'bientot', hint: t('hintDefault')} : {status: 'dispo'}, STATE.items[it.key] || {});
+const itemState = it => { if (it.custom) return {status: it.placeholder ? 'surmesure' : 'apercu'}; const o = Object.assign(it.locked ? {status: 'bientot', hint: t('hintDefault')} : {status: 'dispo'}, STATE.items[it.key] || {}); if (o.hint && LANGS.some(l => I18N[l].hintDefault === o.hint)) o.hint = t('hintDefault'); return o; };
 const igDM = () => `https://ig.me/m/${encodeURIComponent(STATE.handle)}`;
 const igProfile = () => `https://www.instagram.com/${encodeURIComponent(STATE.handle)}/`;
 
@@ -1042,9 +1047,11 @@ function composition(key) {
 }
 function renderComp(it) {
   const p = composition(it.key), mx = Math.max(...p.slice(1)) || 1;
-  $('comp').innerHTML = FACES.map((f, k) => `<span class="die" aria-hidden="true">${f}</span><span class="bar"><i style="width:0"></i></span><span>${(p[k + 1] * 100).toFixed(1).replace('.', ',')} %</span>`).join('') +
-    `<span class="note">${p[0] > .001 ? `${t('blank')} · ${(p[0] * 100).toFixed(1).replace('.', ',')} %<br>` : ''}${t('compNote')}</span>`;
-  requestAnimationFrame(() => requestAnimationFrame(() => [...$('comp').querySelectorAll('.bar i')].forEach((b, k) => b.style.width = (p[k + 1] / mx * 100) + '%')));
+  const pct = v => (v * 100).toFixed(1).replace('.', LANG === 'en' ? '.' : ',') + ' %', mx2 = Math.max(mx, p[0]) || 1;
+  const rows = [[`<span class="die blk" title="${t('blackDice')}"></span>`, p[0]]].concat(FACES.map((f, k) => [`<span class="die" aria-hidden="true">${f}</span>`, p[k + 1]]));
+  $('comp').innerHTML = rows.map(([g, v], k) => `${g}<span class="bar" ${k === 0 ? `aria-label="${t('blackDice')}"` : ''}><i style="width:0"></i></span><span>${pct(v)}</span>`).join('') +
+    `<span class="note">■ = ${t('blackDice')} · ${t('compNote')}</span>`;
+  requestAnimationFrame(() => requestAnimationFrame(() => [...$('comp').querySelectorAll('.bar i')].forEach((b, k) => b.style.width = (rows[k][1] / mx2 * 100) + '%')));
 }
 function setTab(t) {
   const it = ITEMS[sel];
@@ -1139,7 +1146,7 @@ function setCustom(grid, C, Rr, generated) {
     : {key: 'custom', custom: true, placeholder: true, num: '∞', name: 'Crée le tien', sub: 'Transforme ta photo en tableau de dés', chips: ['Pièce unique'], plaque: ['Crée le tien', "JLF D'ICE", 'Sur mesure']};
   if (CUSTOM >= 0) { scene.remove(P[CUSTOM]); P[CUSTOM].traverse(o => { if (o.geometry) o.geometry.dispose(); }); ITEMS[CUSTOM] = item; }
   else { CUSTOM = ITEMS.length; ITEMS.push(item); reveal.push({t0: -9}); }
-  const g = painting(item); P[CUSTOM] = g; equip(g, CUSTOM);
+  const g = painting(item); P[CUSTOM] = g; equip(g, CUSTOM); if (typeof relabel === 'function' && LANG) relabel();
   if (generated) g.userData.mat.userData.uReveal.value = -30;
   g.position.x = (CUSTOM - s) * SPACING; g.scale.setScalar(.0001);
 }
@@ -1329,12 +1336,13 @@ function bootFull() { const L = bootLines(); $('boot').innerHTML = L.map((l, i) 
 const starsCv = $('stars'), sctx = starsCv.getContext('2d');
 const SN = 520, ST = [];
 for (let i = 0; i < SN; i++) ST.push({x: (Math.random() - .5) * 2, y: (Math.random() - .5) * 2, z: Math.random(), pz: 0, c: Math.random()});
-let warpV = .06, travelT0 = 0;
+let warpV = .06, travelT0 = 0, fromTravel = false;
 function sizeStars() { const r = FRAME.getBoundingClientRect(), d = Math.min(devicePixelRatio, 2); starsCv.width = Math.max(1, Math.round(r.width * d)); starsCv.height = Math.max(1, Math.round(r.height * d)); }
 sizeStars(); addEventListener('resize', sizeStars);
-function drawStars(dt, glow) {
+function drawStars(dt, glow, see) {
   const W = starsCv.width, H = starsCv.height, cx = W / 2, cy = H * .46, f = Math.min(W, H) * .9;
-  sctx.fillStyle = `rgba(0,3,7,${Math.min(1, .35 + 2.5 * dt / Math.max(.02, warpV))})`; sctx.fillRect(0, 0, W, H);
+  if (see) sctx.clearRect(0, 0, W, H);
+  else { sctx.fillStyle = `rgba(0,3,7,${Math.min(1, .35 + 2.5 * dt / Math.max(.02, warpV))})`; sctx.fillRect(0, 0, W, H); }
   if (glow > 0) { const gr = sctx.createRadialGradient(cx, cy, 0, cx, cy, f * .9); gr.addColorStop(0, `rgba(255,170,90,${.35 * glow})`); gr.addColorStop(.25, `rgba(90,140,255,${.18 * glow})`); gr.addColorStop(1, 'rgba(0,0,0,0)'); sctx.fillStyle = gr; sctx.fillRect(0, 0, W, H); }
   for (const s0 of ST) {
     s0.pz = s0.z; s0.z -= warpV * dt;
@@ -1368,7 +1376,7 @@ function enterMenu(skipped) {
     const t = AC.currentTime; INTROBUS.gain.cancelScheduledValues(t); INTROBUS.gain.setValueAtTime(INTROBUS.gain.value, t); INTROBUS.gain.linearRampToValueAtTime(0, t + (skipped ? .35 : 1));
     PAD.gain.cancelScheduledValues(t); PAD.gain.setValueAtTime(0, t); PAD.gain.linearRampToValueAtTime(.055, t + 2.5);
   }
-  mode = 'menu'; menuT0 = performance.now(); FRAME.classList.remove('intro'); glitch();
+  mode = 'menu'; menuT0 = performance.now(); FRAME.classList.remove('intro'); glitch(); starsCv.style.opacity = 0;
   infoEl.classList.add('out'); setTimeout(() => showInfo(sel, false), 500);
   retT0 = tt + .6; setTimeout(() => { if (ITEMS[sel].locked) spinT0 = tt; else scan(sel); }, 650);
 }
@@ -1418,10 +1426,22 @@ function physTarget() {
   return {k: clamp(Rr * dieMM / 10 / 116.7, .4, 1.7), H: Rr * dieMM / 10};
 }
 
+/* ---- translated plaque and back label on each frame ---- */
+window.LABEL_TXT = it => [it.locked ? '? ? ?' : itName(it)].concat(t('backL'));
+function relabel() {
+  P.forEach((g, i) => {
+    const it = ITEMS[i], u = g.userData;
+    if (u.plaque) { const mm = u.plaque.material[4]; if (mm.map) mm.map.dispose(); mm.map = tex(plaqueCanvas([it.locked ? '? ? ?' : itName(it), "JLF D'ICE", it.custom ? t('madeL') : '1/1'])); mm.needsUpdate = true; }
+    if (u.label) { const lm = u.label.material; if (lm.map) lm.map.dispose(); lm.map = tex(labelCanvas(it)); lm.needsUpdate = true; }
+  });
+}
+
 /* ---- language switch ---- */
 function applyLang() {
   document.documentElement.lang = LANG;
   document.querySelectorAll('[data-i]').forEach(el => { el.textContent = t(el.dataset.i); });
+  document.querySelectorAll('[data-ia]').forEach(el => { el.setAttribute('aria-label', t(el.dataset.ia)); });
+  relabel();
   $('lang').textContent = LANG.toUpperCase();
   document.querySelectorAll('.flag').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.l === LANG)));
   $('snd').textContent = `${t('ui.sound')} · ${muted ? 'OFF' : 'ON'}`;
@@ -1437,11 +1457,11 @@ $('lang').addEventListener('click', () => setLang(LANGS[(LANGS.indexOf(LANG) + 1
 function loop(now) {
   const dt = Math.min(.05, Math.max(0, (now - last) / 1000)); last = now; tt += dt;
   if (mode === 'gate' || mode === 'travel') {
-    const k = mode === 'travel' ? clamp((now - travelT0) / 2600) : 0;
+    const k = mode === 'travel' ? clamp((now - travelT0) / 2400) : 0;
     warpV = mode === 'gate' ? .07 : .07 + 3.2 * Math.pow(k, 2.2);
-    drawStars(dt, mode === 'travel' ? Math.pow(k, 3) : 0);
-    blackEl.style.opacity = mode === 'travel' ? clamp((k - .82) / .18) : 0;
-    if (mode === 'travel' && k >= 1) enterIntro();
+    starsCv.style.opacity = 1; drawStars(dt, mode === 'travel' ? Math.pow(k, 3) : 0, false);
+    blackEl.style.opacity = 0;
+    if (mode === 'travel' && k >= 1) { fromTravel = true; enterIntro(); }
     requestAnimationFrame(loop); return;
   }
   if (mode === 'intro') {
@@ -1449,6 +1469,13 @@ function loop(now) {
     if (mode === 'intro' && T >= INTRO) enterMenu(false);
     else {
       renderIntro(Math.min(T, INTRO - .001));
+      if (fromTravel) {
+        /* crossfade: the warp slows down and its streaks dissolve while the black hole fades in behind them */
+        const e = clamp(T / 1.8);
+        blackEl.style.opacity = clamp((T - 6.95) / .45);
+        if (e < 1) { warpV = lerp(3.3, .25, ease(e)); starsCv.style.opacity = 1 - ease(e); drawStars(dt, (1 - e) * .8, true); }
+        else starsCv.style.opacity = 0;
+      }
       if (mode === 'intro') { const k = clamp(T / (INTRO - .4)); $('ih1').textContent = `${t('ui.dist')} · ${Math.round(4800 * Math.pow(1 - k, 2.2)).toLocaleString(LOC())} KM`; $('ih2').textContent = `${t('ui.capture')} · ${Math.round(100 * Math.pow(k, 1.6))} %`; $('ihbar').style.width = (100 * k) + '%'; }
       requestAnimationFrame(loop); return;
     }
