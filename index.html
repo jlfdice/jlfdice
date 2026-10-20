@@ -1045,7 +1045,8 @@ function renderInfo(i, scramble) {
   infoEl.querySelector('.num').textContent = it.custom ? `${t('object')} ∞ // ${t(it.placeholder ? 'toCreate' : 'forYou')}` : `${t('object')} ${it.num} // ${t(it.locked ? 'classified' : 'archived')}`;
   const nm = infoEl.querySelector('.name'); if (scramble) decrypt(nm, itName(it)); else nm.textContent = itName(it);
   infoEl.querySelector('.sub').textContent = itSub(it);
-  infoEl.querySelector('.meta').innerHTML = `<span class="chip" style="color:${col}"><span class="dot"></span><span style="color:var(--ink)">${esc(label)}</span></span>` + it.chips.map(c => chipHTML(chipL(c))).join('');
+  if (it.custom) infoEl.querySelector('.meta').innerHTML = chipHTML([chipT('Sur mesure'), 'gold']);
+  else infoEl.querySelector('.meta').innerHTML = `<span class="chip" style="color:${col}"><span class="dot"></span><span style="color:var(--ink)">${esc(label)}</span></span>` + it.chips.map(c => chipHTML(chipL(c))).join('');
   const hint = infoEl.querySelector('.hint'); hint.hidden = !it.locked || !st.hint; hint.textContent = st.hint || '';
   setTimeout(tickCountdown, 0);
   const acts = infoEl.querySelector('.actions');
@@ -1267,7 +1268,7 @@ function setCustom(grid, C, Rr, generated) {
   GR.custom = grid; GR.dims.custom = [C, Rr];
   const item = generated
     ? {key: 'custom', custom: true, num: '∞', name: 'Ton portrait', sub: 'Aperçu généré à partir de ta photo', chips: [['Sur mesure', 'gold']], plaque: ['Ton portrait', "JLF D'ICE", 'Sur mesure']}
-    : {key: 'custom', custom: true, placeholder: true, num: '∞', name: 'Crée le tien', sub: 'Transforme ta photo en tableau de dés', chips: ['Pièce unique'], plaque: ['Crée le tien', "JLF D'ICE", 'Sur mesure']};
+    : {key: 'custom', custom: true, placeholder: true, num: '∞', name: 'Crée le tien', sub: 'Transforme ta photo en tableau de dés', chips: [], plaque: ['Crée le tien', "JLF D'ICE", 'Sur mesure']};
   if (CUSTOM >= 0) { scene.remove(P[CUSTOM]); P[CUSTOM].traverse(o => { if (o.geometry) o.geometry.dispose(); }); ITEMS[CUSTOM] = item; }
   else { CUSTOM = ITEMS.length; ITEMS.push(item); reveal.push({t0: -9}); }
   const g = painting(item); P[CUSTOM] = g; equip(g, CUSTOM); if (typeof relabel === 'function' && LANG) relabel();
