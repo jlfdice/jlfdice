@@ -281,6 +281,9 @@ html, body { height: 100%; margin: 0; overflow: hidden; background: #000; color:
 #ar .ardl b { color: #e9fbff; min-width: 10cqw; text-align: right; }
 #arshot { width: 17cqw; height: 17cqw; border-radius: 50%; border: 1.2cqw solid #fff; background: rgba(255,255,255,.22); box-shadow: 0 0 5cqw rgba(0,0,0,.6); cursor: pointer; }
 #arshot:active { transform: scale(.94); }
+
+#artap { position: absolute; left: 50%; top: 45%; transform: translate(-50%,-50%); z-index: 3; padding: 3.5cqw 6cqw; font: 600 3.6cqw var(--display); letter-spacing: .08em; color: #001018; background: #7fe9ff; border: 0; }
+#artap[hidden] { display: none; }
 </style>
 <template id="markup"><div id="frame" class="gate">
 <div id="bg"></div>
@@ -312,7 +315,7 @@ html, body { height: 100%; margin: 0; overflow: hidden; background: #000; color:
 <button type="button" class="flag" data-l="es"><svg viewBox="0 0 3 2" aria-hidden="true"><rect width="3" height="2" fill="#AA151B"/><rect y=".5" width="3" height="1" fill="#F1BF00"/></svg><span>Español</span></button>
 <button type="button" class="flag" data-l="ru"><svg viewBox="0 0 9 6" aria-hidden="true"><rect width="9" height="2" fill="#fff"/><rect y="2" width="9" height="2" fill="#0039A6"/><rect y="4" width="9" height="2" fill="#D52B1E"/></svg><span>Русский</span></button>
 </div><small data-i="ui.soundRec">Son recommandé</small></div>
-<div id="ar" hidden><video id="arvid" playsinline muted autoplay></video><canvas id="arcv" aria-label="Le tableau sur ton mur"></canvas><div id="arflash"></div>
+<div id="ar" hidden><video id="arvid" playsinline webkit-playsinline muted autoplay></video><canvas id="arcv" aria-label="Le tableau sur ton mur"></canvas><button id="artap" type="button" hidden>Toucher pour activer la caméra</button><div id="arflash"></div>
 <div class="artop"><b data-i="ar.title">CHEZ TOI</b><button class="btn" id="arclose" type="button" data-i="ui.close">Fermer</button></div>
 <div class="arbot"><p id="arhint"></p><span id="arsize"></span><label class="ardl"><span data-i="ar.dist">Distance au mur</span><input id="ardist" type="range" min="80" max="600" step="10" value="250"><b id="ardistv">2,5 m</b></label><button id="arshot" type="button" aria-label="Photo" data-ia="ar.shot"></button></div></div>
 <div id="toast" role="status"></div>
@@ -2455,13 +2458,36 @@ function arSizeFor(i) {
   if (it.custom && !it.placeholder) { const [C, Rr] = GR.dims.custom; return [C * dieMM / 10, Rr * dieMM / 10]; }
   return null;
 }
+async function getCam() {
+  /* Safari (iPhone) refuses some constraint sets: try from the most precise to the simplest */
+  const tries = [{video: {facingMode: {ideal: 'environment'}, width: {ideal: 1920}}, audio: false}, {video: {facingMode: 'environment'}, audio: false}, {video: true, audio: false}];
+  let err;
+  for (const c of tries) { try { return await navigator.mediaDevices.getUserMedia(c); } catch (e) { err = e; if (e && (e.name === 'NotAllowedError' || e.name === 'SecurityError')) break; } }
+  throw err;
+}
+function arErr(e) {
+  const n = e && e.name, fr = LANG === 'fr';
+  const why = n === 'NotAllowedError' || n === 'SecurityError'
+    ? (fr ? 'Accès à la caméra refusé. Sur iPhone : touche « aA » dans la barre d’adresse → Réglages du site web → Caméra → Autoriser, puis recharge la page. Vérifie aussi Réglages → Safari → Caméra.' : t('ar.nocam'))
+    : n === 'NotReadableError' || n === 'AbortError'
+    ? (fr ? 'La caméra est utilisée par une autre app. Ferme-la puis réessaie.' : t('ar.nocam'))
+    : n === 'NotFoundError' || n === 'OverconstrainedError'
+    ? (fr ? 'Aucune caméra trouvée sur cet appareil.' : t('ar.nocam'))
+    : t('ar.nocam');
+  toast(`<b>${t('ar.title')}</b>${why}${n ? ` <small>(${n})</small>` : ''}`, true);
+}
 async function openAR() {
   if (AR.on || mode !== 'detail') return;
+  if (!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia)) { arErr(null); return; }
   let stream;
-  try { stream = await navigator.mediaDevices.getUserMedia({video: {facingMode: {ideal: 'environment'}, width: {ideal: 1280}, height: {ideal: 1920}}, audio: false}); }
-  catch (e) { toast(`<b>${t('ar.title')}</b>${t('ar.nocam')}`, true); return; }
-  AR.on = true; AR.stream = stream; const v = $('arvid'); v.srcObject = stream; try { await v.play(); } catch (e) {}
-  $('ar').hidden = false; buzz([10, 30]); if (sound) SFX.open();
+  try { stream = await getCam(); } catch (e) { arErr(e); return; }
+  AR.on = true; AR.stream = stream; const v = $('arvid');
+  v.setAttribute('playsinline', ''); v.setAttribute('webkit-playsinline', ''); v.muted = true; v.autoplay = true;
+  $('ar').hidden = false;                 /* show first: iOS will not start a video that is not displayed */
+  v.srcObject = stream;
+  const tryPlay = () => { const pr = v.play(); if (pr && pr.catch) pr.catch(() => { $('artap').hidden = false; }); };
+  tryPlay(); setTimeout(() => { if (AR.on && !v.videoWidth) $('artap').hidden = false; }, 2500);
+  buzz([10, 30]); if (sound) SFX.open();
   if (!AR.r) {
     AR.r = new THREE.WebGLRenderer({canvas: $('arcv'), alpha: true, antialias: true, preserveDrawingBuffer: true});
     AR.r.setPixelRatio(Math.min(devicePixelRatio || 1, 2));
@@ -2486,7 +2512,7 @@ function arDist(cmv) { AR.dist = cmv; $('ardistv').textContent = (cmv / 100).toF
 function closeAR() {
   if (!AR.on) return; AR.on = false; cancelAnimationFrame(AR.raf);
   if (AR.stream) AR.stream.getTracks().forEach(tr => tr.stop()); AR.stream = null; $('arvid').srcObject = null;
-  $('ar').hidden = true; if (sound) SFX.close();
+  $('ar').hidden = true; $('artap').hidden = true; if (sound) SFX.close();
 }
 /* room light: the painting is lit like the room the camera sees */
 const arProbe = mk(16, 16), arPg = arProbe.getContext('2d', {willReadFrequently: true}); let arProbeT = 0;
@@ -2522,6 +2548,7 @@ function arPx2cm(px) { const h = $('ar').getBoundingClientRect().height; return 
   const up = e => AR.ptr.delete(e.pointerId); cvs.addEventListener('pointerup', up); cvs.addEventListener('pointercancel', up);
   $('ardist').addEventListener('input', () => arDist(+$('ardist').value));
   $('arclose').addEventListener('click', closeAR);
+  $('artap').addEventListener('click', e => { e.stopPropagation(); const v = $('arvid'); v.play().then(() => { $('artap').hidden = true; }).catch(() => {}); });
   $('arbtn').addEventListener('click', e => { e.stopPropagation(); openAR(); });
   $('arshot').addEventListener('click', async () => {
     const v = $('arvid'), box = $('ar').getBoundingClientRect(), W = 1080, H = Math.round(1080 * box.height / box.width), c = mk(W, H), g = c.getContext('2d');
