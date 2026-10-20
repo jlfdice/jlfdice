@@ -1315,7 +1315,7 @@ function setCustom(grid, C, Rr, generated) {
 }
 setCustom(plusGrid(40, 52), 40, 52, false);
 const cm = (n, mm) => (n * mm / 10).toFixed(1).replace('.', ',');
-function workshopCode() { const [C, Rr] = GR.dims.custom, q = v => Math.round(v * 100); return `JLFD-C${C}-R${Rr}-D${dieMM}-X${q(CROP.px)}Y${q(CROP.py)}Z${q(CROP.z)}-${lastRef}`; }
+function workshopCode() { const [C, Rr] = GR.dims.custom, q = v => Math.round(v * 100); const A = lastImg ? Math.round(lastImg.naturalWidth / lastImg.naturalHeight * 100) : 0; return `JLFD-C${C}-R${Rr}-D${dieMM}-X${q(CROP.px)}Y${q(CROP.py)}Z${q(CROP.z)}${A ? 'A' + A : ''}-${lastRef}`; }
 function renderDiceSel() {
   const box = $('dsel').querySelector('.dopts'), sbox = $('dsel').querySelector('.sopts');
   box.innerHTML = DICE_OPTS.map(n => `<button class="dopt" type="button" role="radio" aria-checked="${n === diceN}" data-n="${n}">${fmtN(n)}</button>`).join('');

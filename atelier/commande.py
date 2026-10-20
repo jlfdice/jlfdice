@@ -14,7 +14,7 @@ ap = argparse.ArgumentParser()
 ap.add_argument('--photo', required=True); ap.add_argument('--code', required=True)
 ap.add_argument('--client', default=''); ap.add_argument('--out', default='')
 A = ap.parse_args()
-m = re.match(r'JLFD-C(\d+)-R(\d+)-D(\d+)(?:-X(\d+)Y(\d+)Z(\d+))?-([A-Z0-9]+)$', A.code.strip().upper())
+m = re.match(r'JLFD-C(\d+)-R(\d+)-D(\d+)(?:-X(\d+)Y(\d+)Z(\d+)(?:A\d+)?)?-([A-Z0-9]+)$', A.code.strip().upper())
 if not m: raise SystemExit('Code atelier illisible : ' + A.code)
 C, R, DIE, REF = int(m[1]), int(m[2]), int(m[3]), m[7]
 # framing chosen by the client in the app (X/Y = position in %, Z = zoom in %); older codes have none

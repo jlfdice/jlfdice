@@ -40,6 +40,11 @@ input:focus-visible, button:focus-visible { outline: 2px solid var(--holo); outl
 #ccv { display: block; touch-action: none; cursor: grab; outline: 1px solid var(--line2); }
 #cropbox { margin-top: 10px; }
 #cropbox .row { justify-content: space-between; }
+.warn { font: 400 13px/1.5 var(--mono); padding: 10px 12px; margin-bottom: 12px; border: 1px solid var(--bad); color: #ffd3dc; background: rgba(255,91,120,.08); }
+.warn b { display: block; color: var(--bad); margin-bottom: 4px; }
+.warn.ok { border-color: #4fd18b; color: #c9f5dc; background: rgba(79,209,139,.08); }
+.warn.soft { border-color: var(--gold); color: #ffe7bf; background: rgba(240,181,74,.08); }
+#cropstate { margin: 0; }
 #czoom { flex: 1; accent-color: #7fe9ff; min-height: 32px; }
 #cpv { display: block; max-width: 46%; height: auto; margin-top: 10px; outline: 1px solid var(--line); }
 .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 0 12px; }
@@ -88,8 +93,14 @@ input:focus-visible, button:focus-visible { outline: 2px solid var(--holo); outl
 <label>Forme</label><div class="chips" id="o-s" role="radiogroup" aria-label="Forme"></div>
 <label>Taille des dés</label><div class="chips" id="o-d" role="radiogroup" aria-label="Taille des dés"></div>
 <div class="info" id="o-info"></div>
-<div id="cwrap" hidden><canvas id="ccv" aria-label="Cadrage : glisse pour déplacer, pince pour zoomer"></canvas></div>
-<div id="cropbox" hidden><div class="row"><span class="zl">ZOOM</span><input id="czoom" type="range" min="1" max="3" step="0.01" value="1" aria-label="Zoom du cadrage"></div><div class="hint">Glisse l'image pour la déplacer · pince ou curseur pour zoomer · aperçu en dés ci-dessous</div><canvas id="cpv" aria-hidden="true"></canvas></div>
+
+</section>
+
+<section class="card" id="p-crop" hidden>
+<h2 id="crophead">Cadrage</h2>
+<div id="arwarn" class="warn" hidden></div>
+<div id="cwrap"><canvas id="ccv" aria-label="Cadrage : glisse pour déplacer, pince pour zoomer"></canvas></div>
+<div id="cropbox"><div class="row"><span class="zl">ZOOM</span><input id="czoom" type="range" min="1" max="3" step="0.01" value="1" aria-label="Zoom du cadrage"></div><div class="hint">Glisse l'image pour la déplacer · pince ou curseur pour zoomer · aperçu en dés ci-dessous</div><canvas id="cpv" aria-hidden="true"></canvas><div class="row" style="margin-top:10px"><span class="info" id="cropstate"></span><button class="btn" id="cropreset" type="button">Revenir au cadrage du client</button></div></div>
 </section>
 
 <section class="card">
@@ -396,22 +407,39 @@ function setMode(m) {
   MODE = m;
   document.querySelectorAll('.seg button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.m === m)));
   $('p-order').hidden = m !== 'order'; $('p-create').hidden = m !== 'create';
-  $('out').hidden = true; refresh();
+  $('out').hidden = true; if (IMG) { if (m === 'order') orderCrop(); else { CROP = {px: .5, py: .5, z: 1}; $('czoom').value = 1; } } refresh(); checkPhoto(); drawCrop();
 }
 document.querySelectorAll('.seg button').forEach(b => b.addEventListener('click', () => setMode(b.dataset.m)));
 
 function parseCode(s) {
-  const m = /JLFD-C(\d+)-R(\d+)-D(\d+)(?:-X(\d+)Y(\d+)Z(\d+))?-([A-Z0-9]+)/.exec(String(s).toUpperCase().replace(/\s+/g, ''));
+  const m = /JLFD-C(\d+)-R(\d+)-D(\d+)(?:-X(\d+)Y(\d+)Z(\d+)(?:A(\d+))?)?-([A-Z0-9]+)/.exec(String(s).toUpperCase().replace(/\s+/g, ''));
   if (!m) return null;
-  return {C: +m[1], R: +m[2], die: +m[3], crop: m[4] ? {px: +m[4] / 100, py: +m[5] / 100, z: Math.max(1, +m[6] / 100)} : null, ref: m[7], code: m[0]};
+  return {C: +m[1], R: +m[2], die: +m[3], crop: m[4] ? {px: +m[4] / 100, py: +m[5] / 100, z: Math.max(1, +m[6] / 100)} : null, ar: m[7] ? +m[7] / 100 : 0, ref: m[8], code: m[0]};
 }
 $('code').addEventListener('input', () => {
   ORDER = parseCode($('code').value);
   $('codeinfo').textContent = ORDER ? `✓ ${fmt(ORDER.C * ORDER.R)} dés de ${ORDER.die} mm · grille ${ORDER.C} × ${ORDER.R} · ≈ ${cm1(ORDER.C, ORDER.die)} × ${cm1(ORDER.R, ORDER.die)} cm · réf. #${ORDER.ref}${ORDER.crop ? ' · cadrage du client' : ''}` : ($('code').value.trim() ? 'Code illisible — il commence par JLFD-C…' : '');
-  $('codeinfo').classList.toggle('bad', !ORDER && !!$('code').value.trim()); refresh();
+  $('codeinfo').classList.toggle('bad', !ORDER && !!$('code').value.trim()); if (IMG && MODE === 'order') orderCrop(); refresh(); checkPhoto(); drawCrop();
 });
 $('paste').addEventListener('click', async () => { try { $('code').value = await navigator.clipboard.readText(); $('code').dispatchEvent(new Event('input')); } catch (e) { toast('Colle le code à la main (appui long → Coller)', true); } });
 
+/* the grid being framed: the client's order, or my own settings */
+const dims = () => MODE === 'order' && ORDER ? [ORDER.C, ORDER.R] : gridDims(diceN, shape);
+let cropEdited = false;
+function orderCrop() { CROP = ORDER && ORDER.crop ? {...ORDER.crop} : {px: .5, py: .46, z: 1}; cropEdited = false; $('czoom').value = CROP.z; }
+/* does the photo received have the proportions of the one the client framed? */
+function checkPhoto() {
+  const w = $('arwarn'); w.hidden = true;
+  if (MODE !== 'order' || !ORDER || !IMG) return;
+  const got = IMG.naturalWidth / IMG.naturalHeight;
+  if (!ORDER.ar) { w.hidden = false; w.className = 'warn soft'; w.textContent = 'Fiche d’une ancienne version : impossible de vérifier la photo. Contrôle le cadrage ci-dessous.'; return; }
+  const diff = Math.abs(got - ORDER.ar) / ORDER.ar;
+  if (diff > .02) {
+    const f = v => v >= 1 ? `${v.toFixed(2).replace('.', ',')} : 1 (paysage)` : `1 : ${(1 / v).toFixed(2).replace('.', ',')} (portrait)`;
+    w.hidden = false; w.className = 'warn';
+    w.innerHTML = `<b>⚠ Ce n’est pas la photo que le client a cadrée.</b> Proportions attendues ${f(ORDER.ar)}, reçues ${f(got)}. C’est souvent une capture d’écran ou une photo recadrée : demande-lui l’original en pleine qualité, ou ajuste le cadrage à la main ci-dessous.`;
+  } else { w.hidden = false; w.className = 'warn ok'; w.textContent = '✓ Photo conforme : c’est bien celle que le client a cadrée. Son cadrage est appliqué ci-dessous.'; }
+}
 function pickInto(which) { const f = $('file'); f.dataset.for = which; f.value = ''; f.click(); }
 $('pick-order').addEventListener('click', () => pickInto('order'));
 $('pick-create').addEventListener('click', () => pickInto('create'));
@@ -419,10 +447,10 @@ $('file').addEventListener('change', () => {
   const f = $('file').files && $('file').files[0]; if (!f) return;
   const url = URL.createObjectURL(f), im = new Image();
   im.onload = () => {
-    IMG = im; IMGFILE = f; CROP = {px: .5, py: .5, z: 1}; $('czoom').value = 1;
+    IMG = im; IMGFILE = f; if (MODE === 'order') orderCrop(); else { CROP = {px: .5, py: .5, z: 1}; $('czoom').value = 1; }
     document.querySelectorAll('.thumb').forEach(t => { t.src = url; t.hidden = false; });
     document.querySelectorAll('.fname').forEach(t => t.textContent = `${f.name} · ${im.naturalWidth} × ${im.naturalHeight}px`);
-    refresh(); drawCrop();
+    refresh(); checkPhoto(); drawCrop();
   };
   im.onerror = () => toast('Image illisible — choisis un JPEG ou un PNG.', true);
   im.src = url;
@@ -444,8 +472,8 @@ let cReq = false;
 function drawCrop() {
   if (cReq) return; cReq = true;
   requestAnimationFrame(() => {
-    cReq = false; if (!IMG || MODE !== 'create') return;
-    const [C, R] = gridDims(diceN, shape), ar = C / R, box = $('cwrap').getBoundingClientRect();
+    cReq = false; if (!IMG || (MODE === 'order' && !ORDER)) return;
+    const [C, R] = dims(), ar = C / R, box = $('cwrap').getBoundingClientRect();
     let w = Math.min(box.width, 520), h = w / ar; if (h > 460) { h = 460; w = h * ar; }
     const cv = $('ccv'), d = Math.min(devicePixelRatio || 1, 2); cv.style.width = w + 'px'; cv.style.height = h + 'px'; cv.width = Math.round(w * d); cv.height = Math.round(h * d);
     const [sx, sy, sw, sh] = cropRect(IMG, ar, CROP), g = cv.getContext('2d'); g.imageSmoothingQuality = 'high';
@@ -460,7 +488,8 @@ function drawCrop() {
   cv.addEventListener('pointermove', e => {
     const p = P.get(e.pointerId); if (!p || !IMG) return;
     if (P.size === 1) {
-      const [C, R] = gridDims(diceN, shape), [, , sw, sh] = cropRect(IMG, C / R, CROP), iw = IMG.naturalWidth, ih = IMG.naturalHeight, r = cv.getBoundingClientRect();
+      cropEdited = true; $('cropstate').textContent = MODE === 'order' ? 'Cadrage ajusté à la main' : '';
+      const [C, R] = dims(), [, , sw, sh] = cropRect(IMG, C / R, CROP), iw = IMG.naturalWidth, ih = IMG.naturalHeight, r = cv.getBoundingClientRect();
       if (iw - sw > 1) CROP.px = clamp(CROP.px - (e.clientX - p.x) * sw / r.width / (iw - sw));
       if (ih - sh > 1) CROP.py = clamp(CROP.py - (e.clientY - p.y) * sh / r.height / (ih - sh));
     }
@@ -469,7 +498,8 @@ function drawCrop() {
     drawCrop();
   });
   const up = e => P.delete(e.pointerId); cv.addEventListener('pointerup', up); cv.addEventListener('pointercancel', up);
-  $('czoom').addEventListener('input', () => { CROP.z = +$('czoom').value; drawCrop(); });
+  $('czoom').addEventListener('input', () => { CROP.z = +$('czoom').value; cropEdited = true; if (MODE === 'order') $('cropstate').textContent = 'Cadrage ajusté à la main'; drawCrop(); });
+  $('cropreset').addEventListener('click', () => { if (MODE === 'order') orderCrop(); else { CROP = {px: .5, py: .5, z: 1}; $('czoom').value = 1; } $('cropstate').textContent = MODE === 'order' ? 'Cadrage du client' : ''; drawCrop(); });
   addEventListener('resize', drawCrop);
 }
 
@@ -481,7 +511,10 @@ function refresh() {
   $('go-why').textContent = ok ? '' : MODE === 'order' ? (!ORDER ? 'Colle le code atelier de la fiche' : 'Ajoute la photo originale du client') : 'Choisis une photo';
   if (!$('f-num').dataset.touched) $('f-num').value = nextNum();
   if (MODE === 'order' && !$('f-title').dataset.touched) $('f-title').value = 'Portrait sur mesure';
-  $('cwrap').hidden = !(MODE === 'create' && IMG); $('cropbox').hidden = !(MODE === 'create' && IMG);
+  const showC = !!IMG && (MODE === 'create' || !!ORDER); $('p-crop').hidden = !showC;
+  $('crophead').textContent = MODE === 'order' ? 'Cadrage du client — vérifie avant de générer' : 'Cadrage';
+  $('cropreset').textContent = MODE === 'order' ? 'Revenir au cadrage du client' : 'Recentrer';
+  if (!cropEdited) $('cropstate').textContent = MODE === 'order' ? (ORDER && ORDER.crop ? 'Cadrage du client' : 'Cadrage par défaut') : '';
 }
 ['f-num', 'f-title', 'f-buyer', 'f-place'].forEach(id => $(id).addEventListener('input', () => { $(id).dataset.touched = '1'; }));
 $('client').addEventListener('input', () => { if (!$('f-buyer').dataset.touched) $('f-buyer').value = $('client').value; });
@@ -496,7 +529,7 @@ async function run() {
   const step = s => { const li = document.createElement('li'); li.textContent = s; steps.appendChild(li); return li; };
   try {
     let C, R, die, crop, ref, code, client = '';
-    if (MODE === 'order') ({C, R, die, crop, ref, code} = ORDER), client = $('client').value.trim();
+    if (MODE === 'order') { ({C, R, die, ref, code} = ORDER); crop = {...CROP}; client = $('client').value.trim(); }
     else {
       [C, R] = gridDims(diceN, shape); die = dieMM; crop = {...CROP};
       ref = 'A' + Date.now().toString(36).slice(-5).toUpperCase(); const q = v => Math.round(v * 100);
