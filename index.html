@@ -286,6 +286,15 @@ html, body { height: 100%; margin: 0; overflow: hidden; background: #000; color:
 #artap[hidden] { display: none; }
 
 #dorder[hidden], #arbtn[hidden] { display: none !important; }
+
+.inapp { box-sizing: border-box; width: 100%; padding: 2.6cqw 3.2cqw; margin: 0 0 2.4cqw; background: rgba(255,179,71,.12); border: 1px solid rgba(255,179,71,.55); color: #ffe2b8; font: 500 3.1cqw/1.4 var(--body, sans-serif); text-align: left; }
+.inapp[hidden] { display: none !important; }
+.inapp b { color: #ffb347; }
+.inapp .btn { margin-top: 2cqw; width: 100%; }
+.inapp small { display: block; margin-top: 1.6cqw; opacity: .8; font-size: 2.7cqw; }
+.gatebar { position: absolute; left: 5cqw; right: 5cqw; top: 3cqh; width: auto; z-index: 5; }
+.inapp, .inapp * { text-transform: none; letter-spacing: normal; }
+#gate .inapp, #gate .inapp * { text-transform: none !important; letter-spacing: normal !important; }
 </style>
 <template id="markup"><div id="frame" class="gate">
 <div id="bg"></div>
@@ -309,7 +318,7 @@ html, body { height: 100%; margin: 0; overflow: hidden; background: #000; color:
 <div id="dbottom"><div id="about"><div class="tabs" role="tablist"><button class="tab on" type="button" role="tab" data-tab="orig" id="tab-orig" data-i="ui.tabOrig">Œuvre originale</button><button class="tab" type="button" role="tab" data-tab="comp" id="tab-comp" data-i="ui.tabComp">Composition</button></div><p id="abouttxt"></p><div id="comp" hidden></div></div><div id="ddice" class="dsel" hidden><span class="dl" data-i="ui.nDice">Nombre de dés</span><div class="dopts" role="radiogroup" aria-label="Nombre de dés"></div><span class="dinfo" id="ddinfo"></span></div><small id="rothint" data-i="ui.rotate">Glisser pour pivoter · pincer pour zoomer</small><div class="drow"><button class="btn" id="explode" type="button">Décomposer</button><a class="btn primary" id="dorder" target="_blank" rel="noopener" data-i="ui.orderPiece">Commander</a></div></div>
 <button class="btn" id="skip" type="button" data-i="ui.skip">Passer ›</button>
 <canvas id="stars" aria-hidden="true"></canvas>
-<div id="gate"><span class="k">JLF D'ICE</span><h1 data-i="ui.archive">Archive</h1><div class="boot" id="boot"></div>
+<div id="gate"><div class="inapp gatebar" id="inapp1" hidden></div><span class="k">JLF D'ICE</span><h1 data-i="ui.archive">Archive</h1><div class="boot" id="boot"></div>
 <p class="pick">Choisis ta langue · Choose your language · Elige tu idioma · Выбери язык</p>
 <div class="flags" role="group" aria-label="Langue / Language / Idioma / Язык">
 <button type="button" class="flag" data-l="fr"><svg viewBox="0 0 3 2" aria-hidden="true"><rect width="1" height="2" fill="#0055A4"/><rect x="1" width="1" height="2" fill="#fff"/><rect x="2" width="1" height="2" fill="#EF4135"/></svg><span>Français</span></button>
@@ -321,7 +330,7 @@ html, body { height: 100%; margin: 0; overflow: hidden; background: #000; color:
 <div class="artop"><b data-i="ar.title">CHEZ TOI</b><button class="btn" id="arclose" type="button" data-i="ui.close">Fermer</button></div>
 <div class="arbot"><p id="arhint"></p><span id="arsize"></span><label class="ardl"><span data-i="ar.dist">Distance au mur</span><input id="ardist" type="range" min="80" max="600" step="10" value="250"><b id="ardistv">2,5 m</b></label><button id="arshot" type="button" aria-label="Photo" data-ia="ar.shot"></button></div></div>
 <div id="toast" role="status"></div>
-<div id="send" hidden><h2 data-i="ui.sendTitle">Envoyer à JLF D’ICE</h2><img id="sendimg" alt="Fiche de commande avec ta photo et l’aperçu en dés"><div class="row"><button class="btn primary" id="savesheet" type="button" data-i="saveSheet">Enregistrer la fiche</button><a class="btn" id="sheetdl" download="commande-jlfdice.png" data-i="dl">Télécharger</a></div><ol id="sendsteps"></ol><div class="row"><a class="btn" id="sendig" target="_blank" rel="noopener" data-i="ui.openConv">Ouvrir la conversation</a><button class="btn" id="sendclose" type="button" data-i="ui.close">Fermer</button></div></div>
+<div id="send" hidden><h2 data-i="ui.sendTitle">Envoyer à JLF D’ICE</h2><div class="inapp" id="inapp2" hidden></div><img id="sendimg" alt="Fiche de commande avec ta photo et l’aperçu en dés"><div class="row"><button class="btn primary" id="savesheet" type="button" data-i="saveSheet">Enregistrer la fiche</button><a class="btn" id="sheetdl" download="commande-jlfdice.png" data-i="dl">Télécharger</a></div><ol id="sendsteps"></ol><div class="row"><a class="btn" id="sendig" target="_blank" rel="noopener" data-i="ui.openConv">Ouvrir la conversation</a><button class="btn" id="sendclose" type="button" data-i="ui.close">Fermer</button></div></div>
 <div id="crop" hidden role="dialog" aria-modal="true" aria-labelledby="croph"><h2 id="croph" data-i="crop.title">Cadrage</h2><div class="dopts cshape" id="cshape" role="radiogroup" aria-label="Proportions"></div><div class="cstage"><div id="cwin"><canvas id="cropcv" aria-label="Photo à cadrer"></canvas></div><canvas id="cbig" role="img" aria-label="Aperçu en dés"></canvas></div><figure class="cpv"><canvas id="croppv" aria-hidden="true"></canvas><figcaption data-i="crop.pv">Aperçu dés</figcaption></figure><div id="cdsel"></div><label class="czl" for="czoom"><span data-i="crop.zoom">Zoom</span><input id="czoom" type="range" min="1" max="3" step="0.01" value="1"></label><small data-i="crop.hint">Glisse pour déplacer · pince ou curseur pour zoomer</small><div class="row"><button class="btn primary" id="cok" type="button" data-i="crop.ok">Valider</button><button class="btn" id="ccancel" type="button" data-i="crop.cancel">Annuler</button></div></div>
 <div id="proc" hidden><div class="ring"></div><b id="proct">Analyse de l’image</b><span id="procs" class="mono">0 %</span><small data-i="ui.privacy">Ta photo reste sur ton appareil · rien n’est envoyé</small></div>
 <div id="panel" hidden>
@@ -2106,7 +2115,7 @@ function applyLang() {
   if (mode === 'detail') { const it = ITEMS[sel]; $('dtitle').textContent = itName(it); $('abouttxt').textContent = itAbout(it); $('explode').textContent = t(exTarget ? 'implode' : 'explode'); if (!$('comp').hidden) renderComp(it); }
   else $('explode').textContent = t('explode');
 }
-function setLang(l) { if (!LANGS.includes(l)) return; LANG = l; try { localStorage.setItem('jlfd-lang', l); } catch (e) {} applyLang(); }
+function setLang(l) { if (!LANGS.includes(l)) return; LANG = l; try { localStorage.setItem('jlfd-lang', l); } catch (e) {} applyLang(); if (typeof renderInapp === 'function') renderInapp(); }
 $('lang').addEventListener('click', () => setLang(LANGS[(LANGS.indexOf(LANG) + 1) % LANGS.length]));
 
 /* ---- main loop ---- */
@@ -2256,6 +2265,32 @@ $('psave').addEventListener('click', savePanel);
   if (!admin) return;
   ART = await claude.use('artifact');
 })();
+
+/* ---- opened inside Instagram / Facebook / TikTok: their built-in browser blocks sharing files, saving images and copying.
+   Offer to reopen the site in Safari (iOS) or Chrome (Android). ---- */
+const INAPP = /Instagram|FBAN|FBAV|FB_IAB|FBIOS|musical_ly|TikTok|BytedanceWebview|Snapchat/i.test(navigator.userAgent);
+const IOS = /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+function inappLang() { const l = (typeof LANG === 'string' && LANG) || (navigator.language || 'fr').slice(0, 2); return ['fr', 'en', 'es', 'ru'].includes(l) ? l : 'en'; }
+const INAPP_T = {
+  fr: {msg: 'Tu es dans le navigateur d’Instagram : l’envoi de ta fiche peut mal marcher.', btn: IOS ? 'Ouvrir dans Safari' : 'Ouvrir dans Chrome', how: IOS ? 'Si rien ne se passe : touche ••• en haut à droite → « Ouvrir dans le navigateur externe ».' : 'Si rien ne se passe : touche ⋮ en haut à droite → « Ouvrir dans Chrome ».'},
+  en: {msg: 'You’re in Instagram’s browser: sending your sheet may not work well.', btn: IOS ? 'Open in Safari' : 'Open in Chrome', how: IOS ? 'If nothing happens: tap ••• at the top right → “Open in external browser”.' : 'If nothing happens: tap ⋮ at the top right → “Open in Chrome”.'},
+  es: {msg: 'Estás en el navegador de Instagram: el envío de tu ficha puede fallar.', btn: IOS ? 'Abrir en Safari' : 'Abrir en Chrome', how: IOS ? 'Si no pasa nada: toca ••• arriba a la derecha → «Abrir en el navegador externo».' : 'Si no pasa nada: toca ⋮ arriba a la derecha → «Abrir en Chrome».'},
+  ru: {msg: 'Вы во встроенном браузере Instagram: отправка анкеты может не работать.', btn: IOS ? 'Открыть в Safari' : 'Открыть в Chrome', how: IOS ? 'Если ничего не происходит: нажмите ••• вверху справа → «Открыть во внешнем браузере».' : 'Если ничего не происходит: нажмите ⋮ вверху справа → «Открыть в Chrome».'}
+};
+function openExternal() {
+  const u = location.href;
+  if (IOS) location.href = 'x-safari-' + u;                       /* iOS 17+: hands the page over to Safari */
+  else location.href = 'intent://' + u.replace(/^https?:\/\//, '') + '#Intent;scheme=https;package=com.android.chrome;S.browser_fallback_url=' + encodeURIComponent(u) + ';end';
+}
+function renderInapp() {
+  if (!INAPP) return; const T = INAPP_T[inappLang()];
+  ['inapp1', 'inapp2'].forEach(id => { const el = $(id); if (!el) return;
+    el.innerHTML = `<b>⚠</b> ${T.msg}<button class="btn primary" type="button">${T.btn}</button><small>${T.how}</small>`;
+    el.querySelector('button').addEventListener('click', e => { e.stopPropagation(); openExternal(); });
+    el.addEventListener('pointerdown', e => e.stopPropagation());
+    el.hidden = false; });
+}
+renderInapp();
 
 /* ================= IMMERSION LAYER =================
    WebGL background, cinematic post (bloom, lens, grain), mirror floor, dust in the light,
