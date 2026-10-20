@@ -15,5 +15,5 @@ Le client envoie sa **fiche** (avec le *code atelier*, ex. `JLFD-C61-R82-D10-Z8K
 python3 atelier/commande.py --photo photo_client.jpg --code JLFD-C61-R82-D10-Z8KX --client "Prénom"
 ```
 
-Sorties : `Plan_fabrication_<REF>.pdf` (caractéristiques, liste de dés par face, carte et pages de sections),
+Sorties : `Plan_fabrication_<REF>.pdf` (2 pages A3 paysage, grille complète en code couleur, légende et quantités),
 `photo_originale_HD_<REF>.jpg`, `version_des_HD_<REF>.png`, `grille_<REF>.csv`.

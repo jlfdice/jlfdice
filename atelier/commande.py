@@ -55,89 +55,70 @@ for y in range(R):
 dice = Image.fromarray(big); dice.save(f'{OUT}/version_des_HD_{REF}.png', optimize=True)
 dist = dice.resize((C * 8, R * 8), Image.LANCZOS)
 
-# ---------- PDF plan ----------
-INK = HexColor('#111316'); GREY = HexColor('#6b7078'); LINE = HexColor('#c9d3e3'); ACC = HexColor('#b8913f'); BLUE = HexColor('#14306b')
-W, H = A4; pdf = f'{OUT}/Plan_fabrication_{REF}.pdf'
-c = canvas.Canvas(pdf, pagesize=A4); c.setTitle(f'Plan de fabrication {REF}'); c.setAuthor("JLF D'ICE")
+# ---------- PDF plan : 2 pages A3 paysage, code couleur ----------
+from reportlab.lib.pagesizes import A3, landscape
+INK = HexColor('#111316'); GREY = HexColor('#6b7078'); RED = HexColor('#e2483d')
+COL = {0: ('#000000', '#ffffff'), 1: ('#3d1c6e', '#ffffff'), 2: ('#1f5fc4', '#ffffff'), 3: ('#14a39a', '#ffffff'),
+       4: ('#74c24a', '#111111'), 5: ('#f3c623', '#111111'), 6: ('#f7f7f5', '#111111')}
+PW, PH = landscape(A3); pdf = f'{OUT}/Plan_fabrication_{REF}.pdf'
+c = canvas.Canvas(pdf, pagesize=(PW, PH)); c.setTitle(f'Plan de fabrication {REF}'); c.setAuthor("JLF D'ICE")
 fmt = lambda n: f'{n:,}'.replace(',', ' ')
+GS = 10                                   # guide every 10 dice
 title = 'Portrait sur mesure' + (f' · {A.client}' if A.client else '')
-def footer(label):
-    c.setFont('Helvetica', 7.5); c.setFillColor(GREY)
-    c.drawString(15 * mm, 9 * mm, f"JLF D'ICE · Plan de fabrication · réf. #{REF}"); c.drawRightString(W - 15 * mm, 9 * mm, label)
-def die_icon(x, y, s, vv):
-    c.setFillColor(INK); c.roundRect(x, y, s, s, s * .17, fill=1, stroke=0); c.setFillColor(white)
+def die_icon(x, y, s, vv, stroke=None):
+    c.setFillColor(INK)
+    if stroke: c.setStrokeColor(stroke); c.setLineWidth(.4)
+    c.roundRect(x, y, s, s, s * .17, fill=1, stroke=1 if stroke else 0); c.setFillColor(white)
     for px, py in PIPS[vv]: c.circle(x + s / 2 + px * s * .26, y + s / 2 - py * s * .26, s * .09, fill=1, stroke=0)
-
-SC, SR = 20, 25; NSC, NSR = math.ceil(C / SC), math.ceil(R / SR)
-LET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
-pages = 2 + NSC * NSR
-# page 1 — overview
-c.setFillColor(INK); c.setFont('Helvetica-Bold', 22); c.drawString(15 * mm, H - 24 * mm, 'Plan de fabrication')
-c.setFont('Helvetica-Bold', 13); c.drawString(15 * mm, H - 32 * mm, title)
-c.setFont('Helvetica', 9); c.setFillColor(GREY); c.drawString(15 * mm, H - 38 * mm, f'Réf. #{REF} · code atelier {A.code.upper()} · {datetime.date.today().strftime("%d/%m/%Y")}')
-iwmm = 85 * mm; ihmm = iwmm * R / C
-if ihmm > 115 * mm: ihmm = 115 * mm; iwmm = ihmm * C / R
-c.drawImage(ImageReader(crop), 15 * mm, H - 46 * mm - ihmm, iwmm, ihmm); c.drawImage(ImageReader(dist), W - 15 * mm - iwmm, H - 46 * mm - ihmm, iwmm, ihmm)
-c.setFont('Helvetica', 7.5); c.drawString(15 * mm, H - 50 * mm - ihmm, 'Photo originale (recadrée)'); c.drawString(W - 15 * mm - iwmm, H - 50 * mm - ihmm, 'Rendu en dés')
-y = H - 62 * mm - ihmm
-def row(k, val, bold=False):
-    global y
-    c.setFont('Helvetica', 9); c.setFillColor(GREY); c.drawString(15 * mm, y, k)
-    c.setFont('Helvetica-Bold' if bold else 'Helvetica', 9.5); c.setFillColor(INK); c.drawString(70 * mm, y, val); y -= 5.6 * mm
-c.setFont('Helvetica-Bold', 11); c.setFillColor(INK); c.drawString(15 * mm, y, 'Caractéristiques'); y -= 7 * mm
-row('Nombre de dés', fmt(N), True); row('Grille', f'{C} colonnes × {R} lignes')
-row('Taille des dés', f'{DIE} × {DIE} × {DIE} mm, noirs à points blancs')
-row('Format final (dés seuls)', f'{C * DIE / 10:.1f} × {R * DIE / 10:.1f} cm'.replace('.', ','), True)
-row('Sections', f'{NSC} × {NSR} sections de {SC} × {SR} dés max.')
-y -= 3 * mm; c.setFont('Helvetica-Bold', 11); c.drawString(15 * mm, y, 'Liste de dés (face visible)'); y -= 8 * mm
-spare = lambda n: math.ceil(n * 1.03)
-for k in [1, 2, 3, 4, 5, 6, 0]:
-    if CNT[k] == 0: continue
-    die_icon(15 * mm, y - 1.5 * mm, 5 * mm, k)
-    c.setFont('Helvetica', 9); c.setFillColor(INK)
-    c.drawString(23 * mm, y, ('Face vide (dé entièrement noir)' if k == 0 else f'Face {k}'))
-    c.drawRightString(110 * mm, y, fmt(CNT[k])); c.setFillColor(GREY); c.drawRightString(150 * mm, y, f'avec 3 % de marge : {fmt(spare(CNT[k]))}'); y -= 6.5 * mm
-c.setFillColor(INK); c.setFont('Helvetica-Bold', 9.5); c.drawString(23 * mm, y, 'Total'); c.drawRightString(110 * mm, y, fmt(N)); c.setFillColor(GREY); c.setFont('Helvetica', 9); c.drawRightString(150 * mm, y, f'à commander : {fmt(sum(spare(CNT[k]) for k in CNT if CNT[k]))}')
-footer(f'1 / {pages}'); c.showPage()
-# page 2 — section map
-c.setFillColor(INK); c.setFont('Helvetica-Bold', 16); c.drawString(15 * mm, H - 22 * mm, 'Carte des sections')
-c.setFont('Helvetica', 9); c.setFillColor(GREY)
-c.drawString(15 * mm, H - 29 * mm, 'Lignes numérotées de haut en bas, colonnes de gauche à droite. Chaque page suivante = une section, vue de face.')
-mw = 180 * mm; mh = mw * R / C
-if mh > 230 * mm: mh = 230 * mm; mw = mh * C / R
-mx, my = (W - mw) / 2, H - 38 * mm - mh
-c.drawImage(ImageReader(dist), mx, my, mw, mh); cw, rh = mw / C, mh / R
-c.setStrokeColor(HexColor('#ffb347')); c.setLineWidth(1.2)
-for i in range(NSC):
-    for j in range(NSR):
-        x0, x1 = i * SC, min(C, (i + 1) * SC); y0, y1 = j * SR, min(R, (j + 1) * SR)
-        c.rect(mx + x0 * cw, my + mh - y1 * rh, (x1 - x0) * cw, (y1 - y0) * rh, fill=0, stroke=1)
-        c.setFillColor(HexColor('#ffb347')); c.setFont('Helvetica-Bold', 9); c.drawCentredString(mx + (x0 + x1) / 2 * cw, my + mh - (y0 + y1) / 2 * rh - 3, f'{LET[i]}{j + 1}')
-footer(f'2 / {pages}'); c.showPage()
-# section pages
-pg = 3
-for j in range(NSR):
-    for i in range(NSC):
-        x0, x1 = i * SC, min(C, (i + 1) * SC); y0, y1 = j * SR, min(R, (j + 1) * SR)
-        sc, sr = x1 - x0, y1 - y0
-        cell = min(176 * mm / SC, 232 * mm / SR)
-        gx, gy = 22 * mm, H - 34 * mm
-        c.setFillColor(INK); c.setFont('Helvetica-Bold', 15); c.drawString(15 * mm, H - 18 * mm, f'Section {LET[i]}{j + 1}')
-        c.setFont('Helvetica', 8.5); c.setFillColor(GREY); c.drawString(15 * mm, H - 24 * mm, f'Colonnes {x0 + 1}–{x1} · lignes {y0 + 1}–{y1} · {sc * sr} dés')
-        # mini map
-        mmw = 28 * mm; mmh = mmw * R / C; ox, oy = W - 15 * mm - mmw, H - 12 * mm - mmh
-        c.setStrokeColor(LINE); c.setFillColor(HexColor('#eef1f5')); c.rect(ox, oy, mmw, mmh, fill=1, stroke=1)
-        c.setFillColor(HexColor('#ffb347')); c.rect(ox + x0 / C * mmw, oy + mmh - y1 / R * mmh, sc / C * mmw, sr / R * mmh, fill=1, stroke=0)
-        c.setFont('Helvetica', 6)
-        for xx in range(sc):
-            c.setFillColor(GREY); c.drawCentredString(gx + (xx + .5) * cell, gy + 1.2 * mm, str(x0 + xx + 1))
-        for yy in range(sr):
-            c.setFillColor(GREY); c.drawRightString(gx - 1.2 * mm, gy - (yy + 1) * cell + cell * .35, str(y0 + yy + 1))
-            for xx in range(sc):
-                die_icon(gx + xx * cell + cell * .06, gy - (yy + 1) * cell + cell * .06, cell * .88, int(G[y0 + yy, x0 + xx]))
-        c.setStrokeColor(LINE); c.setLineWidth(.3)
-        for xx in range(0, sc + 1, 5): c.line(gx + xx * cell, gy, gx + xx * cell, gy - sr * cell)
-        for yy in range(0, sr + 1, 5): c.line(gx, gy - yy * cell, gx + sc * cell, gy - yy * cell)
-        footer(f'{pg} / {pages}'); pg += 1; c.showPage()
+def page(r0, r1, part):
+    rows = r1 - r0
+    left, right, top, bottom = 16 * mm, 16 * mm, 34 * mm, 30 * mm
+    cell = min((PW - left - right - 12 * mm) / C, (PH - top - bottom) / rows)
+    gw, gh = cell * C, cell * rows; gx = (PW - gw) / 2; gyT = PH - top
+    # header
+    c.setFillColor(INK); c.setFont('Helvetica-Bold', 16); c.drawString(16 * mm, PH - 14 * mm, f"Plan de fabrication {part}/2 · {title}")
+    c.setFont('Helvetica', 8.5); c.setFillColor(GREY)
+    c.drawString(16 * mm, PH - 20 * mm, f"Réf. #{REF} · {A.code.upper()} · {fmt(N)} dés de {DIE} mm · grille {C} × {R} · format {f'{C * DIE / 10:.1f}'.replace('.', ',')} × {f'{R * DIE / 10:.1f}'.replace('.', ',')} cm · {datetime.date.today().strftime('%d/%m/%Y')}")
+    c.drawString(16 * mm, PH - 25 * mm, f"Rangées {r0 + 1} à {r1} · 1 case = 1 dé · vue de face, coin haut-gauche = colonne 1, rangée 1 · traits rouges = repères tous les {GS} dés")
+    th = 24 * mm; tw = th * C / R
+    c.drawImage(ImageReader(crop), PW - 16 * mm - 2 * tw - 3 * mm, PH - 8 * mm - th, tw, th); c.drawImage(ImageReader(dist), PW - 16 * mm - tw, PH - 8 * mm - th, tw, th)
+    c.setStrokeColor(RED); c.setLineWidth(.8)   # where this page sits on the piece
+    c.rect(PW - 16 * mm - tw, PH - 8 * mm - th + th * (1 - r1 / R), tw, th * rows / R, fill=0, stroke=1)
+    # legend + shopping list
+    y = 15 * mm; c.setFillColor(INK); c.setFont('Helvetica-Bold', 9); c.drawString(gx, y + 7.5 * mm, 'Légende et quantités (avec 3 % de marge)')
+    for k in range(7):
+        bg, fg = COL[k]; x = gx + k * 40 * mm
+        c.setFillColor(HexColor(bg)); c.setStrokeColor(HexColor('#999999')); c.setLineWidth(.4); c.rect(x, y, 6 * mm, 6 * mm, fill=1, stroke=1)
+        c.setFillColor(HexColor(fg)); c.setFont('Helvetica-Bold', 8); c.drawCentredString(x + 3 * mm, y + 1.8 * mm, str(k))
+        die_icon(x + 7 * mm, y, 6 * mm, k, stroke=GREY if k == 0 else None)
+        c.setFillColor(INK); c.setFont('Helvetica', 7.5); c.drawString(x + 14.5 * mm, y + 3.4 * mm, 'face vide' if k == 0 else f'face {k}')
+        c.setFont('Helvetica-Bold', 7.5); c.drawString(x + 14.5 * mm, y + .3 * mm, f'{fmt(CNT[k])}  →  {fmt(math.ceil(CNT[k] * 1.03))}')
+    # cells
+    fs = cell * .6
+    for r in range(r0, r1):
+        for col in range(C):
+            vv = int(G[r, col]); bg, fg = COL[vv]; x = gx + col * cell; yy = gyT - (r - r0 + 1) * cell
+            c.setFillColor(HexColor(bg)); c.rect(x, yy, cell, cell, fill=1, stroke=0)
+            c.setFillColor(HexColor(fg)); c.setFont('Helvetica-Bold', fs); c.drawCentredString(x + cell / 2, yy + cell * .28, str(vv))
+    c.setStrokeColor(HexColor('#ffffff')); c.setLineWidth(.2)
+    for col in range(C + 1): c.line(gx + col * cell, gyT, gx + col * cell, gyT - gh)
+    for r in range(rows + 1): c.line(gx, gyT - r * cell, gx + gw, gyT - r * cell)
+    c.setStrokeColor(RED); c.setLineWidth(1.1)
+    for col in range(0, C + 1, GS): c.line(gx + col * cell, gyT, gx + col * cell, gyT - gh)
+    for r in range(r0, r1 + 1):
+        if r % GS == 0: c.line(gx, gyT - (r - r0) * cell, gx + gw, gyT - (r - r0) * cell)
+    c.setStrokeColor(INK); c.setLineWidth(1.2); c.rect(gx, gyT - gh, gw, gh, fill=0, stroke=1)
+    c.setFillColor(INK); fsn = min(5.5, cell / mm * 1.2)
+    c.setFont('Helvetica', fsn)
+    for col in range(C):
+        if (col + 1) % 5 == 0 or col == 0 or col == C - 1:
+            c.drawCentredString(gx + col * cell + cell / 2, gyT + 1.3 * mm, str(col + 1)); c.drawCentredString(gx + col * cell + cell / 2, gyT - gh - 3 * mm, str(col + 1))
+    for r in range(r0, r1):
+        yy = gyT - (r - r0 + 1) * cell + cell * .3
+        c.drawRightString(gx - 1.2 * mm, yy, str(r + 1)); c.drawString(gx + gw + 1.2 * mm, yy, str(r + 1))
+    c.setFont('Helvetica', 7.5); c.setFillColor(GREY); c.drawString(16 * mm, 7 * mm, "JLF D'ICE · Plan de fabrication · réf. #" + REF); c.drawRightString(PW - 16 * mm, 7 * mm, f'{part} / 2')
+    c.showPage()
+mid = math.ceil(R / 2)
+page(0, mid, 1); page(mid, R, 2)
 c.save()
-print('OK', OUT, f'{C}x{R}', N, 'dés', CNT, 'pages', pages)
+print('OK', OUT, f'{C}x{R}', N, 'dés', CNT)
