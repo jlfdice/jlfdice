@@ -1671,24 +1671,31 @@ function pickPhoto() { $('mkfile').value = ''; $('mkfile').click(); }
 
 /* order sheet: the photo + the dice preview + the spec, as one image to send */
 function orderSheet() {
-  const W = 1080, H = 1350, c = mk(W, H), g = c.getContext('2d'), [C, Rr] = GR.dims.custom;
+  /* any proportions: both pictures fit a fixed box, the text block always starts under the tallest one */
+  const [C, Rr] = GR.dims.custom, W = 1080, BW = 450, BH = 540, ar = C / Rr;
+  let bw = BW, bh = bw / ar; if (bh > BH) { bh = BH; bw = bh * ar; }
+  const top = 260, rowsY = top + BH + 110, H = rowsY + 6 * 46 + 170;
+  const c = mk(W, H), g = c.getContext('2d');
+  const fit = (txt, x, y, maxW, size, weight = 500, fam = '"JetBrains Mono", monospace') => { let s = size; do { g.font = `${weight} ${s}px ${fam}`; s--; } while (g.measureText(txt).width > maxW && s > 12); g.fillText(txt, x, y); };
   g.fillStyle = '#00060c'; g.fillRect(0, 0, W, H);
   g.strokeStyle = 'rgba(127,233,255,.5)'; g.lineWidth = 3;
   [[30, 30, 1, 1], [W - 30, 30, -1, 1], [30, H - 30, 1, -1], [W - 30, H - 30, -1, -1]].forEach(([x, y, sx, sy]) => { g.beginPath(); g.moveTo(x, y + sy * 70); g.lineTo(x, y); g.lineTo(x + sx * 70, y); g.stroke(); });
-  g.fillStyle = '#7fe9ff'; g.font = '500 26px "JetBrains Mono", monospace'; g.fillText("JLF D'ICE  //  COMMANDE SUR MESURE", 70, 110);
-  g.fillStyle = '#e9fbff'; g.font = '600 64px "Chakra Petch", sans-serif'; g.fillText('PORTRAIT EN DÉS', 70, 190);
-  const bw = 450, bh = Math.round(bw * Rr / C), top = 260;
-  const [qx, qy, qw, qh] = cropRect(lastImg, C / Rr);
-  drawSrc(g, lastImg, qx, qy, qw, qh, 70, top, bw, bh);
-  g.drawImage(boardCanvas(GR.custom, C, Rr), W - 70 - bw, top, bw, bh);
-  g.strokeStyle = 'rgba(127,233,255,.6)'; g.lineWidth = 2; g.strokeRect(70, top, bw, bh); g.strokeRect(W - 70 - bw, top, bw, bh);
-  g.fillStyle = '#5f8597'; g.font = '500 22px "JetBrains Mono", monospace'; g.fillText('TA PHOTO', 70, top + bh + 40); g.fillText('APERÇU EN DÉS', W - 70 - bw, top + bh + 40);
-  const y0 = top + bh + 110; g.font = '500 30px "JetBrains Mono", monospace';
+  g.fillStyle = '#7fe9ff'; fit("JLF D'ICE  //  COMMANDE SUR MESURE", 70, 110, W - 140, 26);
+  g.fillStyle = '#e9fbff'; fit('PORTRAIT EN DÉS', 70, 190, W - 140, 64, 600, '"Chakra Petch", sans-serif');
+  const lx = 70 + (BW - bw) / 2, rx = W - 70 - BW + (BW - bw) / 2, iy = top + (BH - bh) / 2;
+  const [qx, qy, qw, qh] = cropRect(lastImg, ar);
+  drawSrc(g, lastImg, qx, qy, qw, qh, lx, iy, bw, bh);
+  g.drawImage(boardCanvas(GR.custom, C, Rr), rx, iy, bw, bh);
+  g.strokeStyle = 'rgba(127,233,255,.6)'; g.lineWidth = 2; g.strokeRect(lx, iy, bw, bh); g.strokeRect(rx, iy, bw, bh);
+  g.fillStyle = '#5f8597'; g.textAlign = 'center'; g.font = '500 22px "JetBrains Mono", monospace';
+  g.fillText('TA PHOTO', 70 + BW / 2, top + BH + 44); g.fillText('APERÇU EN DÉS', W - 70 - BW / 2, top + BH + 44); g.textAlign = 'left';
   [['NOMBRE DE DÉS', fmtN(C * Rr)], ['GRILLE', `${C} × ${Rr}`], ['TAILLE DES DÉS', `${dieMM} mm`], ['FORMAT FINAL', `≈ ${cm(C, dieMM)} × ${cm(Rr, dieMM)} cm`], ['RÉFÉRENCE', '#' + lastRef], ['DATE', new Date().toLocaleDateString('fr-FR')]].forEach(([k, v], i) => {
-    g.fillStyle = '#5f8597'; g.fillText(k, 70, y0 + i * 46); g.fillStyle = '#e9fbff'; g.fillText(v, 470, y0 + i * 46);
+    g.fillStyle = '#5f8597'; fit(k, 70, rowsY + i * 46, 380, 30); g.fillStyle = '#e9fbff'; fit(v, 470, rowsY + i * 46, W - 540, 30);
   });
-  g.fillStyle = '#7fe9ff'; g.font = '500 24px "JetBrains Mono", monospace'; g.fillText('CODE ATELIER  ' + workshopCode(), 70, H - 115);
-  g.fillStyle = '#ffb347'; g.font = '500 24px "JetBrains Mono", monospace'; g.fillText('@' + STATE.handle, 70, H - 70);
+  const yc = rowsY + 6 * 46 + 30;
+  g.fillStyle = '#5f8597'; fit('CODE ATELIER', 70, yc, 400, 22);
+  g.fillStyle = '#7fe9ff'; fit(workshopCode(), 70, yc + 38, W - 140, 28);
+  g.fillStyle = '#ffb347'; fit('@' + STATE.handle, 70, yc + 84, W - 140, 24);
   return new Promise(res => c.toBlob(b => res(b), 'image/png'));
 }
 /* the order sheet is prepared in advance: iOS only opens the share sheet if it's called right away from the tap */
