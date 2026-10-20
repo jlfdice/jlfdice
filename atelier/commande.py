@@ -1,6 +1,6 @@
 """Atelier JLF D'ICE — à partir d'une commande (photo originale du client + code atelier de la fiche),
 génère : photo originale HD recadrée, version en dés HD, grille CSV et plan de fabrication PDF.
-Usage : python3 commande.py --photo client.jpg --code JLFD-C61-R82-D10-Z8KX [--client "Prénom"] [--out dossier]"""
+Usage : python3 commande.py --photo client.jpg --code JLFD-C61-R82-D10-X50Y50Z100-Z8KX [--client "Prénom"] [--out dossier]"""
 import argparse, csv, math, os, re, datetime
 import numpy as np
 from PIL import Image, ImageOps, ImageDraw, ImageFilter
@@ -14,9 +14,11 @@ ap = argparse.ArgumentParser()
 ap.add_argument('--photo', required=True); ap.add_argument('--code', required=True)
 ap.add_argument('--client', default=''); ap.add_argument('--out', default='')
 A = ap.parse_args()
-m = re.match(r'JLFD-C(\d+)-R(\d+)-D(\d+)-([A-Z0-9]+)$', A.code.strip().upper())
+m = re.match(r'JLFD-C(\d+)-R(\d+)-D(\d+)(?:-X(\d+)Y(\d+)Z(\d+))?-([A-Z0-9]+)$', A.code.strip().upper())
 if not m: raise SystemExit('Code atelier illisible : ' + A.code)
-C, R, DIE, REF = int(m[1]), int(m[2]), int(m[3]), m[4]
+C, R, DIE, REF = int(m[1]), int(m[2]), int(m[3]), m[7]
+# framing chosen by the client in the app (X/Y = position in %, Z = zoom in %); older codes have none
+CROP = (int(m[4]) / 100, int(m[5]) / 100, max(1, int(m[6]) / 100)) if m[4] else None
 OUT = A.out or f'commande_{REF}'; os.makedirs(OUT, exist_ok=True)
 N = C * R
 
@@ -25,7 +27,11 @@ src = ImageOps.exif_transpose(Image.open(A.photo)).convert('RGB')
 iw, ih = src.size; ar = C / R
 sw, sh = iw, iw / ar
 if sh > ih: sh, sw = ih, ih * ar
-sx, sy = (iw - sw) / 2, max(0, (ih - sh) / 2 - sh * .04)
+if CROP:
+    px, py, z = CROP; sw, sh = sw / z, sh / z
+    sx, sy = px * (iw - sw), py * (ih - sh)
+else:
+    sx, sy = (iw - sw) / 2, max(0, (ih - sh) / 2 - sh * .04)
 crop = src.crop((round(sx), round(sy), round(sx + sw), round(sy + sh)))
 crop.save(f'{OUT}/photo_originale_HD_{REF}.jpg', quality=95)
 small = np.asarray(crop.resize((C, R), Image.BOX), dtype=np.float32) / 255

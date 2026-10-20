@@ -214,6 +214,22 @@ html, body { height: 100%; margin: 0; overflow: hidden; background: #000; color:
 @keyframes emFlash { 0% { opacity: 0; transform: scale(.2); } 12% { opacity: 1; transform: scale(1); } 100% { opacity: 0; transform: scale(1.6); } }
 @keyframes emRing { 0% { opacity: 0; transform: scale(.2); } 10% { opacity: 1; } 100% { opacity: 0; transform: scale(14); } }
 @keyframes emSettle { 0% { transform: scale(1.35); filter: blur(10px) brightness(2.2); } 45% { filter: blur(2px) brightness(1.2); } 100% { transform: none; filter: none; } }
+
+/* framing editor */
+#crop { position: absolute; inset: 0; z-index: 9; background: #00040a; display: flex; flex-direction: column; align-items: center; gap: 2.6cqw; padding: 5cqh 6cqw 4cqh; box-sizing: border-box; }
+#crop[hidden] { display: none; }
+#crop h2 { margin: 0; align-self: flex-start; font-weight: 600; font-size: 5.2cqw; letter-spacing: .18em; text-transform: uppercase; color: var(--holo); }
+#crop .cstage { flex: 1; min-height: 0; width: 100%; display: flex; align-items: center; justify-content: center; }
+#cwin { position: relative; touch-action: none; cursor: grab; outline: 1px solid rgba(127,233,255,.7); box-shadow: 0 0 6cqw rgba(127,233,255,.25); }
+#cwin:active { cursor: grabbing; }
+#cropcv { display: block; width: 100%; height: 100%; }
+#crop .cpv { position: absolute; right: 2cqw; bottom: 2cqw; margin: 0; width: 26%; pointer-events: none; background: #000; outline: 1px solid rgba(127,233,255,.6); }
+#croppv { display: block; width: 100%; height: auto; image-rendering: pixelated; }
+#crop figcaption { font: 500 1.9cqw var(--mono); letter-spacing: .12em; color: var(--holo); text-align: center; padding: .6cqw 0; text-transform: uppercase; background: rgba(0,6,12,.9); }
+#crop .czl { width: 100%; display: flex; align-items: center; gap: 3cqw; font: 500 2.4cqw var(--mono); letter-spacing: .2em; text-transform: uppercase; color: var(--holo); }
+#crop .czl input { flex: 1; accent-color: #7fe9ff; height: 6cqw; }
+#crop small { font: 400 2.3cqw var(--mono); color: var(--dim); letter-spacing: .06em; text-align: center; }
+#crop .row { display: flex; gap: 2.4cqw; }
 </style>
 <template id="markup"><div id="frame" class="gate">
 <div id="bg"></div>
@@ -246,6 +262,7 @@ html, body { height: 100%; margin: 0; overflow: hidden; background: #000; color:
 </div><small data-i="ui.soundRec">Son recommandé</small></div>
 <div id="toast" role="status"></div>
 <div id="send" hidden><h2 data-i="ui.sendTitle">Envoyer à JLF D’ICE</h2><img id="sendimg" alt="Fiche de commande avec ta photo et l’aperçu en dés"><ol id="sendsteps"></ol><div class="row"><a class="btn primary" id="sendig" target="_blank" rel="noopener" data-i="ui.openConv">Ouvrir la conversation</a><button class="btn" id="sendclose" type="button" data-i="ui.close">Fermer</button></div></div>
+<div id="crop" hidden role="dialog" aria-modal="true" aria-labelledby="croph"><h2 id="croph" data-i="crop.title">Cadrage</h2><div class="cstage"><div id="cwin"><canvas id="cropcv" aria-label="Photo à cadrer"></canvas><figure class="cpv"><canvas id="croppv" aria-hidden="true"></canvas><figcaption data-i="crop.pv">Aperçu dés</figcaption></figure></div></div><label class="czl" for="czoom"><span data-i="crop.zoom">Zoom</span><input id="czoom" type="range" min="1" max="3" step="0.01" value="1"></label><small data-i="crop.hint">Glisse pour déplacer · pince ou curseur pour zoomer</small><div class="row"><button class="btn primary" id="cok" type="button" data-i="crop.ok">Valider</button><button class="btn" id="ccancel" type="button" data-i="crop.cancel">Annuler</button></div></div>
 <div id="proc" hidden><div class="ring"></div><b id="proct">Analyse de l’image</b><span id="procs" class="mono">0 %</span><small data-i="ui.privacy">Ta photo reste sur ton appareil · rien n’est envoyé</small></div>
 <div id="panel" hidden>
   <h2>Gérer l'archive</h2>
@@ -871,7 +888,7 @@ const I18N = {
     'ui.archive': 'Archive', 'ui.sound': 'SON', 'ui.share': 'PARTAGER', 'ui.create': '✦ CRÉER', 'ui.swipe': '◂ glisser · toucher pour ouvrir ▸', 'ui.back': '‹ Retour', 'ui.analysing': 'ANALYSE EN COURS',
     'ui.data': 'Données · œuvre originale', 'ui.tabOrig': 'Œuvre originale', 'ui.tabComp': 'Composition', 'ui.rotate': 'Glisser pour pivoter · pincer pour zoomer', 'ui.orderPiece': 'Commander',
     'ui.skip': 'Passer ›', 'ui.init': 'Initialiser ▸', 'ui.soundRec': 'Son recommandé', 'ui.approach': 'Approche', 'ui.dist': 'DISTANCE HORIZON', 'ui.capture': 'CAPTURE GRAVITATIONNELLE',
-    'aria.fold': 'Replier ou déplier le texte', 'ui.shape': 'Forme', 'shape.rect': 'Rectangle', 'shape.square': 'Carré',
+    'aria.fold': 'Replier ou déplier le texte', crop: 'Cadrer', 'crop.title': 'Cadrage', 'crop.hint': 'Glisse pour déplacer · pince ou curseur pour zoomer', 'crop.ok': 'Valider', 'crop.cancel': 'Annuler', 'crop.zoom': 'Zoom', 'crop.pv': 'Aperçu dés', 'ui.shape': 'Forme', 'shape.rect': 'Rectangle', 'shape.square': 'Carré',
     'aria.stage': 'Archive 3D des tableaux en dés', 'aria.prev': 'Œuvre précédente', 'aria.next': 'Œuvre suivante', blackDice: 'Dés noirs', backL: ['Dés à jouer, assemblés à la main', 'Pièce unique · 1/1', 'signé au dos'], madeL: 'Sur mesure',
     'ui.nDice': 'Nombre de dés', 'ui.sizeDice': 'Taille des dés', 'ui.privacy': 'Ta photo reste sur ton appareil · rien n’est envoyé', 'ui.sendTitle': 'Envoyer à JLF D’ICE', 'ui.openConv': 'Ouvrir la conversation', 'ui.close': 'Fermer',
     'chip.Dés à jouer': 'Dés à jouer', 'chip.Fait main': 'Fait main', 'chip.Confidentiel': 'Confidentiel', 'chip.Pièce unique': 'Pièce unique', 'chip.Sur mesure': 'Sur mesure',
@@ -896,7 +913,7 @@ const I18N = {
     'ui.archive': 'Archive', 'ui.sound': 'SOUND', 'ui.share': 'SHARE', 'ui.create': '✦ CREATE', 'ui.swipe': '◂ swipe · tap to open ▸', 'ui.back': '‹ Back', 'ui.analysing': 'ANALYSIS IN PROGRESS',
     'ui.data': 'Data · original artwork', 'ui.tabOrig': 'Original', 'ui.tabComp': 'Composition', 'ui.rotate': 'Drag to rotate · pinch to zoom', 'ui.orderPiece': 'Order',
     'ui.skip': 'Skip ›', 'ui.init': 'Initialise ▸', 'ui.soundRec': 'Sound recommended', 'ui.approach': 'Approach', 'ui.dist': 'DISTANCE TO HORIZON', 'ui.capture': 'GRAVITATIONAL CAPTURE',
-    'aria.fold': 'Collapse or expand the text', 'ui.shape': 'Shape', 'shape.rect': 'Rectangle', 'shape.square': 'Square',
+    'aria.fold': 'Collapse or expand the text', crop: 'Frame', 'crop.title': 'Framing', 'crop.hint': 'Drag to move · pinch or slider to zoom', 'crop.ok': 'Confirm', 'crop.cancel': 'Cancel', 'crop.zoom': 'Zoom', 'crop.pv': 'Dice preview', 'ui.shape': 'Shape', 'shape.rect': 'Rectangle', 'shape.square': 'Square',
     'aria.stage': '3D archive of dice paintings', 'aria.prev': 'Previous piece', 'aria.next': 'Next piece', blackDice: 'Black dice', backL: ['Playing dice, assembled by hand', 'One of a kind · 1/1', 'signed on the back'], madeL: 'Made to order',
     'ui.nDice': 'Number of dice', 'ui.sizeDice': 'Dice size', 'ui.privacy': 'Your photo stays on your device · nothing is uploaded', 'ui.sendTitle': 'Send to JLF D’ICE', 'ui.openConv': 'Open the chat', 'ui.close': 'Close',
     'chip.Dés à jouer': 'Playing dice', 'chip.Fait main': 'Handmade', 'chip.Confidentiel': 'Confidential', 'chip.Pièce unique': 'One of a kind', 'chip.Sur mesure': 'Made to order',
@@ -921,7 +938,7 @@ const I18N = {
     'ui.archive': 'Archivo', 'ui.sound': 'SONIDO', 'ui.share': 'COMPARTIR', 'ui.create': '✦ CREAR', 'ui.swipe': '◂ desliza · toca para abrir ▸', 'ui.back': '‹ Volver', 'ui.analysing': 'ANÁLISIS EN CURSO',
     'ui.data': 'Datos · obra original', 'ui.tabOrig': 'Obra original', 'ui.tabComp': 'Composición', 'ui.rotate': 'Desliza para girar · pellizca para ampliar', 'ui.orderPiece': 'Encargar',
     'ui.skip': 'Saltar ›', 'ui.init': 'Iniciar ▸', 'ui.soundRec': 'Sonido recomendado', 'ui.approach': 'Aproximación', 'ui.dist': 'DISTANCIA AL HORIZONTE', 'ui.capture': 'CAPTURA GRAVITATORIA',
-    'aria.fold': 'Plegar o desplegar el texto', 'ui.shape': 'Forma', 'shape.rect': 'Rectángulo', 'shape.square': 'Cuadrado',
+    'aria.fold': 'Plegar o desplegar el texto', crop: 'Encuadrar', 'crop.title': 'Encuadre', 'crop.hint': 'Arrastra para mover · pellizca o usa el control para hacer zoom', 'crop.ok': 'Aceptar', 'crop.cancel': 'Cancelar', 'crop.zoom': 'Zoom', 'crop.pv': 'Vista en dados', 'ui.shape': 'Forma', 'shape.rect': 'Rectángulo', 'shape.square': 'Cuadrado',
     'aria.stage': 'Archivo 3D de cuadros de dados', 'aria.prev': 'Obra anterior', 'aria.next': 'Obra siguiente', blackDice: 'Dados negros', backL: ['Dados de juego, montados a mano', 'Pieza única · 1/1', 'firmado al dorso'], madeL: 'A medida',
     'ui.nDice': 'Número de dados', 'ui.sizeDice': 'Tamaño de los dados', 'ui.privacy': 'Tu foto se queda en tu dispositivo · no se envía nada', 'ui.sendTitle': 'Enviar a JLF D’ICE', 'ui.openConv': 'Abrir el chat', 'ui.close': 'Cerrar',
     'chip.Dés à jouer': 'Dados de juego', 'chip.Fait main': 'Hecho a mano', 'chip.Confidentiel': 'Confidencial', 'chip.Pièce unique': 'Pieza única', 'chip.Sur mesure': 'A medida',
@@ -1038,8 +1055,8 @@ function renderInfo(i, scramble) {
     acts.innerHTML = `<button class="btn primary" type="button" data-pick>${t('pick')}</button>`;
     acts.querySelector('[data-pick]').addEventListener('click', pickPhoto);
   } else if (it.custom) {
-    acts.innerHTML = `<button class="btn primary" type="button" data-send>${t('send')}</button><button class="btn" type="button" data-open>${t('analyse')}</button><button class="btn" type="button" data-again>${t('other')}</button>`;
-    acts.querySelector('[data-send]').addEventListener('click', sendToArtist); acts.querySelector('[data-open]').addEventListener('click', openDetail); acts.querySelector('[data-again]').addEventListener('click', pickPhoto);
+    acts.innerHTML = `<button class="btn primary" type="button" data-send>${t('send')}</button><button class="btn" type="button" data-open>${t('analyse')}</button><button class="btn" type="button" data-crop>${t('crop')}</button><button class="btn" type="button" data-again>${t('other')}</button>`;
+    acts.querySelector('[data-send]').addEventListener('click', sendToArtist); acts.querySelector('[data-open]').addEventListener('click', openDetail); acts.querySelector('[data-again]').addEventListener('click', pickPhoto); acts.querySelector('[data-crop]').addEventListener('click', () => lastImg && openCrop(lastImg));
   } else if (it.locked) acts.innerHTML = `<a class="btn primary" href="${igProfile()}" target="_blank" rel="noopener">${t('notify')}</a>`;
   else {
     const sold = st.status === 'vendu' || st.status === 'privee';
@@ -1063,7 +1080,7 @@ function showInfo(i, animate = true) {
 /* fold arrow on the made-to-order panel: slides the text down so the painting and the life-size silhouette are fully visible */
 let folded = false, foldK = 0;
 /* made-to-order slot: keep the painting AND the 1.75 m silhouette inside the free band between the top bar and the text panel, whatever the phone */
-let cfS = 1, cfY = 0, cfTS = 1, cfTY = 0;
+let cfS = 1, cfY = 0, cfTS = 1, cfTY = 0, cfX = 0, cfTX = 0;
 const fitV = new THREE.Vector3();
 function fitMeasure(g, fh, hs) {
   const r = FRAME.getBoundingClientRect(), H = r.height;
@@ -1072,7 +1089,13 @@ function fitMeasure(g, fh, hs) {
   fitV.set(g.position.x, botW, g.position.z).project(camera); const yb = (1 - fitV.y) / 2 * H;
   const lim1 = $('swipehint').getBoundingClientRect().bottom - r.top + 34, lim2 = infoEl.getBoundingClientRect().top - r.top - 16;
   const span = yb - yt, avail = lim2 - lim1; if (span < 4 || avail < 30) return;
-  cfTS = clamp(cfS * avail / span, .3, 1.15);
+  /* width: from the painting's left edge to the right edge of the silhouette and its 1.75 m ruler */
+  const fw = fh * g.userData.box[0] / g.userData.box[1];
+  fitV.set(g.position.x - fw, g.position.y, g.position.z).project(camera); const xl = (fitV.x + 1) / 2 * r.width;
+  fitV.set(g.position.x + fw + 42 * hs, g.position.y, g.position.z).project(camera); const xr = (fitV.x + 1) / 2 * r.width;
+  const wspan = xr - xl, wav = r.width - 2 * Math.max(14, r.width * .07);
+  cfTS = clamp(cfS * Math.min(avail / span, wspan > 4 ? wav / wspan : 9), .3, 1.15);
+  cfTX = cfX + (r.width / 2 - (xl + xr) / 2) * (2 * fw + 42 * hs) / Math.max(4, wspan);
   cfTY = cfY + ((yt + yb) / 2 - (lim1 + lim2) / 2) * (topW - botW) / span;
 }
 function setFold(i) {
@@ -1189,6 +1212,24 @@ function updateWarp() {
 /* ---- "crée le tien": the visitor's photo becomes a dice piece, locally, then goes to the artist ---- */
 const DICE_OPTS = [5000, 6000, 7500, 9000, 10000], SIZE_OPTS = [10, 12, 14, 16];
 let diceN = 5000, dieMM = 10, shape = 'rect', lastImg = null, lastFile = null, lastRef = '';
+/* framing chosen by the client: zoom z ≥ 1 and the window's position px, py in [0,1] inside the photo */
+let CROP = {px: .5, py: .5, z: 1};
+function cropRect(img, ar, cr = CROP) {
+  const iw = img.naturalWidth || img.width, ih = img.naturalHeight || img.height;
+  let sw = iw, sh = iw / ar; if (sh > ih) { sh = ih; sw = ih * ar; }
+  const cw = sw / cr.z, ch = sh / cr.z;
+  return [cr.px * (iw - cw), cr.py * (ih - ch), cw, ch];
+}
+function faces(img, C, Rr, cr) {
+  const cv2 = mk(C, Rr), g2 = cv2.getContext('2d'), [sx, sy, sw, sh] = cropRect(img, C / Rr, cr);
+  g2.drawImage(img, sx, sy, sw, sh, 0, 0, C, Rr);
+  const d = g2.getImageData(0, 0, C, Rr).data, L = new Float32Array(C * Rr);
+  for (let i = 0; i < C * Rr; i++) L[i] = (.2126 * d[i * 4] + .7152 * d[i * 4 + 1] + .0722 * d[i * 4 + 2]) / 255;
+  const srt = Array.from(L).sort((x, y) => x - y), lo = srt[Math.floor(srt.length * .02)], hi = srt[Math.floor(srt.length * .98)] || 1;
+  const F = new Uint8Array(L.length);
+  for (let i = 0; i < L.length; i++) { const v = Math.pow(clamp((L[i] - lo) / Math.max(.05, hi - lo)), .85); F[i] = v < .05 ? 0 : Math.min(6, 1 + Math.floor(v * 6)); }
+  return [F, L];
+}
 const fmtN = n => n.toLocaleString(LOC()).replace(/ | /g, ' ');
 /* whole-dice rectangle close to 3:4 whose count is as near as possible to n, never above 10 000 */
 function gridDims(n, sh = shape) {
@@ -1201,19 +1242,13 @@ function gridDims(n, sh = shape) {
   return best ? [best[0], best[1]] : (sh === 'square' ? [86, 86] : [75, 100]);
 }
 function toGrid(img, C, Rr) {
-  const cv2 = mk(C, Rr), g2 = cv2.getContext('2d'), ar = C / Rr, iw = img.naturalWidth || img.width, ih = img.naturalHeight || img.height;
-  let sw = iw, sh = iw / ar; if (sh > ih) { sh = ih; sw = ih * ar; }
-  g2.drawImage(img, (iw - sw) / 2, Math.max(0, (ih - sh) / 2 - sh * .04), sw, sh, 0, 0, C, Rr);
-  const d = g2.getImageData(0, 0, C, Rr).data, L = new Float32Array(C * Rr);
-  for (let i = 0; i < C * Rr; i++) L[i] = (.2126 * d[i * 4] + .7152 * d[i * 4 + 1] + .0722 * d[i * 4 + 2]) / 255;
-  const srt = Array.from(L).sort((x, y) => x - y), lo = srt[Math.floor(srt.length * .02)], hi = srt[Math.floor(srt.length * .98)] || 1;
+  const [F, L] = faces(img, C, Rr);
   let s = '', seed = 0;
   for (let i = 0; i < L.length; i += 97) seed = (seed * 31 + Math.round(L[i] * 255)) % 1000003;
   /* the on-screen preview is deliberately "salted": about 15 % of the dice are shifted by one face. From a distance the portrait reads the same,
      but the grid can't be copied die by die — the real build plan is recomputed in the workshop from the original photo. */
-  for (let i = 0; i < L.length; i++) {
-    const v = Math.pow(clamp((L[i] - lo) / Math.max(.05, hi - lo)), .85);
-    let f = v < .05 ? 0 : Math.min(6, 1 + Math.floor(v * 6));
+  for (let i = 0; i < F.length; i++) {
+    let f = F[i];
     const h = hashR(seed + i * 7.13);
     if (f > 0 && h < .15) f = Math.max(1, Math.min(6, f + (h < .075 ? -1 : 1)));
     s += f;
@@ -1241,7 +1276,7 @@ function setCustom(grid, C, Rr, generated) {
 }
 setCustom(plusGrid(40, 52), 40, 52, false);
 const cm = (n, mm) => (n * mm / 10).toFixed(1).replace('.', ',');
-function workshopCode() { const [C, Rr] = GR.dims.custom; return `JLFD-C${C}-R${Rr}-D${dieMM}-${lastRef}`; }
+function workshopCode() { const [C, Rr] = GR.dims.custom, q = v => Math.round(v * 100); return `JLFD-C${C}-R${Rr}-D${dieMM}-X${q(CROP.px)}Y${q(CROP.py)}Z${q(CROP.z)}-${lastRef}`; }
 function renderDiceSel() {
   const box = $('dsel').querySelector('.dopts'), sbox = $('dsel').querySelector('.sopts');
   box.innerHTML = DICE_OPTS.map(n => `<button class="dopt" type="button" role="radio" aria-checked="${n === diceN}" data-n="${n}">${fmtN(n)}</button>`).join('');
@@ -1275,10 +1310,58 @@ $('mkfile').addEventListener('change', () => {
   const f = $('mkfile').files && $('mkfile').files[0]; if (!f) return;
   lastFile = f;
   const url = URL.createObjectURL(f), img = new Image();
-  img.onload = () => generate(img);
+  img.onload = () => { CROP = {px: .5, py: .5, z: 1}; openCrop(img); };
   img.onerror = () => toast(`<b>${t('badFmt')}</b>${t('badFmtTxt')}`, true);
   img.src = url;
 });
+/* ---- framing editor ---- */
+let cImg = null, cWork = null;
+const cropCv = $('cropcv'), cropPv = $('croppv');
+function openCrop(img) {
+  cImg = img; cWork = {...CROP}; $('crop').hidden = false; $('czoom').value = cWork.z;
+  if (mode === 'detail') closeDetail();
+  requestAnimationFrame(drawCrop);
+}
+function drawCrop() {
+  if (!cImg || $('crop').hidden) return;
+  const [C, Rr] = gridDims(diceN), ar = C / Rr, box = $('cwin').parentElement.getBoundingClientRect();
+  let w = Math.min(box.width, 560), h = w / ar; if (h > box.height) { h = box.height; w = h * ar; }
+  $('cwin').style.width = w + 'px'; $('cwin').style.height = h + 'px';
+  const d = Math.min(devicePixelRatio, 2); cropCv.width = Math.round(w * d); cropCv.height = Math.round(h * d);
+  const [sx, sy, sw, sh] = cropRect(cImg, ar, cWork), g = cropCv.getContext('2d');
+  g.drawImage(cImg, sx, sy, sw, sh, 0, 0, cropCv.width, cropCv.height);
+  g.strokeStyle = 'rgba(127,233,255,.35)'; g.lineWidth = 1;
+  for (let k = 1; k < 3; k++) { g.beginPath(); g.moveTo(cropCv.width * k / 3, 0); g.lineTo(cropCv.width * k / 3, cropCv.height); g.moveTo(0, cropCv.height * k / 3); g.lineTo(cropCv.width, cropCv.height * k / 3); g.stroke(); }
+  /* live dice preview: same conversion as the painting, at reduced size */
+  const pc = Math.max(20, Math.round(C / 2)), pr = Math.max(20, Math.round(Rr / 2)), [F] = faces(cImg, pc, pr, cWork);
+  cropPv.width = pc; cropPv.height = pr; const pg = cropPv.getContext('2d'), id = pg.createImageData(pc, pr), LV = [0, 46, 84, 122, 162, 205, 245];
+  for (let i = 0; i < F.length; i++) { const v = LV[F[i]]; id.data[i * 4] = v; id.data[i * 4 + 1] = v; id.data[i * 4 + 2] = v; id.data[i * 4 + 3] = 255; }
+  pg.putImageData(id, 0, 0); cropPv.style.aspectRatio = `${pc} / ${pr}`;
+}
+function cropPan(dx, dy) {
+  const [, , sw, sh] = cropRect(cImg, cropCv.width / cropCv.height, cWork), iw = cImg.naturalWidth, ih = cImg.naturalHeight, r = $('cwin').getBoundingClientRect();
+  if (iw - sw > 1) cWork.px = clamp(cWork.px - dx * sw / r.width / (iw - sw));
+  if (ih - sh > 1) cWork.py = clamp(cWork.py - dy * sh / r.height / (ih - sh));
+  drawCrop();
+}
+function cropZoom(z) { cWork.z = Math.max(1, Math.min(3, z)); $('czoom').value = cWork.z; drawCrop(); }
+{
+  const cp = new Map(); let pd0 = 0, z0 = 1;
+  const win = $('cwin');
+  win.addEventListener('pointerdown', e => { win.setPointerCapture(e.pointerId); cp.set(e.pointerId, {x: e.clientX, y: e.clientY}); if (cp.size === 2) { const [a, b] = [...cp.values()]; pd0 = Math.hypot(a.x - b.x, a.y - b.y); z0 = cWork.z; } e.preventDefault(); });
+  win.addEventListener('pointermove', e => {
+    const p = cp.get(e.pointerId); if (!p) return;
+    if (cp.size === 1) cropPan(e.clientX - p.x, e.clientY - p.y);
+    p.x = e.clientX; p.y = e.clientY;
+    if (cp.size === 2) { const [a, b] = [...cp.values()]; cropZoom(z0 * Math.hypot(a.x - b.x, a.y - b.y) / (pd0 || 1)); }
+  });
+  const up = e => cp.delete(e.pointerId); win.addEventListener('pointerup', up); win.addEventListener('pointercancel', up);
+  win.addEventListener('wheel', e => { e.preventDefault(); cropZoom(cWork.z * Math.exp(-e.deltaY * .0015)); }, {passive: false});
+  $('czoom').addEventListener('input', () => cropZoom(+$('czoom').value));
+  $('cok').addEventListener('click', () => { CROP = {...cWork}; $('crop').hidden = true; buzz(15); generate(cImg); });
+  $('ccancel').addEventListener('click', () => { $('crop').hidden = true; if (!lastImg) cImg = null; });
+  addEventListener('resize', () => drawCrop());
+}
 function pickPhoto() { $('mkfile').value = ''; $('mkfile').click(); }
 
 /* order sheet: the photo + the dice preview + the spec, as one image to send */
@@ -1290,8 +1373,8 @@ function orderSheet() {
   g.fillStyle = '#7fe9ff'; g.font = '500 26px "JetBrains Mono", monospace'; g.fillText("JLF D'ICE  //  COMMANDE SUR MESURE", 70, 110);
   g.fillStyle = '#e9fbff'; g.font = '600 64px "Chakra Petch", sans-serif'; g.fillText('PORTRAIT EN DÉS', 70, 190);
   const bw = 450, bh = Math.round(bw * Rr / C), top = 260;
-  const ar = bw / bh, iw = lastImg.naturalWidth, ih = lastImg.naturalHeight; let sw = iw, sh = iw / ar; if (sh > ih) { sh = ih; sw = ih * ar; }
-  g.drawImage(lastImg, (iw - sw) / 2, (ih - sh) / 2, sw, sh, 70, top, bw, bh);
+  const [qx, qy, qw, qh] = cropRect(lastImg, C / Rr);
+  g.drawImage(lastImg, qx, qy, qw, qh, 70, top, bw, bh);
   g.drawImage(boardCanvas(GR.custom, C, Rr), W - 70 - bw, top, bw, bh);
   g.strokeStyle = 'rgba(127,233,255,.6)'; g.lineWidth = 2; g.strokeRect(70, top, bw, bh); g.strokeRect(W - 70 - bw, top, bw, bh);
   g.fillStyle = '#5f8597'; g.font = '500 22px "JetBrains Mono", monospace'; g.fillText('TA PHOTO', 70, top + bh + 40); g.fillText('APERÇU EN DÉS', W - 70 - bw, top + bh + 40);
@@ -1338,7 +1421,7 @@ function touchedOnce() { if (!touched) { touched = true; $('swipehint').classLis
 function openDetail() {
   if (mode !== 'menu') return;
   const it = ITEMS[sel];
-  if (it.placeholder) { pickPhoto(); return; }
+  if (it.placeholder) { shakeT0 = tt; buzz(10); return; }
   if (it.locked) {
     shakeT0 = tt; spinT0 = tt; glitch(); glitch('denied', 900); if (sound) SFX.deny(); buzz([40, 60, 40]);
     toast(`<b style="margin:0">${t('denied')}</b>`, true); return;
@@ -1590,7 +1673,7 @@ function loop(now) {
     const sc = (.58 + .42 * focus) * edge * (1 + dk * ((ITEMS[i].about ? .08 : .3) + (zoom - 1) * .9)) * (isSel ? 1 : 1 - detK);
     /* made-to-order slot: real proportions next to a 1.75 m person, shrunk together so both stay on screen */
     const fit = i === CUSTOM ? Math.min(1, 1.05 / physK, 64 / (2 * g.userData.box[0] * physK + 50)) * lerp(1, cfS, 1 - dk) : 1;
-    if (i === CUSTOM) g.position.y += cfY * (1 - dk);
+    if (i === CUSTOM) { g.position.y += cfY * (1 - dk); g.position.x += cfX * (1 - dk) * focus; }
     const pk = i === CUSTOM ? physK * fit : 1;
     if (i === CUSTOM) g.position.x -= 13 * sc * fit * (1 - dk);
     g.scale.setScalar(Math.max(.0001, sc * pk)); g.visible = sc > .002;
@@ -1616,7 +1699,7 @@ function loop(now) {
   camera.position.set(camBase.x + parX * 14, camBase.y - parY * 9, camBase.z); camera.lookAt(0, 2, 0);
   physK += (physTarget().k - physK) * (1 - Math.exp(-dt * 5));
   foldK += ((folded && sel === CUSTOM && mode === 'menu' ? 1 : 0) - foldK) * (1 - Math.exp(-dt * 7));
-  { const q = 1 - Math.exp(-dt * 5); cfS += (cfTS - cfS) * q; cfY += (cfTY - cfY) * q; }
+  { const q = 1 - Math.exp(-dt * 5); cfS += (cfTS - cfS) * q; cfY += (cfTY - cfY) * q; cfX += (cfTX - cfX) * q; }
   const g = P[sel]; g.updateMatrixWorld(); placeReticle(g, (1 - detK * .6) * (1 - exV));
   if (mode === 'detail') $('readout').innerHTML = `ROT ${(yaw * 57.3 >= 0 ? '+' : '−') + Math.abs(((yaw * 57.3) % 360)).toFixed(1).padStart(5, '0')}°<br>INCL ${(pitch * 57.3 >= 0 ? '+' : '−') + Math.abs(pitch * 57.3).toFixed(1).padStart(4, '0')}°<br>ZOOM ×${zoom.toFixed(2)}<br>${t('material')}${exV > .02 ? '<br><span style="color:var(--warn)">' + t('exActive') + '</span>' : ''}`;
   if ((tickT += dt) > .25) { tickT = 0; ticker(); }
