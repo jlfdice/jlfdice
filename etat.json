@@ -1,0 +1,12 @@
+{
+  "handle": "jlf2ice",
+  "items": {
+    "mona": {
+      "status": "dispo"
+    },
+    "mystery": {
+      "status": "bientot",
+      "hint": "Une nouvelle œuvre est en cours. Personne ne l’a encore vue."
+    }
+  }
+}
