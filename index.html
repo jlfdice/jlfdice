@@ -1032,7 +1032,8 @@ function renderInfo(i, scramble) {
   const hint = infoEl.querySelector('.hint'); hint.hidden = !it.locked || !st.hint; hint.textContent = st.hint || '';
   setTimeout(tickCountdown, 0);
   const acts = infoEl.querySelector('.actions');
-  $('dsel').hidden = !it.custom; if (it.custom) renderDiceSel();
+  /* options only once a photo has been chosen */
+  $('dsel').hidden = !it.custom || !!it.placeholder; if (it.custom) renderDiceSel();
   if (it.custom && it.placeholder) {
     acts.innerHTML = `<button class="btn primary" type="button" data-pick>${t('pick')}</button>`;
     acts.querySelector('[data-pick]').addEventListener('click', pickPhoto);
@@ -1061,6 +1062,19 @@ function showInfo(i, animate = true) {
 }
 /* fold arrow on the made-to-order panel: slides the text down so the painting and the life-size silhouette are fully visible */
 let folded = false, foldK = 0;
+/* made-to-order slot: keep the painting AND the 1.75 m silhouette inside the free band between the top bar and the text panel, whatever the phone */
+let cfS = 1, cfY = 0, cfTS = 1, cfTY = 0;
+const fitV = new THREE.Vector3();
+function fitMeasure(g, fh, hs) {
+  const r = FRAME.getBoundingClientRect(), H = r.height;
+  const topW = Math.max(g.position.y + fh, g.position.y - fh + 72 * hs) + 4 * hs, botW = g.position.y - fh - 7 * hs;
+  fitV.set(g.position.x, topW, g.position.z).project(camera); const yt = (1 - fitV.y) / 2 * H;
+  fitV.set(g.position.x, botW, g.position.z).project(camera); const yb = (1 - fitV.y) / 2 * H;
+  const lim1 = $('swipehint').getBoundingClientRect().bottom - r.top + 34, lim2 = infoEl.getBoundingClientRect().top - r.top - 16;
+  const span = yb - yt, avail = lim2 - lim1; if (span < 4 || avail < 30) return;
+  cfTS = clamp(cfS * avail / span, .3, 1.15);
+  cfTY = cfY + ((yt + yb) / 2 - (lim1 + lim2) / 2) * (topW - botW) / span;
+}
 function setFold(i) {
   const on = ITEMS[i] && ITEMS[i].custom, f = on && folded;
   $('fold').hidden = !on; infoEl.classList.toggle('fold', !!f); FRAME.classList.toggle('folded', !!f);
@@ -1327,7 +1341,7 @@ function openDetail() {
   if (it.placeholder) { pickPhoto(); return; }
   if (it.locked) {
     shakeT0 = tt; spinT0 = tt; glitch(); glitch('denied', 900); if (sound) SFX.deny(); buzz([40, 60, 40]);
-    toast(`<b>${t('denied')}</b>${esc(itemState(it).hint || t('soon'))}`, true); return;
+    toast(`<b style="margin:0">${t('denied')}</b>`, true); return;
   }
   mode = 'detail'; touchedOnce(); FRAME.classList.add('detail');
   $('dtitle').textContent = itName(it); $('dorder').href = igDM();
@@ -1575,8 +1589,8 @@ function loop(now) {
     g.rotation.set(Math.sin(tt * .7 * speed + i) * .06 * (1 - dk) + dk * pitch, spin + Math.sin(tt * .55 * speed + i * 1.7) * (.1 + .08 * (1 - focus)) * (1 - dk) + dk * yaw - d * .35, Math.sin(tt * .4 + i) * .025 * (1 - dk));
     const sc = (.58 + .42 * focus) * edge * (1 + dk * ((ITEMS[i].about ? .08 : .3) + (zoom - 1) * .9)) * (isSel ? 1 : 1 - detK);
     /* made-to-order slot: real proportions next to a 1.75 m person, shrunk together so both stay on screen */
-    const fit = i === CUSTOM ? Math.min(1, 1.05 / physK, 64 / (2 * g.userData.box[0] * physK + 50)) * (1 + .16 * foldK * (1 - dk)) : 1;
-    if (i === CUSTOM) g.position.y -= 9 * foldK * sc * (1 - dk);
+    const fit = i === CUSTOM ? Math.min(1, 1.05 / physK, 64 / (2 * g.userData.box[0] * physK + 50)) * lerp(1, cfS, 1 - dk) : 1;
+    if (i === CUSTOM) g.position.y += cfY * (1 - dk);
     const pk = i === CUSTOM ? physK * fit : 1;
     if (i === CUSTOM) g.position.x -= 13 * sc * fit * (1 - dk);
     g.scale.setScalar(Math.max(.0001, sc * pk)); g.visible = sc > .002;
@@ -1584,6 +1598,7 @@ function loop(now) {
       const fw = g.userData.box[0] * sc * pk, fh = g.userData.box[1] * sc * pk;
       human.scale.setScalar(Math.max(.0001, sc * fit)); human.position.set(g.position.x + fw + (6 + 17) * sc * fit, g.position.y - fh + 36 * sc * fit, g.position.z + 2);
       human.material.opacity = (mode === 'menu' ? 1 : 0) * focus * focus * .95; human.visible = human.material.opacity > .01;
+      if (isSel && mode === 'menu' && focus > .97 && dk < .02) fitMeasure(g, fh, sc * fit);
     }
     const u = g.userData; u.glow.material.opacity = .45 * focus * focus * (1 - detK);
     if (ITEMS[i].locked) u.mat.emissiveIntensity = (.14 + .12 * Math.sin(tt * 3) + (Math.random() < .04 ? .3 : 0)) * (.4 + .6 * focus);
@@ -1601,6 +1616,7 @@ function loop(now) {
   camera.position.set(camBase.x + parX * 14, camBase.y - parY * 9, camBase.z); camera.lookAt(0, 2, 0);
   physK += (physTarget().k - physK) * (1 - Math.exp(-dt * 5));
   foldK += ((folded && sel === CUSTOM && mode === 'menu' ? 1 : 0) - foldK) * (1 - Math.exp(-dt * 7));
+  { const q = 1 - Math.exp(-dt * 5); cfS += (cfTS - cfS) * q; cfY += (cfTY - cfY) * q; }
   const g = P[sel]; g.updateMatrixWorld(); placeReticle(g, (1 - detK * .6) * (1 - exV));
   if (mode === 'detail') $('readout').innerHTML = `ROT ${(yaw * 57.3 >= 0 ? '+' : '−') + Math.abs(((yaw * 57.3) % 360)).toFixed(1).padStart(5, '0')}°<br>INCL ${(pitch * 57.3 >= 0 ? '+' : '−') + Math.abs(pitch * 57.3).toFixed(1).padStart(4, '0')}°<br>ZOOM ×${zoom.toFixed(2)}<br>${t('material')}${exV > .02 ? '<br><span style="color:var(--warn)">' + t('exActive') + '</span>' : ''}`;
   if ((tickT += dt) > .25) { tickT = 0; ticker(); }
