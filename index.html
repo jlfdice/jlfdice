@@ -2299,7 +2299,7 @@ document.addEventListener('click', e => {
   const h = a.getAttribute('href') || '';
   if (!/^https:\/\/(ig\.me\/|www\.instagram\.com\/)/.test(h)) return;
   const mobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-  if (!mobile || INAPP) return;                 /* inside Instagram, its own links already stay in the app */
+  if (!mobile) return;                          /* inside Instagram's browser too: its own app link takes the client straight to the profile */
   e.preventDefault(); e.stopPropagation();
   let left = false; const gone = () => { left = true; };
   document.addEventListener('visibilitychange', gone, {once: true}); addEventListener('pagehide', gone, {once: true}); addEventListener('blur', gone, {once: true});
