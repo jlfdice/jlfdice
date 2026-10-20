@@ -36,6 +36,7 @@ input:focus-visible, button:focus-visible { outline: 2px solid var(--holo); outl
 .chips { display: flex; flex-wrap: wrap; gap: 8px; }
 .chips button { font: 500 13px var(--mono); color: var(--ink); background: rgba(127,233,255,.05); border: 1px solid var(--line); padding: 9px 12px; min-height: 40px; cursor: pointer; }
 .chips button[aria-checked="true"] { background: var(--gold); color: #140a00; border-color: var(--gold); }
+.chips button.off { opacity: .4; text-decoration: line-through; border-style: dashed; }
 #cwrap { margin-top: 14px; display: flex; justify-content: center; }
 #ccv { display: block; touch-action: none; cursor: move; outline: 1px solid var(--line2); }
 #cropbox { margin-top: 10px; }
@@ -104,7 +105,7 @@ input:focus-visible, button:focus-visible { outline: 2px solid var(--holo); outl
 <label>Nombre de dés</label><div class="chips" id="o-n" role="radiogroup" aria-label="Nombre de dés"></div>
 <label>Forme</label><div class="chips" id="o-s" role="radiogroup" aria-label="Forme"></div>
 <label>Taille des dés</label><div class="chips" id="o-d" role="radiogroup" aria-label="Taille des dés"></div>
-<div class="info" id="o-info"></div>
+<div class="info" id="o-info"></div><div class="warn" id="o-warn" hidden></div>
 
 </section>
 
@@ -160,10 +161,15 @@ function drawSrc(g, img, sx, sy, sw, sh, dx, dy, dw, dh) {
   if (x1 <= x0 || y1 <= y0) return;
   g.drawImage(img, x0, y0, x1 - x0, y1 - y0, dx + (x0 - sx) / sw * dw, dy + (y0 - sy) / sh * dh, (x1 - x0) / sw * dw, (y1 - y0) / sh * dh);
 }
-/* no zoom-out past the photo: the selection always stays inside it */
-function zoomMin() { return 1; }
-/* selection tool: the whole photo is shown, the area to turn into dice is a box (painting proportions)
-   that can be moved, resized by its corners or with two fingers.  api: img(), ar(), get(), set(crop), changed() */
+/* the box can open up to the whole photo (what sticks out becomes black dice) */
+function zoomMin(img, ar) {
+  const iw = img.naturalWidth || img.width, ih = img.naturalHeight || img.height;
+  let sw = iw, sh = iw / ar; if (sh > ih) { sh = ih; sw = ih * ar; }
+  return sw / Math.max(iw, ih * ar);
+}
+/* selection tool: the whole photo is shown, the area to turn into dice is a box that can be moved, resized by its corners
+   or with two fingers. With api.free() the corners change its proportions too (the painting then takes those proportions).
+   api: img(), ar(), free(), get() → {px, py, z}, set({px, py, z, ar}), changed() */
 function cropSelector(cv, api) {
   const P = new Map(); let mode = null, anchor = null, start = null, w0 = 0, d0 = 0;
   const L = () => {
@@ -171,15 +177,14 @@ function cropSelector(cv, api) {
     const iw = img.naturalWidth || img.width, ih = img.naturalHeight || img.height, r = cv.getBoundingClientRect();
     const s = Math.min(r.width / iw, r.height / ih); return {iw, ih, s, ox: (r.width - iw * s) / 2, oy: (r.height - ih * s) / 2, r};
   };
-  const rect = l => {
-    const c = api.get(), ar = api.ar(); let sw = l.iw, sh = l.iw / ar; if (sh > l.ih) { sh = l.ih; sw = l.ih * ar; }
-    const w = sw / c.z, h = sh / c.z; return {x: c.px * (l.iw - w), y: c.py * (l.ih - h), w, h, sw};
+  const base = (l, ar) => { let sw = l.iw, sh = l.iw / ar; if (sh > l.ih) { sh = l.ih; sw = l.ih * ar; } return sw; };
+  const rect = l => { const c = api.get(), ar = api.ar(), sw = base(l, ar), w = sw / c.z, h = w / ar; return {x: c.px * (l.iw - w), y: c.py * (l.ih - h), w, h, ar, sw}; };
+  const minW = (l, ar) => Math.max(base(l, ar) / 3, 24 / l.s);
+  const commit = (l, x, y, w, h, ar) => {
+    const sw = base(l, ar); x = Math.max(0, Math.min(l.iw - w, x)); y = Math.max(0, Math.min(l.ih - h, y));
+    api.set({z: Math.max(1, sw / w), px: l.iw - w > .5 ? x / (l.iw - w) : .5, py: l.ih - h > .5 ? y / (l.ih - h) : .5, ar}); api.changed();
   };
-  const setRect = (l, x, y, w) => {
-    const ar = api.ar(), R = rect(l); w = Math.max(R.sw / 3, Math.min(R.sw, w)); const h = w / ar;
-    x = Math.max(0, Math.min(l.iw - w, x)); y = Math.max(0, Math.min(l.ih - h, y));
-    api.set({z: R.sw / w, px: l.iw - w > .5 ? x / (l.iw - w) : .5, py: l.ih - h > .5 ? y / (l.ih - h) : .5}); api.changed();
-  };
+  const setRect = (l, x, y, w) => { const ar = api.ar(), sw = base(l, ar); w = Math.max(minW(l, ar), Math.min(sw, w)); commit(l, x, y, w, w / ar, ar); };
   const toImg = (l, e) => [(e.clientX - l.r.left - l.ox) / l.s, (e.clientY - l.r.top - l.oy) / l.s];
   function draw() {
     const l = L(); if (!l) return;
@@ -190,16 +195,16 @@ function cropSelector(cv, api) {
     g.fillStyle = 'rgba(0,4,10,.62)'; g.beginPath(); g.rect(l.ox, l.oy, l.iw * l.s, l.ih * l.s); g.rect(x, y, w, h); g.fill('evenodd');
     g.strokeStyle = 'rgba(127,233,255,.35)'; g.lineWidth = 1;
     for (let k = 1; k < 3; k++) { g.beginPath(); g.moveTo(x + w * k / 3, y); g.lineTo(x + w * k / 3, y + h); g.moveTo(x, y + h * k / 3); g.lineTo(x + w, y + h * k / 3); g.stroke(); }
-    g.strokeStyle = '#7fe9ff'; g.lineWidth = 2; g.strokeRect(x, y, w, h);
-    const hs = 14; g.lineWidth = 4; g.lineCap = 'square';
-    for (const [cx, cy, sx, sy] of [[x, y, 1, 1], [x + w, y, -1, 1], [x, y + h, 1, -1], [x + w, y + h, -1, -1]]) { g.beginPath(); g.moveTo(cx, cy + sy * hs); g.lineTo(cx, cy); g.lineTo(cx + sx * hs, cy); g.stroke(); }
+    g.strokeStyle = '#7fe9ff'; g.lineWidth = 2; g.strokeRect(x + 1, y + 1, w - 2, h - 2);
+    const hs = 16; g.lineWidth = 5; g.lineCap = 'square';
+    for (const [cx, cy, sx, sy] of [[x + 2, y + 2, 1, 1], [x + w - 2, y + 2, -1, 1], [x + 2, y + h - 2, 1, -1], [x + w - 2, y + h - 2, -1, -1]]) { g.beginPath(); g.moveTo(cx, cy + sy * hs); g.lineTo(cx, cy); g.lineTo(cx + sx * hs, cy); g.stroke(); }
   }
   cv.style.touchAction = 'none';
   cv.addEventListener('pointerdown', e => {
     const l = L(); if (!l) return; cv.setPointerCapture(e.pointerId); P.set(e.pointerId, {x: e.clientX, y: e.clientY});
     const R = rect(l);
     if (P.size === 2) { const [a, b] = [...P.values()]; d0 = Math.hypot(a.x - b.x, a.y - b.y); w0 = R.w; mode = 'pinch'; return; }
-    const [px, py] = toImg(l, e), tol = 26 / l.s;
+    const [px, py] = toImg(l, e), tol = 30 / l.s;
     const corners = [[R.x, R.y, R.x + R.w, R.y + R.h], [R.x + R.w, R.y, R.x, R.y + R.h], [R.x, R.y + R.h, R.x + R.w, R.y], [R.x + R.w, R.y + R.h, R.x, R.y]];
     const hit = corners.find(([cx, cy]) => Math.abs(px - cx) < tol && Math.abs(py - cy) < tol);
     if (hit) { mode = 'resize'; anchor = [hit[2], hit[3]]; }
@@ -211,20 +216,44 @@ function cropSelector(cv, api) {
   });
   cv.addEventListener('pointermove', e => {
     const p = P.get(e.pointerId); if (!p) return; p.x = e.clientX; p.y = e.clientY;
-    const l = L(); if (!l) return; const R = rect(l), ar = api.ar();
-    if (mode === 'pinch' && P.size === 2) { const [a, b] = [...P.values()], k = d0 / Math.max(1, Math.hypot(a.x - b.x, a.y - b.y)), nw = w0 * k; setRect(l, R.x + R.w / 2 - nw / 2, R.y + R.h / 2 - nw / ar / 2, nw); return; }
-    const [px, py] = toImg(l, e);
+    const l = L(); if (!l) return; const R = rect(l), ar = R.ar;
+    if (mode === 'pinch' && P.size === 2) { const [a, b] = [...P.values()], nw = w0 * Math.hypot(a.x - b.x, a.y - b.y) / Math.max(1, d0); setRect(l, R.x + R.w / 2 - nw / 2, R.y + R.h / 2 - nw / ar / 2, nw); return; }
+    const [px0, py0] = toImg(l, e), px = Math.max(0, Math.min(l.iw, px0)), py = Math.max(0, Math.min(l.ih, py0));
     if (mode === 'move') setRect(l, start.x + px - start.px, start.y + py - start.py, R.w);
     else if (mode === 'resize') {
-      const [ax, ay] = anchor; let w = Math.max(Math.abs(px - ax), Math.abs(py - ay) * ar);
-      w = Math.max(R.sw / 3, Math.min(R.sw, w, px < ax ? ax : l.iw - ax, (py < ay ? ay : l.ih - ay) * ar)); const h = w / ar;
-      setRect(l, px < ax ? ax - w : ax, py < ay ? ay - h : ay, w);
+      const [ax, ay] = anchor;
+      if (api.free()) {
+        /* free proportions: the box follows the finger, between 1:3 and 3:1 */
+        let w = Math.max(24 / l.s, Math.abs(px - ax)), h = Math.max(24 / l.s, Math.abs(py - ay)), a = w / h;
+        if (a > 3) w = h * 3; if (a < 1 / 3) h = w * 3; a = w / h;
+        commit(l, px < ax ? ax - w : ax, py < ay ? ay - h : ay, w, h, a);
+      } else {
+        let w = Math.max(Math.abs(px - ax), Math.abs(py - ay) * ar);
+        w = Math.max(minW(l, ar), Math.min(R.sw, w, px < ax ? ax : l.iw - ax, (py < ay ? ay : l.ih - ay) * ar)); const h = w / ar;
+        setRect(l, px < ax ? ax - w : ax, py < ay ? ay - h : ay, w);
+      }
     }
   });
-  const up = e => { P.delete(e.pointerId); if (P.size === 0) mode = null; else if (mode === 'pinch') mode = null; };
+  const up = e => { P.delete(e.pointerId); mode = null; };
   cv.addEventListener('pointerup', up); cv.addEventListener('pointercancel', up);
-  cv.addEventListener('wheel', e => { e.preventDefault(); const l = L(); if (!l) return; const R = rect(l), nw = R.w * Math.exp(e.deltaY * .0015); setRect(l, R.x + R.w / 2 - nw / 2, R.y + R.h / 2 - nw / api.ar() / 2, nw); }, {passive: false});
+  cv.addEventListener('wheel', e => { e.preventDefault(); const l = L(); if (!l) return; const R = rect(l), nw = R.w * Math.exp(e.deltaY * .0015); setRect(l, R.x + R.w / 2 - nw / 2, R.y + R.h / 2 - nw / R.ar / 2, nw); }, {passive: false});
   return {draw};
+}
+/* any proportions: whole-dice grid as near as possible to n dice (never above 10 000) */
+function gridFor(n, want) {
+  let best = null;
+  for (let C = 12; C <= 300; C++) for (const R of [Math.floor(n / C), Math.ceil(n / C)]) {
+    if (R < 12) continue; const N = C * R, e = Math.abs(C / R - want) / want; if (e > .035 || N > 10000) continue;
+    const sc = Math.abs(N - n) + e * 2000; if (!best || sc < best[2]) best = [C, R, sc];
+  }
+  if (best) return [best[0], best[1]];
+  const C = Math.max(12, Math.round(Math.sqrt(n * want))); return [C, Math.max(12, Math.floor(Math.min(10000, n) / C))];
+}
+/* is this dice count good enough for this framing?  '' = fine, otherwise a reason code */
+function diceIssue(img, C, R, cropW) {
+  if (Math.min(C, R) < 45) return 'thin';
+  if (img && cropW / C < 3) return 'res';
+  return '';
 }
 const FACE_LV = [0.075, 0.105, 0.128, 0.158, 0.180, 0.211, 0.238];   /* mean brightness of each face as seen from afar */
 function claheL(L, w, h, tx, ty, clip) {
@@ -654,7 +683,9 @@ $('code').addEventListener('input', () => {
 $('paste').addEventListener('click', async () => { try { $('code').value = await navigator.clipboard.readText(); $('code').dispatchEvent(new Event('input')); } catch (e) { toast('Colle le code à la main (appui long → Coller)', true); } });
 
 /* the grid being framed: the client's order, or my own settings */
-const dims = () => MODE === 'order' && ORDER ? [ORDER.C, ORDER.R] : gridDims(diceN, shape);
+const SHAPE_AR = {rect: .75, square: 1};
+const curAR = () => MODE === 'order' && ORDER ? ORDER.C / ORDER.R : SHAPE_AR[shape] || CROP.ar || .75;
+const dims = () => MODE === 'order' && ORDER ? [ORDER.C, ORDER.R] : gridFor(diceN, curAR());
 let cropEdited = false;
 function orderCrop() { CROP = ORDER && ORDER.crop ? {...ORDER.crop} : {px: .5, py: .46, z: 1}; cropEdited = false; $('czoom').value = CROP.z; }
 /* does the photo received have the proportions of the one the client framed? */
@@ -680,7 +711,7 @@ $('file').addEventListener('change', () => {
     IMG = im; IMGFILE = f; if (MODE === 'order') orderCrop(); else { CROP = {px: .5, py: .5, z: 1}; $('czoom').value = 1; }
     document.querySelectorAll('.thumb').forEach(t => { t.src = url; t.hidden = false; });
     document.querySelectorAll('.fname').forEach(t => t.textContent = `${f.name} · ${im.naturalWidth} × ${im.naturalHeight}px`);
-    refresh(); checkPhoto(); drawCrop();
+    refresh(); checkPhoto(); renderOpts(); drawCrop();
   };
   im.onerror = () => toast('Image illisible — choisis un JPEG ou un PNG.', true);
   im.src = url;
@@ -691,10 +722,20 @@ function chips(boxId, opts, cur, label, on) {
   box.querySelectorAll('button').forEach(b => b.addEventListener('click', () => on(b.dataset.v)));
 }
 function renderOpts() {
-  chips('o-n', DICE_OPTS, diceN, fmt, v => { diceN = +v; renderOpts(); drawCrop(); });
-  chips('o-s', ['rect', 'square'], shape, v => v === 'rect' ? 'Rectangle' : 'Carré', v => { shape = v; renderOpts(); drawCrop(); });
+  /* dice counts that would give a poor result for this framing are struck through */
+  const bad = {}; DICE_OPTS.forEach(n => { if (!IMG) return; const [C, R] = gridFor(n, curAR()), [, , cw] = cropRect(IMG, C / R, CROP); bad[n] = diceIssue(IMG, C, R, cw); });
+  if (bad[diceN]) { const ok = DICE_OPTS.filter(n => !bad[n]); if (ok.length) diceN = ok.reduce((a, b) => Math.abs(b - diceN) < Math.abs(a - diceN) ? b : a); }
+  chips('o-n', DICE_OPTS, diceN, fmt, v => { if (bad[v]) { toast(bad[v] === 'thin' ? 'Format trop étroit : moins de 45 dés sur le petit côté' : 'Image pas assez détaillée pour autant de dés', true); return; } diceN = +v; renderOpts(); drawCrop(); });
+  $('o-n').querySelectorAll('button').forEach(b => { if (bad[b.dataset.v]) b.classList.add('off'); });
+  const offs = DICE_OPTS.filter(n => bad[n]);
+  $('o-warn').hidden = !offs.length; $('o-warn').textContent = offs.length ? `Indisponible : ${offs.map(fmt).join(' · ')} — ${bad[offs[0]] === 'thin' ? 'format trop étroit, moins de 45 dés sur le petit côté' : 'image pas assez détaillée pour autant de dés'}.` : '';
+  const iw = IMG ? IMG.naturalWidth : 3, ih = IMG ? IMG.naturalHeight : 4, full = shape === 'free' && CROP.z <= 1.001 && Math.abs((CROP.ar || 0) - iw / ih) < .01;
+  chips('o-s', ['full', 'free', 'rect', 'square'], full ? 'full' : shape, v => ({full: 'Toute l’image', free: 'Libre', rect: '3:4', square: 'Carré'})[v], v => {
+    if (v === 'full') { shape = 'free'; CROP = {px: .5, py: .5, z: 1, ar: iw / ih}; } else { shape = v; if (SHAPE_AR[v]) CROP = {...CROP, ar: SHAPE_AR[v]}; }
+    $('czoom').value = CROP.z; renderOpts(); drawCrop();
+  });
   chips('o-d', SIZE_OPTS, dieMM, v => v + ' mm', v => { dieMM = +v; renderOpts(); });
-  const [C, R] = gridDims(diceN, shape);
+  const [C, R] = dims();
   $('o-info').textContent = `${fmt(C * R)} dés · grille ${C} × ${R} · ≈ ${cm1(C, dieMM)} × ${cm1(R, dieMM)} cm`;
 }
 /* framing editor for my own creations */
@@ -715,8 +756,8 @@ function drawCrop() {
   });
 }
 {
-  var SEL = cropSelector($('ccv'), {img: () => IMG, ar: () => { const [C, R] = dims(); return C / R; }, get: () => CROP,
-    set: v => { CROP = v; $('czoom').value = v.z; cropEdited = true; if (MODE === 'order') $('cropstate').textContent = 'Cadrage ajusté à la main'; }, changed: drawCrop});
+  var SEL = cropSelector($('ccv'), {img: () => IMG, ar: curAR, free: () => MODE === 'create' && shape === 'free', get: () => CROP,
+    set: v => { CROP = v; $('czoom').value = v.z; cropEdited = true; if (MODE === 'order') $('cropstate').textContent = 'Cadrage ajusté à la main'; }, changed: () => { drawCrop(); if (MODE === 'create') renderOpts(); }});
   $('czoom').addEventListener('input', () => { CROP.z = +$('czoom').value; cropEdited = true; if (MODE === 'order') $('cropstate').textContent = 'Cadrage ajusté à la main'; drawCrop(); });
   $('cropreset').addEventListener('click', () => { if (MODE === 'order') orderCrop(); else { CROP = {px: .5, py: .5, z: 1}; $('czoom').value = 1; } $('cropstate').textContent = MODE === 'order' ? 'Cadrage du client' : ''; drawCrop(); });
   addEventListener('resize', drawCrop);
@@ -750,7 +791,7 @@ async function run() {
     let C, R, die, crop, ref, code, client = '';
     if (MODE === 'order') { ({C, R, die, ref, code} = ORDER); crop = {...CROP}; client = $('client').value.trim(); }
     else {
-      [C, R] = gridDims(diceN, shape); die = dieMM; crop = {...CROP};
+      [C, R] = dims(); die = dieMM; crop = {...CROP};
       ref = 'A' + Date.now().toString(36).slice(-5).toUpperCase(); const q = v => Math.round(v * 100);
       code = `JLFD-C${C}-R${R}-D${die}-X${q(crop.px)}Y${q(crop.py)}Z${q(crop.z)}-${ref}`;
     }
