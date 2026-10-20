@@ -150,17 +150,27 @@ html, body { height: 100%; margin: 0; overflow: hidden; background: #000; color:
 #frame.detail #dbottom button { pointer-events: auto; }
 #frame.exploded #readout::after { content: "DÉCOMPOSITION ACTIVE"; display: block; color: var(--warn); }
 
-#mkwrap { right: 7cqw; top: 11.2cqh; z-index: 6; }
-#mkbtn { font-size: 2.3cqw; padding: 1.6cqw 2.8cqw; color: var(--warn); border-color: rgba(255,179,71,.7); background: rgba(255,179,71,.08); box-shadow: 0 0 4cqw rgba(255,179,71,.18); animation: mkpulse 2.6s ease-in-out infinite; }
-@keyframes mkpulse { 50% { box-shadow: 0 0 7cqw rgba(255,179,71,.4); } }
-#frame.detail #mkwrap { opacity: 0; }
+.tool.hot { color: var(--warn); border-color: rgba(255,179,71,.65); background: rgba(255,179,71,.08); }
 #proc { position: absolute; inset: 0; z-index: 8; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2.4cqw; background: rgba(0,4,9,.82); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); text-align: center; padding: 0 10cqw; }
 #proc .ring { width: 22cqw; height: 22cqw; border-radius: 50%; border: 2px solid rgba(127,233,255,.2); border-top-color: var(--holo); border-right-color: var(--holo); animation: spinr .9s linear infinite; box-shadow: 0 0 6cqw rgba(127,233,255,.25); }
 @keyframes spinr { to { transform: rotate(360deg); } }
 #proc b { font-weight: 600; font-size: 4.4cqw; letter-spacing: .2em; text-transform: uppercase; }
 #proc span { font-size: 3cqw; color: var(--holo); letter-spacing: .2em; }
 #proc small { font: 400 2.3cqw var(--mono); color: var(--dim); letter-spacing: .1em; }
-@media (prefers-reduced-motion: reduce) { #mkbtn, #proc .ring { animation: none; } }
+@media (prefers-reduced-motion: reduce) { #proc .ring { animation: none; } }
+
+.dsel { margin-top: 2.6cqw; }
+.dsel .dl { display: block; font: 500 2.2cqw var(--mono); letter-spacing: .24em; text-transform: uppercase; color: var(--holo); margin-bottom: 1.4cqw; }
+.dopts { display: flex; flex-wrap: wrap; gap: 1.4cqw; }
+.dopt { font: 500 2.6cqw var(--mono); letter-spacing: .06em; color: var(--ink); background: rgba(127,233,255,.05); border: 1px solid var(--line); padding: 1.4cqw 2.2cqw; cursor: pointer; font-variant-numeric: tabular-nums; }
+.dopt[aria-checked="true"] { background: var(--warn); color: #120800; border-color: var(--warn); box-shadow: 0 0 3cqw rgba(255,179,71,.45); }
+.dopt:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+.dsel .dinfo { display: block; margin-top: 1.4cqw; font: 400 2.3cqw var(--mono); color: var(--dim); letter-spacing: .06em; }
+#send { position: absolute; inset: 0; z-index: 9; background: rgba(0,4,9,.95); display: flex; flex-direction: column; gap: 3cqw; padding: 6cqh 7cqw 5cqh; overflow-y: auto; touch-action: pan-y; }
+#send h2 { margin: 0; font-weight: 600; font-size: 5.2cqw; letter-spacing: .18em; text-transform: uppercase; color: var(--holo); }
+#send img { width: 100%; max-width: 100%; border: 1px solid var(--line); }
+#send ol { margin: 0; padding-left: 5cqw; font: 400 3cqw/1.6 var(--mono); color: #d6f6ff; }
+#send .row { display: flex; gap: 2.4cqw; flex-wrap: wrap; }
 </style>
 <template id="markup"><div id="frame" class="gate">
 <div id="bg"></div>
@@ -173,18 +183,19 @@ html, body { height: 100%; margin: 0; overflow: hidden; background: #000; color:
 <div class="hud" id="top"><div><span class="t1">Archive</span><span class="t2" id="t2">JLF D'ICE</span></div></div>
 <div class="hud" id="count">01 / 02<small>SIGNAL STABLE</small></div>
 <div class="hud" id="ticker"></div>
-<div class="hud menu-only" id="tools"><button class="tool" id="snd" type="button" aria-pressed="true">SON · ON</button><button class="tool" id="share" type="button">PARTAGER</button><button class="tool" id="gear" type="button" hidden>GÉRER</button></div>
-<div class="hud menu-only" id="mkwrap"><button class="btn" id="mkbtn" type="button">✦ Ton portrait en dés</button><input id="mkfile" type="file" accept="image/*" hidden></div>
+<div class="hud menu-only" id="tools"><button class="tool" id="snd" type="button" aria-pressed="true">SON · ON</button><button class="tool" id="share" type="button">PARTAGER</button><button class="tool hot" id="mkgo" type="button">✦ CRÉER</button><button class="tool" id="gear" type="button" hidden>GÉRER</button></div>
+<input id="mkfile" type="file" accept="image/*" hidden>
 <button class="arrow hud menu-only" id="prev" type="button" aria-label="Œuvre précédente">‹</button>
 <button class="arrow hud menu-only" id="next" type="button" aria-label="Œuvre suivante">›</button>
 <div class="hud menu-only" id="swipehint">◂ glisser · toucher pour ouvrir ▸</div>
-<div class="hud out menu-only" id="info" aria-live="polite"><div class="num"></div><div class="name"></div><div class="sub"></div><div class="meta"></div><div class="countdown" hidden></div><div class="hint" hidden></div><div class="actions"></div></div>
+<div class="hud out menu-only" id="info" aria-live="polite"><div class="num"></div><div class="name"></div><div class="sub"></div><div class="meta"></div><div class="countdown" hidden></div><div class="dsel" id="dsel" hidden><span class="dl">Nombre de dés</span><div class="dopts" role="radiogroup" aria-label="Nombre de dés"></div><span class="dinfo" id="dinfo"></span></div><div class="hint" hidden></div><div class="actions"></div></div>
 <div id="detailbar"><button class="btn" id="back" type="button">‹ Retour</button><span class="dt"><b id="dtitle">La Joconde</b><small>ANALYSE EN COURS</small></span></div>
 <div id="readout"></div>
 <div id="dbottom"><div id="about"><div class="tabs" role="tablist"><button class="tab on" type="button" role="tab" data-tab="orig" id="tab-orig">Œuvre originale</button><button class="tab" type="button" role="tab" data-tab="comp" id="tab-comp">Composition</button></div><p id="abouttxt"></p><div id="comp" hidden></div></div><small>Glisser pour pivoter · pincer pour zoomer</small><div class="drow"><button class="btn" id="explode" type="button">Décomposer</button><a class="btn primary" id="dorder" target="_blank" rel="noopener">Commander</a></div></div>
 <button class="btn" id="skip" type="button">Passer ›</button>
 <div id="gate"><span class="k">JLF D'ICE</span><h1>Archive</h1><div class="boot" id="boot"></div><button class="btn primary" id="enter" type="button" disabled>Initialiser ▸</button><small>Son recommandé</small></div>
 <div id="toast" role="status"></div>
+<div id="send" hidden><h2>Envoyer à JLF D’ICE</h2><img id="sendimg" alt="Fiche de commande avec ta photo et l’aperçu en dés"><ol id="sendsteps"></ol><div class="row"><a class="btn primary" id="sendig" target="_blank" rel="noopener">Ouvrir la conversation</a><button class="btn" id="sendclose" type="button">Fermer</button></div></div>
 <div id="proc" hidden><div class="ring"></div><b id="proct">Analyse de l’image</b><span id="procs" class="mono">0 %</span><small>Ta photo reste sur ton appareil · rien n’est envoyé</small></div>
 <div id="panel" hidden>
   <h2>Gérer l'archive</h2>
@@ -774,16 +785,16 @@ STATE.handle = STATE.handle || 'jlf2ice';
 STATE.items = STATE.items || {};
 const STATUS = {
   dispo: ['Disponible', '#6dffb4'], reserve: ['Réservé', '#ffb347'], vendu: ['Vendu', '#ff6f8a'],
-  privee: ['Collection privée', '#ffd48a'], bientot: ['Classifié', '#ff3d63'], apercu: ['Aperçu généré', '#7fe9ff'],
+  privee: ['Collection privée', '#ffd48a'], bientot: ['Classifié', '#ff3d63'], apercu: ['Aperçu généré', '#7fe9ff'], surmesure: ['Sur mesure', '#ffb347'],
 };
-const itemState = it => it.custom ? {status: 'apercu'} : Object.assign(it.locked ? {status: 'bientot', hint: 'Une nouvelle œuvre est en cours. Personne ne l’a encore vue.'} : {status: 'dispo'}, STATE.items[it.key] || {});
+const itemState = it => it.custom ? {status: it.placeholder ? 'surmesure' : 'apercu'} : Object.assign(it.locked ? {status: 'bientot', hint: 'Une nouvelle œuvre est en cours. Personne ne l’a encore vue.'} : {status: 'dispo'}, STATE.items[it.key] || {});
 const igDM = () => `https://ig.me/m/${encodeURIComponent(STATE.handle)}`;
 const igProfile = () => `https://www.instagram.com/${encodeURIComponent(STATE.handle)}/`;
 
 const $ = id => document.getElementById(id);
 const infoEl = $('info'), countEl = $('count'), toastEl = $('toast'), retEl = $('reticle');
 const pad2 = n => String(n).padStart(2, '0');
-$('t2').textContent = `JLF D'ICE · ${pad2(ITEMS.length)} OBJETS`;
+$('t2').textContent = `JLF D'ICE · ${pad2(ITEMS.filter(i => !i.custom).length)} OBJETS`;
 
 let mode = 'gate', sound = false, introT0 = 0, menuT0 = 0, last = performance.now(), tt = 0;
 let sel = 0, s = 0, off = 0, detK = 0, yaw = 0, pitch = 0, vyaw = 0, zoom = 1, spinT0 = -9, shakeT0 = -9, touched = false, retT0 = -9;
@@ -850,16 +861,20 @@ function chipHTML(c) { return Array.isArray(c) ? `<span class="chip ${c[1]}">${c
 function esc(t) { return String(t).replace(/[&<>"]/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;'}[c])); }
 function renderInfo(i, scramble) {
   const it = ITEMS[i], st = itemState(it), [label, col] = STATUS[st.status] || STATUS.dispo;
-  infoEl.querySelector('.num').textContent = it.custom ? 'OBJET ∞ // GÉNÉRÉ POUR TOI' : `OBJET ${it.num} // ${it.locked ? 'CLASSIFIÉ' : 'ARCHIVÉ'}`;
+  infoEl.querySelector('.num').textContent = it.custom ? (it.placeholder ? 'OBJET ∞ // À CRÉER' : 'OBJET ∞ // GÉNÉRÉ POUR TOI') : `OBJET ${it.num} // ${it.locked ? 'CLASSIFIÉ' : 'ARCHIVÉ'}`;
   const nm = infoEl.querySelector('.name'); if (scramble) decrypt(nm, it.name); else nm.textContent = it.name;
   infoEl.querySelector('.sub').textContent = it.sub;
   infoEl.querySelector('.meta').innerHTML = `<span class="chip" style="color:${col}"><span class="dot"></span><span style="color:var(--ink)">${esc(label)}</span></span>` + it.chips.map(chipHTML).join('');
   const hint = infoEl.querySelector('.hint'); hint.hidden = !it.locked || !st.hint; hint.textContent = st.hint || '';
   setTimeout(tickCountdown, 0);
   const acts = infoEl.querySelector('.actions');
-  if (it.custom) {
-    acts.innerHTML = `<a class="btn primary" href="${igDM()}" target="_blank" rel="noopener">Commander ce tableau</a><button class="btn" type="button" data-open>Analyser</button><button class="btn" type="button" data-again>Autre photo</button>`;
-    acts.querySelector('[data-open]').addEventListener('click', openDetail); acts.querySelector('[data-again]').addEventListener('click', () => $('mkfile').click());
+  $('dsel').hidden = !it.custom; if (it.custom) renderDiceSel();
+  if (it.custom && it.placeholder) {
+    acts.innerHTML = `<button class="btn primary" type="button" data-pick>Choisir une photo</button>`;
+    acts.querySelector('[data-pick]').addEventListener('click', pickPhoto);
+  } else if (it.custom) {
+    acts.innerHTML = `<button class="btn primary" type="button" data-send>Envoyer à JLF D’ICE</button><button class="btn" type="button" data-open>Analyser</button><button class="btn" type="button" data-again>Autre photo</button>`;
+    acts.querySelector('[data-send]').addEventListener('click', sendToArtist); acts.querySelector('[data-open]').addEventListener('click', openDetail); acts.querySelector('[data-again]').addEventListener('click', pickPhoto);
   } else if (it.locked) acts.innerHTML = `<a class="btn primary" href="${igProfile()}" target="_blank" rel="noopener">Être prévenu</a>`;
   else {
     const sold = st.status === 'vendu' || st.status === 'privee';
@@ -870,7 +885,7 @@ function renderInfo(i, scramble) {
   countEl.innerHTML = `${pad2(i + 1)} / ${pad2(ITEMS.length)}<small>${it.locked ? 'SIGNAL CRYPTÉ' : 'SIGNAL STABLE'}</small>`;
   $('prev').disabled = i === 0; $('next').disabled = i === ITEMS.length - 1;
   retEl.classList.toggle('locked', !!it.locked);
-  retEl.querySelector('.tag').textContent = it.locked ? 'CLASSIFIÉ · ACCÈS RESTREINT' : 'CIBLE VERROUILLÉE';
+  retEl.querySelector('.tag').textContent = it.locked ? 'CLASSIFIÉ · ACCÈS RESTREINT' : it.placeholder ? 'EMPLACEMENT LIBRE' : 'CIBLE VERROUILLÉE';
   retEl.querySelector('.tag2').textContent = `RÉF. ${it.num} · PIÈCE 1/1`;
 }
 let infoTimer = 0;
@@ -975,7 +990,11 @@ function updateWarp() {
   wgeo.attributes.position.needsUpdate = true;
 }
 
-/* ---- "ton portrait en dés": turn the visitor's photo into a dice piece, locally ---- */
+/* ---- "crée le tien": the visitor's photo becomes a dice piece, locally, then goes to the artist ---- */
+const DICE_OPTS = [5000, 7500, 10000, 15000, 20000];
+let diceN = 5000, lastImg = null, lastRef = '';
+const fmtN = n => n.toLocaleString('fr-FR').replace(/ | /g, ' ');
+function gridDims(n) { const C = Math.round(Math.sqrt(n * 3 / 4)); return [C, Math.round(n / C)]; }
 function toGrid(img, C, Rr) {
   const cv2 = mk(C, Rr), g2 = cv2.getContext('2d'), ar = C / Rr, iw = img.naturalWidth || img.width, ih = img.naturalHeight || img.height;
   let sw = iw, sh = iw / ar; if (sh > ih) { sh = ih; sw = ih * ar; }
@@ -984,39 +1003,100 @@ function toGrid(img, C, Rr) {
   for (let i = 0; i < C * Rr; i++) L[i] = (.2126 * d[i * 4] + .7152 * d[i * 4 + 1] + .0722 * d[i * 4 + 2]) / 255;
   const srt = Array.from(L).sort((x, y) => x - y), lo = srt[Math.floor(srt.length * .02)], hi = srt[Math.floor(srt.length * .98)] || 1;
   let s = '';
-  for (let i = 0; i < L.length; i++) { const v = Math.pow(clamp((L[i] - lo) / Math.max(.05, hi - lo)), .9); s += v < .06 ? '0' : String(Math.min(6, 1 + Math.floor(v * 6))); }
+  for (let i = 0; i < L.length; i++) { const v = Math.pow(clamp((L[i] - lo) / Math.max(.05, hi - lo)), .85); s += v < .05 ? '0' : String(Math.min(6, 1 + Math.floor(v * 6))); }
   return s;
 }
-function buildPortrait(img) {
-  const C2 = 40, R2 = 52;
-  GR.custom = toGrid(img, C2, R2); GR.dims.custom = [C2, R2];
-  let idx = ITEMS.findIndex(it => it.custom);
-  const item = {key: 'custom', custom: true, num: '∞', name: 'Ton portrait', sub: 'Aperçu généré à partir de ta photo', chips: [['Sur mesure', 'gold'], 'Dés à jouer', 'Fait main'], plaque: ['Ton portrait', "JLF D'ICE", 'Sur mesure']};
-  if (idx >= 0) { scene.remove(P[idx]); P[idx].traverse(o => { if (o.geometry) o.geometry.dispose(); }); ITEMS[idx] = item; }
-  else { idx = ITEMS.length; ITEMS.push(item); reveal.push({t0: -9}); }
-  const g = painting(item); g.userData.mat.userData.uReveal.value = -30; P[idx] = g; equip(g, idx);
-  return idx;
+function plusGrid(C, Rr) {
+  const c = mk(C, Rr), g = c.getContext('2d'); g.fillStyle = '#000'; g.fillRect(0, 0, C, Rr); g.fillStyle = '#fff';
+  const t = Math.max(3, Math.round(C * .12)), l = Math.round(C * .5);
+  g.fillRect((C - t) / 2, (Rr - l) / 2, t, l); g.fillRect((C - l) / 2, (Rr - t) / 2, l, t);
+  const d = g.getImageData(0, 0, C, Rr).data; let s = ''; for (let i = 0; i < C * Rr; i++) s += d[i * 4] > 110 ? '6' : '0'; return s;
 }
-$('mkbtn').addEventListener('click', () => { $('mkfile').value = ''; $('mkfile').click(); });
+let CUSTOM = -1;
+function setCustom(grid, C, Rr, generated) {
+  GR.custom = grid; GR.dims.custom = [C, Rr];
+  const item = generated
+    ? {key: 'custom', custom: true, num: '∞', name: 'Ton portrait', sub: 'Aperçu généré à partir de ta photo', chips: [['Sur mesure', 'gold']], plaque: ['Ton portrait', "JLF D'ICE", 'Sur mesure']}
+    : {key: 'custom', custom: true, placeholder: true, num: '∞', name: 'Crée le tien', sub: 'Transforme ta photo en tableau de dés', chips: ['Pièce unique'], plaque: ['Crée le tien', "JLF D'ICE", 'Sur mesure']};
+  if (CUSTOM >= 0) { scene.remove(P[CUSTOM]); P[CUSTOM].traverse(o => { if (o.geometry) o.geometry.dispose(); }); ITEMS[CUSTOM] = item; }
+  else { CUSTOM = ITEMS.length; ITEMS.push(item); reveal.push({t0: -9}); }
+  const g = painting(item); P[CUSTOM] = g; equip(g, CUSTOM);
+  if (generated) g.userData.mat.userData.uReveal.value = -30;
+  g.position.x = (CUSTOM - s) * SPACING; g.scale.setScalar(.0001);
+}
+setCustom(plusGrid(40, 52), 40, 52, false);
+function renderDiceSel() {
+  const box = $('dsel').querySelector('.dopts');
+  box.innerHTML = DICE_OPTS.map(n => `<button class="dopt" type="button" role="radio" aria-checked="${n === diceN}" data-n="${n}">${fmtN(n)}</button>`).join('');
+  box.querySelectorAll('.dopt').forEach(b => b.addEventListener('click', () => { diceN = +b.dataset.n; renderDiceSel(); if (lastImg) generate(lastImg); }));
+  const [C, Rr] = gridDims(diceN);
+  $('dinfo').textContent = `${fmtN(C * Rr)} dés · grille ${C} × ${Rr}`;
+}
+function generate(img) {
+  lastImg = img; lastRef = Math.random().toString(36).slice(2, 6).toUpperCase();
+  $('proc').hidden = false; $('proct').textContent = 'Analyse de l’image'; $('procs').textContent = '0 %'; if (sound) SFX.scan();
+  const t0 = performance.now(), steps = ['Analyse de l’image', 'Détection des contrastes', `Placement de ${fmtN(diceN)} dés`, 'Assemblage'];
+  const tick = setInterval(() => { const k = Math.min(1, (performance.now() - t0) / 1900); $('procs').textContent = Math.round(k * 100) + ' %'; $('proct').textContent = steps[Math.min(3, Math.floor(k * 4))]; }, 60);
+  setTimeout(() => {
+    try { const [C, Rr] = gridDims(diceN); setCustom(toGrid(img, C, Rr), C, Rr, true); }
+    catch (e) { clearInterval(tick); $('proc').hidden = true; toast('<b>ERREUR</b>Cette image n’a pas pu être lue. Essaie une autre photo.', true); return; }
+    setTimeout(() => {
+      clearInterval(tick); $('proc').hidden = true;
+      if (mode === 'detail') closeDetail();
+      if (sel === CUSTOM) { showInfo(CUSTOM); setTimeout(() => scan(CUSTOM), 250); } else goTo(CUSTOM);
+      buzz([30, 40, 80]); toast(`<b style="color:var(--holo)">PORTRAIT GÉNÉRÉ</b>${fmtN(diceN)} dés · ta photo devient un tableau.`);
+    }, Math.max(0, 1900 - (performance.now() - t0)));
+  }, 60);
+}
+$('mkgo').addEventListener('click', () => { if (mode === 'detail') closeDetail(); goTo(CUSTOM); });
 $('mkfile').addEventListener('change', () => {
   const f = $('mkfile').files && $('mkfile').files[0]; if (!f) return;
   const url = URL.createObjectURL(f), img = new Image();
-  $('proc').hidden = false; $('proct').textContent = 'Analyse de l’image'; $('procs').textContent = '0 %'; if (sound) SFX.scan();
-  const t0 = performance.now(), steps = ['Analyse de l’image', 'Détection des contrastes', 'Placement des dés', 'Assemblage'];
-  const tick = setInterval(() => { const k = Math.min(1, (performance.now() - t0) / 1900); $('procs').textContent = Math.round(k * 100) + ' %'; $('proct').textContent = steps[Math.min(3, Math.floor(k * 4))]; }, 60);
-  img.onload = () => {
-    let idx;
-    try { idx = buildPortrait(img); } catch (e) { clearInterval(tick); $('proc').hidden = true; toast('<b>ERREUR</b>Cette image n’a pas pu être lue. Essaie une autre photo.', true); return; }
-    setTimeout(() => {
-      clearInterval(tick); $('proc').hidden = true; URL.revokeObjectURL(url);
-      if (mode === 'detail') closeDetail();
-      if (sel === idx) { showInfo(idx); scan(idx); } else goTo(idx);
-      buzz([30, 40, 80]); toast('<b style="color:var(--holo)">PORTRAIT GÉNÉRÉ</b>Voici ta photo transformée en tableau de dés.');
-    }, Math.max(0, 1900 - (performance.now() - t0)));
-  };
-  img.onerror = () => { clearInterval(tick); $('proc').hidden = true; toast('<b>FORMAT NON LU</b>Choisis une photo JPEG ou PNG.', true); };
+  img.onload = () => generate(img);
+  img.onerror = () => toast('<b>FORMAT NON LU</b>Choisis une photo JPEG ou PNG.', true);
   img.src = url;
 });
+function pickPhoto() { $('mkfile').value = ''; $('mkfile').click(); }
+
+/* order sheet: the photo + the dice preview + the spec, as one image to send */
+function orderSheet() {
+  const W = 1080, H = 1350, c = mk(W, H), g = c.getContext('2d'), [C, Rr] = GR.dims.custom;
+  g.fillStyle = '#00060c'; g.fillRect(0, 0, W, H);
+  g.strokeStyle = 'rgba(127,233,255,.5)'; g.lineWidth = 3;
+  [[30, 30, 1, 1], [W - 30, 30, -1, 1], [30, H - 30, 1, -1], [W - 30, H - 30, -1, -1]].forEach(([x, y, sx, sy]) => { g.beginPath(); g.moveTo(x, y + sy * 70); g.lineTo(x, y); g.lineTo(x + sx * 70, y); g.stroke(); });
+  g.fillStyle = '#7fe9ff'; g.font = '500 26px "JetBrains Mono", monospace'; g.fillText("JLF D'ICE  //  COMMANDE SUR MESURE", 70, 110);
+  g.fillStyle = '#e9fbff'; g.font = '600 64px "Chakra Petch", sans-serif'; g.fillText('PORTRAIT EN DÉS', 70, 190);
+  const bw = 450, bh = Math.round(bw * Rr / C), top = 260;
+  const ar = bw / bh, iw = lastImg.naturalWidth, ih = lastImg.naturalHeight; let sw = iw, sh = iw / ar; if (sh > ih) { sh = ih; sw = ih * ar; }
+  g.drawImage(lastImg, (iw - sw) / 2, (ih - sh) / 2, sw, sh, 70, top, bw, bh);
+  g.drawImage(boardCanvas(GR.custom, C, Rr), W - 70 - bw, top, bw, bh);
+  g.strokeStyle = 'rgba(127,233,255,.6)'; g.lineWidth = 2; g.strokeRect(70, top, bw, bh); g.strokeRect(W - 70 - bw, top, bw, bh);
+  g.fillStyle = '#5f8597'; g.font = '500 22px "JetBrains Mono", monospace'; g.fillText('TA PHOTO', 70, top + bh + 40); g.fillText('APERÇU EN DÉS', W - 70 - bw, top + bh + 40);
+  const y0 = top + bh + 110; g.font = '500 30px "JetBrains Mono", monospace';
+  [['NOMBRE DE DÉS', fmtN(C * Rr)], ['GRILLE', `${C} × ${Rr}`], ['RÉFÉRENCE', '#' + lastRef], ['DATE', new Date().toLocaleDateString('fr-FR')]].forEach(([k, v], i) => {
+    g.fillStyle = '#5f8597'; g.fillText(k, 70, y0 + i * 52); g.fillStyle = '#e9fbff'; g.fillText(v, 470, y0 + i * 52);
+  });
+  g.fillStyle = '#ffb347'; g.font = '500 24px "JetBrains Mono", monospace'; g.fillText('@' + STATE.handle, 70, H - 70);
+  return new Promise(res => c.toBlob(b => res(b), 'image/png'));
+}
+async function sendToArtist() {
+  if (!lastImg) { pickPhoto(); return; }
+  const [C, Rr] = GR.dims.custom;
+  const text = `Bonjour ! Je voudrais un portrait en dés sur mesure : ${fmtN(C * Rr)} dés (grille ${C} × ${Rr}), réf. #${lastRef}. Voici ma photo et l’aperçu.`;
+  let blob = null; try { blob = await orderSheet(); } catch (e) {}
+  if (blob) {
+    const file = new File([blob], `commande-jlfdice-${lastRef}.png`, {type: 'image/png'});
+    try { if (navigator.canShare && navigator.canShare({files: [file]})) { await navigator.share({files: [file], text}); toast('<b style="color:var(--holo)">PRÊT</b>Choisis Instagram, puis la conversation avec @' + esc(STATE.handle) + '.'); return; } }
+    catch (e) { if (e && e.name === 'AbortError') return; }
+  }
+  /* no file sharing here: show the sheet so it can be saved, then open the conversation */
+  try { await navigator.clipboard.writeText(text); } catch (e) {}
+  $('sendimg').src = blob ? URL.createObjectURL(blob) : '';
+  $('sendimg').hidden = !blob;
+  $('sendsteps').innerHTML = `<li>Enregistre cette fiche : appui long dessus → « Enregistrer l’image », ou fais une capture d’écran.</li><li>Ouvre la conversation avec @${esc(STATE.handle)}.</li><li>Joins la fiche et ta photo. Ton message est déjà copié : colle-le.</li>`;
+  $('sendig').href = igDM(); $('send').hidden = false;
+}
+$('sendclose').addEventListener('click', () => { $('send').hidden = true; });
 
 /* ---- navigation ---- */
 function goTo(i) {
@@ -1030,6 +1110,7 @@ function touchedOnce() { if (!touched) { touched = true; $('swipehint').classLis
 function openDetail() {
   if (mode !== 'menu') return;
   const it = ITEMS[sel];
+  if (it.placeholder) { pickPhoto(); return; }
   if (it.locked) {
     shakeT0 = tt; spinT0 = tt; glitch(); glitch('denied', 900); if (sound) SFX.deny(); buzz([40, 60, 40]);
     toast(`<b>ACCÈS REFUSÉ</b>${esc(itemState(it).hint || 'Révélation bientôt')}`, true); return;
