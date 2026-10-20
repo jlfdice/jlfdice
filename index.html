@@ -284,6 +284,8 @@ html, body { height: 100%; margin: 0; overflow: hidden; background: #000; color:
 
 #artap { position: absolute; left: 50%; top: 45%; transform: translate(-50%,-50%); z-index: 3; padding: 3.5cqw 6cqw; font: 600 3.6cqw var(--display); letter-spacing: .08em; color: #001018; background: #7fe9ff; border: 0; }
 #artap[hidden] { display: none; }
+
+#dorder[hidden], #arbtn[hidden] { display: none !important; }
 </style>
 <template id="markup"><div id="frame" class="gate">
 <div id="bg"></div>
@@ -1134,9 +1136,7 @@ function equip(g, i) {
 P.forEach(equip);
 const builtOnce = new Set();
 function scan(i) {
-  if (pendingBuild && i === CUSTOM) { const d = pendingBuild; pendingBuild = false; builtOnce.add(i); startBuild(i, d); return; }
-  /* the first time a piece appears it assembles itself, dice by dice; afterwards the quicker laser scan */
-  if (!builtOnce.has(i) && !ITEMS[i].placeholder && !ITEMS[i].locked && !REDUCED) { builtOnce.add(i); startBuild(i, 4.6); return; }
+  pendingBuild = false;   /* no automatic dice-by-dice assembly (the ASSEMBLER button still replays it) */
   reveal[i].t0 = tt; if (sound) SFX.scan();
 }
 
@@ -1837,14 +1837,7 @@ async function sendToArtist() {
   if (!lastImg) { pickPhoto(); return; }
   const text = dmText();
   try { navigator.clipboard.writeText(text).catch(() => {}); } catch (e) {}
-  const ready = sheet.key === sheetKey() && sheet.blob;
-  if (ready) {
-    const file = sheetFile(sheet.blob), files = lastFile ? [file, lastFile] : [file];
-    try {
-      const share = navigator.canShare && navigator.canShare({files}) ? files : (navigator.canShare && navigator.canShare({files: [file]}) ? [file] : null);
-      if (share) { await navigator.share({files: share, text}); toast(`<b style="color:var(--holo)">${t('ready')}</b>` + t('readyTxt', {h: esc(STATE.handle)})); return; }
-    } catch (e) { if (e && e.name === 'AbortError') return; }
-  }
+  /* always show the explanation panel; its save button shares the sheet (fresh tap, works on iOS) */
   /* fallback: show the sheet with its own save button (a fresh tap), a download link, and long-press still works */
   const blob = sheet.blob && sheet.key === sheetKey() ? sheet.blob : await prepSheet();
   if (blob) {
@@ -1897,7 +1890,7 @@ function openDetail() {
   mode = 'detail'; touchedOnce(); FRAME.classList.add('detail');
   $('dtitle').textContent = itName(it); $('dorder').href = igDM();
   /* client portrait: first tab is a clean preview (only the dice-count picker), composition on demand */
-  const cu = !!it.custom; $('tab-orig').textContent = t(cu ? 'ui.tabPreview' : 'ui.tabOrig');
+  const cu = !!it.custom; $('dorder').hidden = cu; $('tab-orig').textContent = t(cu ? 'ui.tabPreview' : 'ui.tabOrig');
   $('abouttxt').textContent = cu ? '' : itAbout(it); $('tab-orig').hidden = !it.about && !cu; setTab(it.about || cu ? 'orig' : 'comp'); setExplode(false);
   renderDetailDice();
   TORCH.on = false; TORCH.finger = false; FRAME.classList.remove('torch'); $('torchbtn').setAttribute('aria-pressed', 'false'); $('rothint').textContent = t('ui.rotate'); torchSweep();
@@ -2452,7 +2445,7 @@ $('buildbtn').addEventListener('click', e => { e.stopPropagation(); if (mode !==
    from the wall the painting appears at about its true size (typical phone camera field of view). */
 const AR = {on: false, stream: null, r: null, scene: null, cam: null, grp: null, item: null, x: 0, y: 0, k: 1, dist: 250, real: false, hcm: 0, wcm: 0, lum: .5, raf: 0, ptr: new Map(), pd0: 0, k0: 1};
 const AR_FOV = 62;   /* vertical field of view of a phone's main camera held upright (approx.) */
-$('arbtn').hidden = !(navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
+$('arbtn').hidden = true;   /* "Chez toi" removed at the artist's request */
 function arSizeFor(i) {
   const it = ITEMS[i];
   if (it.custom && !it.placeholder) { const [C, Rr] = GR.dims.custom; return [C * dieMM / 10, Rr * dieMM / 10]; }
