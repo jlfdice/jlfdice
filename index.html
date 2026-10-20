@@ -1355,19 +1355,48 @@ function gridDims(n, sh = shape) {
   }
   return best ? [best[0], best[1]] : (sh === 'square' ? [86, 86] : [75, 100]);
 }
-function toGrid(img, C, Rr) {
-  const [F, L] = faces(img, C, Rr);
-  let s = '', seed = 0;
-  for (let i = 0; i < L.length; i += 97) seed = (seed * 31 + Math.round(L[i] * 255)) % 1000003;
-  /* the on-screen preview is deliberately "salted": about 15 % of the dice are shifted by one face. From a distance the portrait reads the same,
-     but the grid can't be copied die by die — the real build plan is recomputed in the workshop from the original photo. */
-  for (let i = 0; i < F.length; i++) {
-    let f = F[i];
-    const h = hashR(seed + i * 7.13);
-    if (f > 0 && h < .15) f = Math.max(1, Math.min(6, f + (h < .075 ? -1 : 1)));
-    s += f;
-  }
+/* every public preview is deliberately "salted": about 30 % of the dice are shifted by one face. From a distance the portrait reads the same,
+   but the grid can't be copied die by die — the real build plan is recomputed in the workshop from the original photo. */
+function salted(F, L, p = .3) {
+  let seed = 0; for (let i = 0; i < L.length; i += 97) seed = (seed * 31 + Math.round(L[i] * 255)) % 1000003;
+  let s = '';
+  for (let i = 0; i < F.length; i++) { let f = F[i]; const h = hashR(seed + i * 7.13); if (f > 0 && h < p) f = Math.max(1, Math.min(6, f + (h < p / 2 ? -1 : 1))); s += f; }
   return s;
+}
+function toGrid(img, C, Rr) { const [F, L] = faces(img, C, Rr); return salted(F, L); }
+/* the dice shrunk to ~2 px each: the portrait reads, individual dice don't */
+function farArt(board, C, Rr, k = 2.2) {
+  const c = mk(Math.round(C * k), Math.round(Rr * k)), g = c.getContext('2d'); g.imageSmoothingQuality = 'high';
+  g.drawImage(board, 0, 0, c.width, c.height); return c;
+}
+/* the finished piece on a dark wall, seen from a few metres: frame, spotlight, gilt plaque, 1.75 m silhouette for scale */
+function finishedView(art, W, H, Cn, Rn, mm) {
+  const c = mk(W, H), g = c.getContext('2d'), ar = Cn / Rn, wcm = Cn * mm / 10, hcm = Rn * mm / 10;
+  let gr = g.createRadialGradient(W * .42, H * .16, W * .05, W * .45, H * .45, Math.max(W, H));
+  gr.addColorStop(0, '#3a3a3e'); gr.addColorStop(.45, '#18181b'); gr.addColorStop(1, '#060607'); g.fillStyle = gr; g.fillRect(0, 0, W, H);
+  /* floor line */
+  const floor = H * .9; gr = g.createLinearGradient(0, floor, 0, H); gr.addColorStop(0, '#0d0d0f'); gr.addColorStop(1, '#030304'); g.fillStyle = gr; g.fillRect(0, floor, W, H - floor);
+  g.fillStyle = 'rgba(255,255,255,.05)'; g.fillRect(0, floor, W, 1);
+  /* scale: 175 cm person and the piece hung with its centre at 150 cm */
+  const pxcm = Math.min((floor - H * .08) / Math.max(185, 150 + hcm / 2 + 12), W * .62 / (wcm + 60));
+  const aw = wcm * pxcm, ah = hcm * pxcm, ax = W * .44 - aw / 2, ay = floor - 150 * pxcm - ah / 2, fr = Math.max(3, aw * .045);
+  g.shadowColor = 'rgba(0,0,0,.75)'; g.shadowBlur = aw * .12; g.shadowOffsetY = aw * .05; g.fillStyle = '#0b0b0c'; g.fillRect(ax - fr, ay - fr, aw + 2 * fr, ah + 2 * fr); g.shadowColor = 'transparent';
+  const X0 = ax - fr, Y0 = ay - fr, X1 = ax + aw + fr, Y1 = ay + ah + fr, bev = (pts, col) => { g.beginPath(); g.moveTo(...pts[0]); pts.slice(1).forEach(p => g.lineTo(...p)); g.closePath(); g.fillStyle = col; g.fill(); };
+  bev([[X0, Y0], [X1, Y0], [ax + aw, ay], [ax, ay]], '#3c3c41'); bev([[X0, Y0], [ax, ay], [ax, ay + ah], [X0, Y1]], '#2a2a2e');
+  bev([[X0, Y1], [ax, ay + ah], [ax + aw, ay + ah], [X1, Y1]], '#0c0c0e'); bev([[X1, Y0], [X1, Y1], [ax + aw, ay + ah], [ax + aw, ay]], '#111114');
+  g.imageSmoothingQuality = 'high'; g.drawImage(art, ax, ay, aw, ah);
+  gr = g.createRadialGradient(ax + aw / 2, ay - ah * .1, aw * .2, ax + aw / 2, ay + ah * .5, aw * 1.1); gr.addColorStop(0, 'rgba(255,240,215,.12)'); gr.addColorStop(.6, 'rgba(0,0,0,0)'); gr.addColorStop(1, 'rgba(0,0,0,.35)'); g.fillStyle = gr; g.fillRect(ax, ay, aw, ah);
+  const pw = Math.max(18, aw * .22), ph = pw * .22; gr = g.createLinearGradient(0, Y1, pw, Y1 + ph); gr.addColorStop(0, '#8a6a2f'); gr.addColorStop(.5, '#e7c77a'); gr.addColorStop(1, '#7a5a22');
+  g.fillStyle = gr; g.fillRect(ax + aw / 2 - pw / 2, Y1 + fr * .8, pw, ph);
+  /* silhouette */
+  const hh = 175 * pxcm, hx = Math.min(W - hh * .2, X1 + Math.max(18, aw * .25) + hh * .13), fy = floor;
+  g.fillStyle = 'rgba(127,233,255,.16)'; g.strokeStyle = 'rgba(127,233,255,.7)'; g.lineWidth = Math.max(1, W / 500);
+  g.beginPath(); g.arc(hx, fy - hh * .93, hh * .065, 0, Math.PI * 2); g.fill(); g.stroke();
+  g.beginPath(); g.moveTo(hx - hh * .11, fy - hh * .84); g.lineTo(hx + hh * .11, fy - hh * .84); g.lineTo(hx + hh * .13, fy - hh * .5); g.lineTo(hx + hh * .07, fy - hh * .5); g.lineTo(hx + hh * .06, fy); g.lineTo(hx + hh * .01, fy); g.lineTo(hx, fy - hh * .45);
+  g.lineTo(hx - hh * .01, fy); g.lineTo(hx - hh * .06, fy); g.lineTo(hx - hh * .07, fy - hh * .5); g.lineTo(hx - hh * .13, fy - hh * .5); g.closePath(); g.fill(); g.stroke();
+  g.fillStyle = 'rgba(127,233,255,.85)'; g.font = `500 ${Math.round(W / 34)}px "JetBrains Mono", monospace`; g.textAlign = 'center'; g.fillText('1,75 m', hx, fy + W / 26);
+  g.fillText(`${cm(Cn, mm)} × ${cm(Rn, mm)} cm`, ax + aw / 2, Y1 + fr * .8 + ph + W / 22);
+  return c;
 }
 function plusGrid(C, Rr) {
   const c = mk(C, Rr), g = c.getContext('2d'); g.fillStyle = '#000'; g.fillRect(0, 0, C, Rr); g.fillStyle = '#fff';
@@ -1399,7 +1428,7 @@ function renderDiceSel() {
   fbox.querySelectorAll('.dopt').forEach(b => b.addEventListener('click', () => { shape = b.dataset.f; renderDiceSel(); if (!$('crop').hidden) reqCrop(); else if (lastImg) generate(lastImg); else if (ITEMS[CUSTOM] && ITEMS[CUSTOM].placeholder) { const [C, Rr] = gridDims(diceN); setCustom(plusGrid(Math.round(40 * C / Rr), 40), Math.round(40 * C / Rr), 40, false); } }));
   sbox.innerHTML = SIZE_OPTS.map(n => `<button class="dopt" type="button" role="radio" aria-checked="${n === dieMM}" data-s="${n}">${n} mm</button>`).join('');
   box.querySelectorAll('.dopt').forEach(b => b.addEventListener('click', () => { diceN = +b.dataset.n; renderDiceSel(); if (!$('crop').hidden) reqCrop(); else if (lastImg) generate(lastImg); }));
-  sbox.querySelectorAll('.dopt').forEach(b => b.addEventListener('click', () => { dieMM = +b.dataset.s; renderDiceSel(); if (lastImg) prepSheet(); }));
+  sbox.querySelectorAll('.dopt').forEach(b => b.addEventListener('click', () => { dieMM = +b.dataset.s; renderDiceSel(); if (!$('crop').hidden) reqCrop(); else if (lastImg) prepSheet(); }));
   const [C, Rr] = gridDims(diceN);
   $('fsum').textContent = $('dinfo').textContent = `${fmtN(C * Rr)} ${t('dice')} · ${C} × ${Rr} · ${t('format')} ≈ ${cm(C, dieMM)} × ${cm(Rr, dieMM)} cm`;
 }
@@ -1452,12 +1481,13 @@ function openCrop(img) {
 function drawCrop() {
   if (!cImg || $('crop').hidden) return;
   const [C, Rr] = gridDims(diceN), ar = C / Rr, box = $('cwin').parentElement.getBoundingClientRect();
-  const board = boardCanvas(Array.from(faces(cImg, C, Rr, cWork)[0]).join(''), C, Rr);
+  const [F0, L0] = faces(cImg, C, Rr, cWork), art = farArt(boardCanvas(salted(F0, L0), C, Rr), C, Rr);
   if (cStep === 'opts') {
-    let w = Math.min(box.width, 560), h = w / ar; if (h > box.height) { h = box.height; w = h * ar; }
+    /* step 2: the finished piece on a wall, seen from afar — the dice are too small to be read one by one */
+    let w = Math.min(box.width, 560), h = w * 1.15; if (h > box.height) { h = box.height; w = h / 1.15; }
     const big = $('cbig'), d = Math.min(devicePixelRatio, 2); big.style.width = w + 'px'; big.style.height = h + 'px';
     big.width = Math.round(w * d); big.height = Math.round(h * d);
-    const bg = big.getContext('2d'); bg.imageSmoothingQuality = 'high'; bg.drawImage(board, 0, 0, big.width, big.height); return;
+    big.getContext('2d').drawImage(finishedView(art, big.width, big.height, C, Rr, dieMM), 0, 0); return;
   }
   let w = Math.min(box.width, 560), h = w / ar; if (h > box.height) { h = box.height; w = h * ar; }
   $('cwin').style.width = w + 'px'; $('cwin').style.height = h + 'px';
@@ -1468,7 +1498,7 @@ function drawCrop() {
   for (let k = 1; k < 3; k++) { g.beginPath(); g.moveTo(cropCv.width * k / 3, 0); g.lineTo(cropCv.width * k / 3, cropCv.height); g.moveTo(0, cropCv.height * k / 3); g.lineTo(cropCv.width, cropCv.height * k / 3); g.stroke(); }
   /* live dice preview: the real dice, every one of them, drawn smooth */
   const pw = Math.round(w * .34 * d), ph = Math.round(pw / ar);
-  cropPv.width = pw; cropPv.height = ph; const pg = cropPv.getContext('2d'); pg.imageSmoothingQuality = 'high'; pg.drawImage(board, 0, 0, pw, ph);
+  cropPv.width = pw; cropPv.height = ph; const pg = cropPv.getContext('2d'); pg.imageSmoothingQuality = 'high'; pg.drawImage(art, 0, 0, pw, ph);
 }
 function cropPan(dx, dy) {
   const [, , sw, sh] = cropRect(cImg, cropCv.width / cropCv.height, cWork), iw = cImg.naturalWidth, ih = cImg.naturalHeight, r = $('cwin').getBoundingClientRect();
