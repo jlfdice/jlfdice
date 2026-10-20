@@ -296,10 +296,26 @@ html, body { height: 100%; margin: 0; overflow: hidden; background: #000; color:
 .inapp, .inapp * { text-transform: none; letter-spacing: normal; }
 #gate .inapp, #gate .inapp * { text-transform: none !important; letter-spacing: normal !important; }
 #sendig[hidden] { display: none !important; }
+
+/* easter egg */
+#egg { position: absolute; inset: 0; z-index: 40; pointer-events: auto; overflow: hidden; }
+#egg[hidden] { display: none; }
+#egg .ewash { position: absolute; inset: 0; background: #fff; opacity: 0; }
+#egg.impact .ewash { opacity: .9; transition: none; }
+#egg.smoke .ewash { opacity: 0; transition: opacity 1.2s ease-out; }
+#egg.wasted .ewash { background: radial-gradient(ellipse at center, rgba(0,0,0,0) 30%, rgba(40,0,0,.65) 100%); opacity: 1; transition: opacity 1.4s ease; }
+#egg .ewasted { position: absolute; left: 0; right: 0; top: 50%; transform: translateY(-50%) scale(1.6); text-align: center; font: 700 17cqw/1 "Chakra Petch", Impact, sans-serif; letter-spacing: .06em; color: #d3131b; text-shadow: 0 0 1.5cqw rgba(0,0,0,.9), 0 .6cqw 0 #3a0000; opacity: 0; padding: 4cqh 0; background: linear-gradient(180deg, rgba(0,0,0,0), rgba(0,0,0,.72) 25%, rgba(0,0,0,.72) 75%, rgba(0,0,0,0)); }
+#egg.wasted .ewasted { opacity: 1; transform: translateY(-50%) scale(1); transition: opacity 1.6s ease .3s, transform 2.4s cubic-bezier(.2,.7,.2,1) .3s; }
+#egg .ehint { position: absolute; left: 0; right: 0; bottom: 9cqh; text-align: center; font: 500 3cqw var(--mono, monospace); letter-spacing: .2em; text-transform: uppercase; color: rgba(255,255,255,.75); opacity: 0; }
+#egg.wasted .ehint { opacity: 1; transition: opacity 1s ease 2.6s; animation: eggpulse 1.6s ease-in-out 3s infinite; }
+@keyframes eggpulse { 50% { opacity: .35; } }
+#frame.egg > :not(canvas):not(#egg) { opacity: 0 !important; pointer-events: none !important; transition: opacity .5s; }
+#stage { transition: filter 1.6s ease; }
+#frame.wasted #stage { filter: grayscale(1) contrast(1.2) brightness(.75); }
 </style>
 <template id="markup"><div id="frame" class="gate">
 <div id="bg"></div>
-<canvas id="stage" aria-label="Archive 3D des tableaux en dés" data-ia="aria.stage"></canvas>
+<canvas id="stage" aria-label="Archive 3D des tableaux en dés" data-ia="aria.stage"></canvas><div id="egg" hidden><div class="ewash"></div><div class="ewasted">WASTED</div><div class="ehint" id="egghint"></div></div>
 <div id="reticle"><i></i><i></i><i></i><i></i><span class="tag">CIBLE VERROUILLÉE</span><span class="tag2"></span></div>
 <div id="intro-ui"><div id="blackout"></div></div>
 <div id="fx"></div><div id="emerge" aria-hidden="true"><i></i><b></b><b></b></div><div id="deny"></div>
@@ -2620,6 +2636,140 @@ function arPx2cm(px) { const h = $('ar').getBoundingClientRect().height; return 
     try { if (navigator.canShare && navigator.canShare({files: [file]})) { await navigator.share({files: [file]}); return; } } catch (e) { if (e && e.name === 'AbortError') return; }
     const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = file.name; document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 3000);
   });
+}
+
+/* ================= Easter egg: a giant made of black dice walks in, stomps the gallery, "WASTED" =================
+   Trigger: tap the ARCHIVE title 5 times quickly (gallery view). Tap the screen afterwards to put everything back. */
+const EGG = {on: false, t: 0, phase: 'off', impact: false, wastedAt: 0, taps: [], ex: 0, shake: 0, lastStep: 0};
+const EGG_S = 7, EGG_FLOOR = -44;
+const eggDieTex = (() => {
+  const c = mk(64, 64), g = c.getContext('2d'); g.fillStyle = '#0d0d10'; g.fillRect(0, 0, 64, 64);
+  g.strokeStyle = 'rgba(255,255,255,.08)'; g.lineWidth = 3; g.strokeRect(1.5, 1.5, 61, 61); g.fillStyle = '#e9e8e2';
+  [[16, 16], [48, 16], [32, 32], [16, 48], [48, 48]].forEach(([x, y]) => { g.beginPath(); g.arc(x, y, 6, 0, 7); g.fill(); });
+  const t = new THREE.CanvasTexture(c); t.anisotropy = 4; return t;
+})();
+const eggMat = new THREE.MeshStandardMaterial({map: eggDieTex, roughness: .35, metalness: .1, emissive: 0x0a1a2a, emissiveIntensity: .12});
+/* a block of dice cubes (w × h × d, in dice), pivot at its top centre so limbs swing naturally */
+function eggBlock(w, h, d, pivotTop = true) {
+  const n = w * h * d, m = new THREE.InstancedMesh(new THREE.BoxGeometry(EGG_S * .94, EGG_S * .94, EGG_S * .94), eggMat, n), o = new THREE.Object3D();
+  let i = 0;
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) for (let z = 0; z < d; z++) {
+    o.position.set((x - (w - 1) / 2) * EGG_S, pivotTop ? -(y + .5) * EGG_S : (y + .5) * EGG_S, (z - (d - 1) / 2) * EGG_S);
+    o.rotation.set(Math.floor(Math.random() * 4) * Math.PI / 2, Math.floor(Math.random() * 4) * Math.PI / 2, 0); o.updateMatrix(); m.setMatrixAt(i++, o.matrix);
+  }
+  m.frustumCulled = false; const g = new THREE.Group(); g.add(m); return g;
+}
+const GIANT = (() => {
+  const root = new THREE.Group(), body = new THREE.Group(); root.add(body);
+  const legH = 14, torH = 12;
+  const legL = eggBlock(4, legH, 4), legR = eggBlock(4, legH, 4);
+  legL.position.set(-2.6 * EGG_S, legH * EGG_S, 0); legR.position.set(2.6 * EGG_S, legH * EGG_S, 0);
+  const torso = eggBlock(10, torH, 5, false); torso.position.set(0, legH * EGG_S, 0);
+  const armL = eggBlock(3, 12, 3), armR = eggBlock(3, 12, 3);
+  armL.position.set(-6.6 * EGG_S, (legH + torH - .5) * EGG_S, 0); armR.position.set(6.6 * EGG_S, (legH + torH - .5) * EGG_S, 0);
+  const head = eggBlock(6, 6, 6, false); head.position.set(0, (legH + torH) * EGG_S, 0);
+  const eyeM = new THREE.MeshBasicMaterial({color: 0xff2a1a});
+  [-1.4, 1.4].forEach(x => { const e = new THREE.Mesh(new THREE.BoxGeometry(EGG_S * 1.2, EGG_S * .7, 1), eyeM); e.position.set(x * EGG_S, 3.6 * EGG_S, 3 * EGG_S + .6); head.add(e); });
+  const eyeL = new THREE.PointLight(0xff2a1a, 0, 160, 2); eyeL.position.set(0, 3.6 * EGG_S, 4 * EGG_S); head.add(eyeL);
+  body.add(legL, legR, torso, armL, armR, head);
+  root.visible = false; scene.add(root);
+  return {root, body, legL, legR, armL, armR, head, eyeL};
+})();
+/* debris: dice flying out of the impact */
+const EGG_N = 420, eggDebris = new THREE.InstancedMesh(new THREE.BoxGeometry(2.2, 2.2, 2.2), eggMat, EGG_N);
+eggDebris.visible = false; eggDebris.frustumCulled = false; scene.add(eggDebris);
+const eggP = Array.from({length: EGG_N}, () => ({p: new THREE.Vector3(), v: new THREE.Vector3(), r: new THREE.Euler(), w: new THREE.Vector3()}));
+function eggBurst(at) {
+  eggP.forEach(d => {
+    d.p.copy(at).add(new THREE.Vector3((Math.random() - .5) * 60, Math.random() * 20, (Math.random() - .5) * 30));
+    const a = Math.random() * Math.PI * 2, sp = 40 + Math.random() * 120;
+    d.v.set(Math.cos(a) * sp, 60 + Math.random() * 160, Math.sin(a) * sp * .6 + 30); d.r.set(Math.random() * 6, Math.random() * 6, 0); d.w.set((Math.random() - .5) * 20, (Math.random() - .5) * 20, (Math.random() - .5) * 20);
+  });
+  eggDebris.visible = true;
+}
+const eggO = new THREE.Object3D();
+function eggDebrisFrame(dt) {
+  if (!eggDebris.visible) return;
+  eggP.forEach((d, i) => {
+    d.v.y -= 260 * dt; d.p.addScaledVector(d.v, dt);
+    if (d.p.y < EGG_FLOOR + 1.1) { d.p.y = EGG_FLOOR + 1.1; d.v.y *= -.35; d.v.x *= .7; d.v.z *= .7; d.w.multiplyScalar(.7); }
+    d.r.x += d.w.x * dt; d.r.y += d.w.y * dt; d.r.z += d.w.z * dt;
+    eggO.position.copy(d.p); eggO.rotation.copy(d.r); eggO.updateMatrix(); eggDebris.setMatrixAt(i, eggO.matrix);
+  });
+  eggDebris.instanceMatrix.needsUpdate = true;
+}
+/* sounds (only with sound on) */
+function eggThud(v) { if (!sound || !AC) return; blip(70, 34, .5, .5 * v, 'sine'); noiseSweep(300, 60, .35, .25 * v); }
+function eggBoom() { if (!sound || !AC) return; blip(90, 28, 1.6, .9, 'sine'); blip(55, 22, 2.2, .6, 'triangle', .02); noiseSweep(2400, 80, 1.4, .6); noiseSweep(6000, 900, .5, .25, .05); }
+function eggWastedSfx() { if (!sound || !AC) return; blip(196, 49, 2.6, .35, 'sawtooth'); blip(98, 41, 3, .3, 'sine', .1); noiseSweep(800, 120, 2.2, .12); }
+
+function eggStart() {
+  if (EGG.on || mode !== 'menu') return;
+  EGG.on = true; EGG.t = 0; EGG.impact = false; EGG.wastedAt = 0; EGG.ex = 0; EGG.lastStep = 0; EGG.shake = 0;
+  GIANT.root.visible = true; GIANT.root.position.set(0, EGG_FLOOR, -1150); GIANT.root.rotation.set(0, 0, 0); GIANT.body.rotation.set(0, 0, 0);
+  ['legL', 'legR', 'armL', 'armR'].forEach(k => GIANT[k].rotation.set(0, 0, 0)); GIANT.eyeL.intensity = 0;
+  $('egghint').textContent = ({fr: 'Toucher pour tout reconstruire', en: 'Tap to rebuild everything', es: 'Toca para reconstruirlo todo', ru: 'Коснись, чтобы всё восстановить'})[LANG] || 'Tap to rebuild';
+  $('egg').hidden = false; $('egg').className = 'walk'; FRAME.classList.add('egg'); buzz([20, 60, 20]);
+  if (sound && AC) { blip(48, 40, 2.5, .25, 'sine'); }
+}
+function eggReset() {
+  EGG.on = false; if (sound && AC) { blip(300, 900, .5, .08, 'sine'); noiseSweep(300, 3000, .9, .08); } GIANT.root.visible = false; eggDebris.visible = false;
+  $('egg').hidden = true; $('egg').className = ''; FRAME.classList.remove('egg', 'wasted');
+}
+function eggFrame(dt) {
+  if (!EGG.on) {   /* after the reset the dice fly back into place */
+    if (EGG.ex > 0) { EGG.ex = Math.max(0, EGG.ex - dt / 1.4); P.forEach(pg => { pg.userData.mat.userData.uExplode.value = Math.max(pg.userData.mat.userData.uExplode.value, EGG.ex); }); }
+    return;
+  }
+  const slow = EGG.wastedAt ? .25 : 1, d = dt * slow; EGG.t += d; const t = EGG.t, G = GIANT;
+  const WALK = 5.6, cyc = 1.25;
+  if (t < WALK) {
+    /* the walk: heavier and louder as it gets closer */
+    const k = t / WALK, z = -1150 + (1150 - 300) * (1 - Math.pow(1 - k, 1.6)), ph = t / cyc * Math.PI * 2;
+    G.root.position.z = z; G.legL.rotation.x = Math.sin(ph) * .42; G.legR.rotation.x = -Math.sin(ph) * .42;
+    G.armL.rotation.x = -Math.sin(ph) * .35; G.armR.rotation.x = Math.sin(ph) * .35; G.body.position.y = Math.abs(Math.cos(ph)) * 6;
+    G.body.rotation.z = Math.sin(ph) * .03; G.eyeL.intensity = Math.min(3, t * .8);
+    const step = Math.floor(t / (cyc / 2));
+    if (step > EGG.lastStep) { EGG.lastStep = step; const v = .25 + .75 * k; EGG.shake = Math.max(EGG.shake, 1.5 + 5 * k); eggThud(v); buzz(Math.round(15 + 40 * k)); }
+  } else if (!EGG.impact) {
+    /* the stomp: lift the right foot, lean in, slam it down on the gallery */
+    const u = t - WALK;
+    G.legL.rotation.x += (0 - G.legL.rotation.x) * .2; G.armL.rotation.x += (-.6 - G.armL.rotation.x) * .1; G.armR.rotation.x += (.4 - G.armR.rotation.x) * .1; G.body.position.y *= .9;
+    if (u < .9) { const e = u / .9; G.legR.rotation.x = -1.35 * Math.sin(e * Math.PI / 2); G.body.rotation.x = -.12 * e; }
+    else if (u < 1.15) { G.legR.rotation.x = -1.35; G.body.rotation.x = -.12; if (sound && AC && !EGG.whoosh) { EGG.whoosh = true; noiseSweep(200, 1800, .3, .3); } }
+    else { const e = Math.min(1, (u - 1.15) / .2); G.legR.rotation.x = -1.35 + (1.35 - .5) * e * e; G.body.rotation.x = -.12 + .28 * e * e; G.root.position.z = -300 + 262 * (1 - Math.pow(1 - e, 2));
+      if (e >= 1) {
+        EGG.impact = true; EGG.whoosh = false; EGG.impactT = t; EGG.shake = 16; eggBoom(); buzz([80, 40, 160, 60, 220]);
+        const foot = new THREE.Vector3(); G.legR.children[0].getWorldPosition(foot); foot.set(0, -6, 12); eggBurst(foot);
+        $('egg').className = 'impact'; setTimeout(() => { if (EGG.on && $('egg').className === 'impact') $('egg').className = 'smoke'; }, 220);
+      }
+    }
+  } else {
+    const u = t - EGG.impactT;
+    EGG.ex = Math.min(1, EGG.ex + d * 2.2);
+    if (!EGG.wastedAt && u > 1.1) { EGG.wastedAt = t; FRAME.classList.add('wasted'); $('egg').className = 'wasted'; eggWastedSfx(); }
+  }
+  /* every painting bursts into its dice */
+  P.forEach(pg => { pg.userData.mat.userData.uExplode.value = Math.max(pg.userData.mat.userData.uExplode.value, EGG.ex); pg.userData.mat.userData.uTimeE.value = tt * 3; });
+  eggDebrisFrame(d);
+  /* camera shake */
+  EGG.shake *= Math.exp(-dt * 4.5);
+  if (EGG.shake > .05) { camera.position.x += (Math.random() - .5) * EGG.shake; camera.position.y += (Math.random() - .5) * EGG.shake * .7; camera.lookAt(0, 2, 0); }
+}
+{
+  const fx0 = fxFrame;
+  fxFrame = function (dt, now) { fx0(dt, now); eggFrame(dt); };
+  /* 5 quick taps on the ARCHIVE title */
+  document.addEventListener('pointerdown', e => {
+    if (EGG.on || mode !== 'menu') return;
+    const r = document.querySelector('#top .t1').getBoundingClientRect();
+    if (e.clientX < r.left - 12 || e.clientX > r.right + 12 || e.clientY < r.top - 14 || e.clientY > r.bottom + 14) { EGG.taps = []; return; }
+    const now = performance.now(); EGG.taps = EGG.taps.filter(x => now - x < 3000); EGG.taps.push(now);
+    if (sound && AC) blip(400 + EGG.taps.length * 140, 300 + EGG.taps.length * 140, .08, .08, 'square');
+    if (EGG.taps.length >= 5) { EGG.taps = []; eggStart(); }
+  }, true);
+  $('egg').addEventListener('pointerdown', e => { e.stopPropagation(); e.preventDefault(); if (EGG.wastedAt && EGG.t - EGG.wastedAt > .5) eggReset(); }, true);
+  $('egg').addEventListener('click', e => e.stopPropagation(), true);
 }
 </script>
 </body></html>
