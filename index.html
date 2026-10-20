@@ -237,6 +237,9 @@ html, body { height: 100%; margin: 0; overflow: hidden; background: #000; color:
 #cdsel .dsel { margin-top: 0; }
 #crop .row { width: 100%; justify-content: center; }
 #crop .row .btn { white-space: nowrap; letter-spacing: .1em; padding-left: 4cqw; padding-right: 4cqw; }
+#ddice { margin-top: 0; background: rgba(0,8,14,.72); border: 1px solid var(--line); padding: 2.2cqw 2.6cqw; backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
+#ddice[hidden] { display: none; }
+#ddice .dopt { padding: 1.2cqw 1.9cqw; font-size: 2.4cqw; }
 </style>
 <template id="markup"><div id="frame" class="gate">
 <div id="bg"></div>
@@ -257,7 +260,7 @@ html, body { height: 100%; margin: 0; overflow: hidden; background: #000; color:
 <div class="hud out menu-only" id="info" aria-live="polite"><button class="fold" id="fold" type="button" hidden aria-expanded="true" aria-label="Replier ou déplier le texte" data-ia="aria.fold">▾</button><div class="num"></div><div class="name"></div><div class="fsum" id="fsum"></div><div class="sub"></div><div class="meta"></div><div class="countdown" hidden></div><div class="dsel" id="dsel" hidden><span class="dl" data-i="ui.nDice">Nombre de dés</span><div class="dopts" role="radiogroup" aria-label="Nombre de dés"></div><span class="dl dl2" data-i="ui.shape">Forme</span><div class="dopts fopts" role="radiogroup" aria-label="Forme"></div><span class="dl dl2" data-i="ui.sizeDice">Taille des dés</span><div class="dopts sopts" role="radiogroup" aria-label="Taille des dés"></div><span class="dinfo" id="dinfo"></span></div><div class="hint" hidden></div><div class="actions"></div></div>
 <div id="detailbar"><button class="btn" id="back" type="button" data-i="ui.back">‹ Retour</button><span class="dt"><b id="dtitle">La Joconde</b><small data-i="ui.analysing">ANALYSE EN COURS</small></span></div>
 <div id="readout"></div>
-<div id="dbottom"><div id="about"><div class="tabs" role="tablist"><button class="tab on" type="button" role="tab" data-tab="orig" id="tab-orig" data-i="ui.tabOrig">Œuvre originale</button><button class="tab" type="button" role="tab" data-tab="comp" id="tab-comp" data-i="ui.tabComp">Composition</button></div><p id="abouttxt"></p><div id="comp" hidden></div></div><small data-i="ui.rotate">Glisser pour pivoter · pincer pour zoomer</small><div class="drow"><button class="btn" id="explode" type="button">Décomposer</button><a class="btn primary" id="dorder" target="_blank" rel="noopener" data-i="ui.orderPiece">Commander</a></div></div>
+<div id="dbottom"><div id="about"><div class="tabs" role="tablist"><button class="tab on" type="button" role="tab" data-tab="orig" id="tab-orig" data-i="ui.tabOrig">Œuvre originale</button><button class="tab" type="button" role="tab" data-tab="comp" id="tab-comp" data-i="ui.tabComp">Composition</button></div><p id="abouttxt"></p><div id="comp" hidden></div></div><div id="ddice" class="dsel" hidden><span class="dl" data-i="ui.nDice">Nombre de dés</span><div class="dopts" role="radiogroup" aria-label="Nombre de dés"></div><span class="dinfo" id="ddinfo"></span></div><small data-i="ui.rotate">Glisser pour pivoter · pincer pour zoomer</small><div class="drow"><button class="btn" id="explode" type="button">Décomposer</button><a class="btn primary" id="dorder" target="_blank" rel="noopener" data-i="ui.orderPiece">Commander</a></div></div>
 <button class="btn" id="skip" type="button" data-i="ui.skip">Passer ›</button>
 <canvas id="stars" aria-hidden="true"></canvas>
 <div id="gate"><span class="k">JLF D'ICE</span><h1 data-i="ui.archive">Archive</h1><div class="boot" id="boot"></div>
@@ -894,7 +897,7 @@ const I18N = {
     denied: 'ACCÈS REFUSÉ', soon: 'Révélation bientôt', boot: ['> connexion au signal', '> déchiffrement de l’archive', '> {n} objets détectés', '> {k} objet classifié', '> prêt'],
     material: 'MATIÈRE · DÉS À JOUER', human: 'ÉCHELLE · 1,75 M',
     'ui.archive': 'Archive', 'ui.sound': 'SON', 'ui.share': 'PARTAGER', 'ui.create': '✦ CRÉER', 'ui.swipe': '◂ glisser · toucher pour ouvrir ▸', 'ui.back': '‹ Retour', 'ui.analysing': 'ANALYSE EN COURS',
-    'ui.data': 'Données · œuvre originale', 'ui.tabOrig': 'Œuvre originale', 'ui.tabComp': 'Composition', 'ui.rotate': 'Glisser pour pivoter · pincer pour zoomer', 'ui.orderPiece': 'Commander',
+    'ui.data': 'Données · œuvre originale', 'ui.tabOrig': 'Œuvre originale', 'ui.tabPreview': 'Aperçu', 'ui.tabComp': 'Composition', 'ui.rotate': 'Glisser pour pivoter · pincer pour zoomer', 'ui.orderPiece': 'Commander',
     'ui.skip': 'Passer ›', 'ui.init': 'Initialiser ▸', 'ui.soundRec': 'Son recommandé', 'ui.approach': 'Approche', 'ui.dist': 'DISTANCE HORIZON', 'ui.capture': 'CAPTURE GRAVITATIONNELLE',
     'aria.fold': 'Replier ou déplier le texte', crop: 'Cadrer', 'crop.next': 'Suivant ›', 'crop.gen': 'Générer mon tableau', 'crop.back': '‹ Cadrage', 'crop.title2': 'Ton tableau', 'crop.title': 'Cadrage', 'crop.hint': 'Glisse pour déplacer · pince ou curseur pour zoomer', 'crop.ok': 'Valider', 'crop.cancel': 'Annuler', 'crop.zoom': 'Zoom', 'crop.pv': 'Aperçu dés', 'ui.shape': 'Forme', 'shape.rect': 'Rectangle', 'shape.square': 'Carré',
     'aria.stage': 'Archive 3D des tableaux en dés', 'aria.prev': 'Œuvre précédente', 'aria.next': 'Œuvre suivante', blackDice: 'Dés noirs', backL: ['Dés à jouer, assemblés à la main', 'Pièce unique · 1/1', 'signé au dos'], madeL: 'Sur mesure',
@@ -919,7 +922,7 @@ const I18N = {
     denied: 'ACCESS DENIED', soon: 'Reveal coming soon', boot: ['> connecting to signal', '> decrypting archive', '> {n} objects detected', '> {k} object classified', '> ready'],
     material: 'MATERIAL · PLAYING DICE', human: 'SCALE · 1.75 M',
     'ui.archive': 'Archive', 'ui.sound': 'SOUND', 'ui.share': 'SHARE', 'ui.create': '✦ CREATE', 'ui.swipe': '◂ swipe · tap to open ▸', 'ui.back': '‹ Back', 'ui.analysing': 'ANALYSIS IN PROGRESS',
-    'ui.data': 'Data · original artwork', 'ui.tabOrig': 'Original', 'ui.tabComp': 'Composition', 'ui.rotate': 'Drag to rotate · pinch to zoom', 'ui.orderPiece': 'Order',
+    'ui.data': 'Data · original artwork', 'ui.tabOrig': 'Original', 'ui.tabPreview': 'Preview', 'ui.tabComp': 'Composition', 'ui.rotate': 'Drag to rotate · pinch to zoom', 'ui.orderPiece': 'Order',
     'ui.skip': 'Skip ›', 'ui.init': 'Initialise ▸', 'ui.soundRec': 'Sound recommended', 'ui.approach': 'Approach', 'ui.dist': 'DISTANCE TO HORIZON', 'ui.capture': 'GRAVITATIONAL CAPTURE',
     'aria.fold': 'Collapse or expand the text', crop: 'Frame', 'crop.next': 'Next ›', 'crop.gen': 'Generate my painting', 'crop.back': '‹ Framing', 'crop.title2': 'Your painting', 'crop.title': 'Framing', 'crop.hint': 'Drag to move · pinch or slider to zoom', 'crop.ok': 'Confirm', 'crop.cancel': 'Cancel', 'crop.zoom': 'Zoom', 'crop.pv': 'Dice preview', 'ui.shape': 'Shape', 'shape.rect': 'Rectangle', 'shape.square': 'Square',
     'aria.stage': '3D archive of dice paintings', 'aria.prev': 'Previous piece', 'aria.next': 'Next piece', blackDice: 'Black dice', backL: ['Playing dice, assembled by hand', 'One of a kind · 1/1', 'signed on the back'], madeL: 'Made to order',
@@ -944,7 +947,7 @@ const I18N = {
     denied: 'ACCESO DENEGADO', soon: 'Revelación próximamente', boot: ['> conectando a la señal', '> descifrando el archivo', '> {n} objetos detectados', '> {k} objeto clasificado', '> listo'],
     material: 'MATERIAL · DADOS', human: 'ESCALA · 1,75 M',
     'ui.archive': 'Archivo', 'ui.sound': 'SONIDO', 'ui.share': 'COMPARTIR', 'ui.create': '✦ CREAR', 'ui.swipe': '◂ desliza · toca para abrir ▸', 'ui.back': '‹ Volver', 'ui.analysing': 'ANÁLISIS EN CURSO',
-    'ui.data': 'Datos · obra original', 'ui.tabOrig': 'Obra original', 'ui.tabComp': 'Composición', 'ui.rotate': 'Desliza para girar · pellizca para ampliar', 'ui.orderPiece': 'Encargar',
+    'ui.data': 'Datos · obra original', 'ui.tabOrig': 'Obra original', 'ui.tabPreview': 'Vista previa', 'ui.tabComp': 'Composición', 'ui.rotate': 'Desliza para girar · pellizca para ampliar', 'ui.orderPiece': 'Encargar',
     'ui.skip': 'Saltar ›', 'ui.init': 'Iniciar ▸', 'ui.soundRec': 'Sonido recomendado', 'ui.approach': 'Aproximación', 'ui.dist': 'DISTANCIA AL HORIZONTE', 'ui.capture': 'CAPTURA GRAVITATORIA',
     'aria.fold': 'Plegar o desplegar el texto', crop: 'Encuadrar', 'crop.next': 'Siguiente ›', 'crop.gen': 'Generar mi cuadro', 'crop.back': '‹ Encuadre', 'crop.title2': 'Tu cuadro', 'crop.title': 'Encuadre', 'crop.hint': 'Arrastra para mover · pellizca o usa el control para hacer zoom', 'crop.ok': 'Aceptar', 'crop.cancel': 'Cancelar', 'crop.zoom': 'Zoom', 'crop.pv': 'Vista en dados', 'ui.shape': 'Forma', 'shape.rect': 'Rectángulo', 'shape.square': 'Cuadrado',
     'aria.stage': 'Archivo 3D de cuadros de dados', 'aria.prev': 'Obra anterior', 'aria.next': 'Obra siguiente', blackDice: 'Dados negros', backL: ['Dados de juego, montados a mano', 'Pieza única · 1/1', 'firmado al dorso'], madeL: 'A medida',
@@ -969,7 +972,7 @@ const I18N = {
     denied: 'ДОСТУП ЗАПРЕЩЁН', soon: 'Скоро раскрытие', boot: ['> подключение к сигналу', '> расшифровка архива', '> обнаружено объектов: {n}', '> засекречено объектов: {k}', '> готово'],
     material: 'МАТЕРИАЛ · ИГРАЛЬНЫЕ КУБИКИ', human: 'МАСШТАБ · 1,75 М',
     'ui.archive': 'Архив', 'ui.sound': 'ЗВУК', 'ui.share': 'ПОДЕЛИТЬСЯ', 'ui.create': '✦ СОЗДАТЬ', 'ui.swipe': '◂ листай · нажми, чтобы открыть ▸', 'ui.back': '‹ Назад', 'ui.analysing': 'ИДЁТ АНАЛИЗ',
-    'ui.data': 'Данные · оригинал', 'ui.tabOrig': 'Оригинал', 'ui.tabComp': 'Состав', 'ui.rotate': 'Проведи, чтобы повернуть · сведи пальцы для зума', 'ui.orderPiece': 'Заказать',
+    'ui.data': 'Данные · оригинал', 'ui.tabOrig': 'Оригинал', 'ui.tabPreview': 'Предпросмотр', 'ui.tabComp': 'Состав', 'ui.rotate': 'Проведи, чтобы повернуть · сведи пальцы для зума', 'ui.orderPiece': 'Заказать',
     'ui.skip': 'Пропустить ›', 'ui.init': 'Начать ▸', 'ui.soundRec': 'Рекомендуем включить звук', 'ui.approach': 'Сближение', 'ui.dist': 'ДО ГОРИЗОНТА', 'ui.capture': 'ГРАВИТАЦИОННЫЙ ЗАХВАТ',
     'aria.fold': 'Свернуть или развернуть текст', crop: 'Кадрировать', 'crop.next': 'Далее ›', 'crop.gen': 'Создать картину', 'crop.back': '‹ Кадрирование', 'crop.title2': 'Твоя картина', 'crop.title': 'Кадрирование', 'crop.hint': 'Перетащи, чтобы сдвинуть · сведи пальцы или используй ползунок для зума', 'crop.ok': 'Готово', 'crop.cancel': 'Отмена', 'crop.zoom': 'Зум', 'crop.pv': 'Вид в кубиках', 'ui.shape': 'Форма', 'shape.rect': 'Прямоугольник', 'shape.square': 'Квадрат',
     'aria.stage': '3D-архив картин из кубиков', 'aria.prev': 'Предыдущая работа', 'aria.next': 'Следующая работа', blackDice: 'Чёрные кубики', backL: ['Игральные кубики, собрано вручную', 'Уникальная работа · 1/1', 'подпись на обороте'], madeL: 'На заказ',
@@ -1193,7 +1196,7 @@ function setTab(t) {
   const it = ITEMS[sel];
   $('tab-orig').classList.toggle('on', t === 'orig'); $('tab-comp').classList.toggle('on', t === 'comp');
   $('tab-orig').setAttribute('aria-selected', String(t === 'orig')); $('tab-comp').setAttribute('aria-selected', String(t === 'comp'));
-  $('abouttxt').hidden = t !== 'orig'; $('comp').hidden = t !== 'comp';
+  $('abouttxt').hidden = t !== 'orig' || !$('abouttxt').textContent; $('comp').hidden = t !== 'comp';
   if (t === 'comp') renderComp(it);
 }
 $('tab-orig').addEventListener('click', () => setTab('orig'));
@@ -1484,9 +1487,28 @@ function openDetail() {
   }
   mode = 'detail'; touchedOnce(); FRAME.classList.add('detail');
   $('dtitle').textContent = itName(it); $('dorder').href = igDM();
-  $('abouttxt').textContent = itAbout(it); $('tab-orig').hidden = !it.about; setTab(it.about ? 'orig' : 'comp'); setExplode(false);
+  /* client portrait: first tab is a clean preview (only the dice-count picker), composition on demand */
+  const cu = !!it.custom; $('tab-orig').textContent = t(cu ? 'ui.tabPreview' : 'ui.tabOrig');
+  $('abouttxt').textContent = cu ? '' : itAbout(it); $('tab-orig').hidden = !it.about && !cu; setTab(it.about || cu ? 'orig' : 'comp'); setExplode(false);
+  renderDetailDice();
   yaw = -.35; pitch = 0; vyaw = .9; zoom = 1;
   if (sound) SFX.open();
+}
+/* analysis view of the client's portrait: change the dice count and watch the painting rebuild in place */
+function renderDetailDice() {
+  const it = ITEMS[sel], on = !!(it && it.custom && !it.placeholder && lastImg);
+  $('ddice').hidden = !on; if (!on) return;
+  const box = $('ddice').querySelector('.dopts');
+  box.innerHTML = DICE_OPTS.map(n => `<button class="dopt" type="button" role="radio" aria-checked="${n === diceN}" data-n="${n}">${fmtN(n)}</button>`).join('');
+  box.querySelectorAll('.dopt').forEach(b => b.addEventListener('click', () => {
+    if (+b.dataset.n === diceN) return;
+    diceN = +b.dataset.n; const [C, Rr] = gridDims(diceN);
+    if (exTarget) setExplode(false);
+    setCustom(toGrid(lastImg, C, Rr), C, Rr, true); scan(CUSTOM); if (sound) SFX.scan(); buzz(12);
+    renderDiceSel(); renderDetailDice(); if (!$('comp').hidden) renderComp(ITEMS[CUSTOM]);
+  }));
+  const [C, Rr] = gridDims(diceN);
+  $('ddinfo').textContent = `${fmtN(C * Rr)} ${t('dice')} · ${C} × ${Rr} · ≈ ${cm(C, dieMM)} × ${cm(Rr, dieMM)} cm`;
 }
 function closeDetail() { if (mode !== 'detail') return; if (exTarget) setExplode(false); mode = 'menu'; FRAME.classList.remove('detail'); retT0 = tt; if (sound) SFX.close(); }
 $('prev').addEventListener('click', () => goTo(sel - 1));
@@ -1724,9 +1746,9 @@ function loop(now) {
     const d = i - s, ad = Math.abs(d), focus = clamp(1 - ad), edge = clamp((1.5 - ad) / .35);
     const isSel = i === sel, dk = isSel ? detK : 0;
     const spin = ITEMS[i].locked ? ease(clamp((tt - spinT0) / 1.9)) * Math.PI * 2 : 0;
-    g.position.set(d * SPACING + Math.sin(tt * 60) * shake * 1.6 * (isSel ? 1 : 0), Math.sin(tt * 1.1 * speed + i * 2.1) * 1.4 * (1 - dk) + (focus - 1) * 4 + (ITEMS[i].about ? 11 : 0) * dk, focus * 14 - ad * 30 + 4 * dk);
+    g.position.set(d * SPACING + Math.sin(tt * 60) * shake * 1.6 * (isSel ? 1 : 0), Math.sin(tt * 1.1 * speed + i * 2.1) * 1.4 * (1 - dk) + (focus - 1) * 4 + (ITEMS[i].about || ITEMS[i].custom ? 11 : 0) * dk, focus * 14 - ad * 30 + 4 * dk);
     g.rotation.set(Math.sin(tt * .7 * speed + i) * .06 * (1 - dk) + dk * pitch, spin + Math.sin(tt * .55 * speed + i * 1.7) * (.1 + .08 * (1 - focus)) * (1 - dk) + dk * yaw - d * .35, Math.sin(tt * .4 + i) * .025 * (1 - dk));
-    const sc = (.58 + .42 * focus) * edge * (1 + dk * ((ITEMS[i].about ? .08 : .3) + (zoom - 1) * .9)) * (isSel ? 1 : 1 - detK);
+    const sc = (.58 + .42 * focus) * edge * (1 + dk * ((ITEMS[i].about || ITEMS[i].custom ? .08 : .3) + (zoom - 1) * .9)) * (isSel ? 1 : 1 - detK);
     /* made-to-order slot: real proportions next to a 1.75 m person, shrunk together so both stay on screen */
     const fit = i === CUSTOM ? Math.min(1, 1.05 / physK, 64 / (2 * g.userData.box[0] * physK + 50)) * lerp(1, cfS, 1 - dk) : 1;
     if (i === CUSTOM) { g.position.y += cfY * (1 - dk); g.position.x += cfX * (1 - dk) * focus; }
