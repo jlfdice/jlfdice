@@ -190,6 +190,16 @@ html, body { height: 100%; margin: 0; overflow: hidden; background: #000; color:
 #frame:not(.gate):not(.travel) #gate { display: none; }
 
 #comp .die.blk { display: inline-block; width: 3.2cqw; height: 3.2cqw; background: #000; border: 1px solid var(--line); border-radius: .6cqw; box-shadow: inset 0 0 0 .4cqw #111; }
+
+/* fold arrow (made-to-order panel) */
+#info .fold { position: absolute; right: 0; top: -1.2cqw; width: 9cqw; height: 9cqw; display: grid; place-items: center; border: 1px solid rgba(127,233,255,.45); background: rgba(4,14,22,.6); color: var(--holo); font-size: 4.4cqw; line-height: 1; border-radius: 50%; box-shadow: 0 0 3cqw rgba(127,233,255,.25); cursor: pointer; pointer-events: auto; animation: foldpulse 2.4s ease-in-out infinite; backdrop-filter: blur(4px); }
+#info .fold[hidden] { display: none; }
+@keyframes foldpulse { 50% { transform: translateY(.8cqw); box-shadow: 0 0 5cqw rgba(127,233,255,.45); } }
+#info .fsum { display: none; margin-top: 1.4cqw; font: 400 2.4cqw var(--mono); color: var(--holo); letter-spacing: .06em; }
+#info.fold .fsum { display: block; }
+#info.fold .sub, #info.fold .meta, #info.fold .dsel, #info.fold .hint { display: none !important; }
+#info.fold .name { font-size: 6cqw; }
+@media (prefers-reduced-motion: reduce) { #info .fold { animation: none; } }
 </style>
 <template id="markup"><div id="frame" class="gate">
 <div id="bg"></div>
@@ -207,7 +217,7 @@ html, body { height: 100%; margin: 0; overflow: hidden; background: #000; color:
 <button class="arrow hud menu-only" id="prev" type="button" aria-label="Œuvre précédente" data-ia="aria.prev">‹</button>
 <button class="arrow hud menu-only" id="next" type="button" aria-label="Œuvre suivante" data-ia="aria.next">›</button>
 <div class="hud menu-only" id="swipehint" data-i="ui.swipe">◂ glisser · toucher pour ouvrir ▸</div>
-<div class="hud out menu-only" id="info" aria-live="polite"><div class="num"></div><div class="name"></div><div class="sub"></div><div class="meta"></div><div class="countdown" hidden></div><div class="dsel" id="dsel" hidden><span class="dl" data-i="ui.nDice">Nombre de dés</span><div class="dopts" role="radiogroup" aria-label="Nombre de dés"></div><span class="dl dl2" data-i="ui.shape">Forme</span><div class="dopts fopts" role="radiogroup" aria-label="Forme"></div><span class="dl dl2" data-i="ui.sizeDice">Taille des dés</span><div class="dopts sopts" role="radiogroup" aria-label="Taille des dés"></div><span class="dinfo" id="dinfo"></span></div><div class="hint" hidden></div><div class="actions"></div></div>
+<div class="hud out menu-only" id="info" aria-live="polite"><button class="fold" id="fold" type="button" hidden aria-expanded="true" aria-label="Replier ou déplier le texte" data-ia="aria.fold">▾</button><div class="num"></div><div class="name"></div><div class="fsum" id="fsum"></div><div class="sub"></div><div class="meta"></div><div class="countdown" hidden></div><div class="dsel" id="dsel" hidden><span class="dl" data-i="ui.nDice">Nombre de dés</span><div class="dopts" role="radiogroup" aria-label="Nombre de dés"></div><span class="dl dl2" data-i="ui.shape">Forme</span><div class="dopts fopts" role="radiogroup" aria-label="Forme"></div><span class="dl dl2" data-i="ui.sizeDice">Taille des dés</span><div class="dopts sopts" role="radiogroup" aria-label="Taille des dés"></div><span class="dinfo" id="dinfo"></span></div><div class="hint" hidden></div><div class="actions"></div></div>
 <div id="detailbar"><button class="btn" id="back" type="button" data-i="ui.back">‹ Retour</button><span class="dt"><b id="dtitle">La Joconde</b><small data-i="ui.analysing">ANALYSE EN COURS</small></span></div>
 <div id="readout"></div>
 <div id="dbottom"><div id="about"><div class="tabs" role="tablist"><button class="tab on" type="button" role="tab" data-tab="orig" id="tab-orig" data-i="ui.tabOrig">Œuvre originale</button><button class="tab" type="button" role="tab" data-tab="comp" id="tab-comp" data-i="ui.tabComp">Composition</button></div><p id="abouttxt"></p><div id="comp" hidden></div></div><small data-i="ui.rotate">Glisser pour pivoter · pincer pour zoomer</small><div class="drow"><button class="btn" id="explode" type="button">Décomposer</button><a class="btn primary" id="dorder" target="_blank" rel="noopener" data-i="ui.orderPiece">Commander</a></div></div>
@@ -591,7 +601,11 @@ void main(){
   vec3 v = normalize(fw * uFocal + uv.x * rt2 + uv.y * up2), p = uCam;
   vec3 h = cross(p, v); float h2 = dot(h, h);
   vec3 col = vec3(0.); float trans = 1.; bool hit = false; float glow = 0.;
+  /* far away (approach): fly the ray straight to the r=60 sphere, gravity is negligible out there */
+  bool miss = false;
+  if (dot(p, p) > 3600.) { float bq = dot(p, v), cq = dot(p, p) - 3600., dq = bq * bq - cq; if (dq > 0. && bq < 0.) p += v * (-bq - sqrt(dq)); else miss = true; }
   for (int i = 0; i < 190; i++) {
+    if (miss) break;
     float r = length(p);
     if (r < 1.0) { hit = true; break; }
     float dt = clamp(.04 * r * r, .025, 1.6);
@@ -771,7 +785,7 @@ function renderIntro(t) {
   bhMat.uniforms.uCam.value.set(dist * Math.sin(ang) * Math.cos(pitch), dist * Math.sin(pitch), dist * Math.cos(ang) * Math.cos(pitch));
   bhMat.uniforms.uRoll.value = -.16 + .08 * Math.sin(t * .35) + dive * dive * 1.6;
   const fov = 48 + 42 * dive; bhMat.uniforms.uFocal.value = 1 / Math.tan(THREE.MathUtils.degToRad(fov / 2));
-  bhMat.uniforms.uTime.value = t; bhMat.uniforms.uFade.value = clamp((t - .1) / 1.3); bhMat.uniforms.uExpo.value = .95 - .45 * ease(clamp((t - 4.8) / 1.6));
+  bhMat.uniforms.uTime.value = t; bhMat.uniforms.uFade.value = window.SEAMLESS ? 1 : clamp((t - .1) / 1.3); bhMat.uniforms.uExpo.value = .95 - .45 * ease(clamp((t - 4.8) / 1.6));
   ocam.position.copy(bhMat.uniforms.uCam.value); ocam.up.set(0, 1, 0); ocam.lookAt(0, 0, 0); ocam.rotateZ(bhMat.uniforms.uRoll.value);
   ocam.fov = fov; ocam.aspect = FRAME.clientWidth / FRAME.clientHeight; ocam.updateProjectionMatrix();
   orbFill.position.copy(ocam.position).add(new THREE.Vector3(0, 10, 0));
@@ -780,6 +794,20 @@ function renderIntro(t) {
   post.uniforms.uCA.value = .002 + .012 * dive; post.uniforms.uTime.value = t;
   composer.render();
   blackEl.style.opacity = Math.max(1 - clamp(t / .6), clamp((t - 6.95) / .45));
+}
+/* travel: the hole is a speck at the back of space and grows as we fly toward it, ending exactly on the intro's first frame */
+function renderApproach(k) {
+  if (!composer) setupComposer();
+  const sm = k * k * k * (k * (k * 6 - 15) + 10);
+  const dist = 46 * Math.pow(22, 1 - sm), ang = .55 + (k - 1) * .3, pitch = .085;
+  bhMat.uniforms.uCam.value.set(dist * Math.sin(ang) * Math.cos(pitch), dist * Math.sin(pitch), dist * Math.cos(ang) * Math.cos(pitch));
+  bhMat.uniforms.uRoll.value = -.16; bhMat.uniforms.uFocal.value = 1 / Math.tan(THREE.MathUtils.degToRad(24));
+  bhMat.uniforms.uTime.value = (k - 1) * 4; bhMat.uniforms.uFade.value = ease(clamp(k / .35)); bhMat.uniforms.uExpo.value = .95;
+  ocam.position.copy(bhMat.uniforms.uCam.value); ocam.up.set(0, 1, 0); ocam.lookAt(0, 0, 0); ocam.rotateZ(-.16);
+  ocam.fov = 48; ocam.aspect = FRAME.clientWidth / FRAME.clientHeight; ocam.updateProjectionMatrix();
+  OP.forEach(g => { g.visible = false; g.userData.shards.sh.visible = false; g.userData.shards.flash.material.opacity = 0; });
+  bloom.strength = .7; bloom.radius = .55; post.uniforms.uCA.value = .002; post.uniforms.uTime.value = 0;
+  composer.render();
 }
 window.onIntroResize = () => { if (composer) setupComposer(); };
 
@@ -829,7 +857,7 @@ const I18N = {
     'ui.archive': 'Archive', 'ui.sound': 'SON', 'ui.share': 'PARTAGER', 'ui.create': '✦ CRÉER', 'ui.swipe': '◂ glisser · toucher pour ouvrir ▸', 'ui.back': '‹ Retour', 'ui.analysing': 'ANALYSE EN COURS',
     'ui.data': 'Données · œuvre originale', 'ui.tabOrig': 'Œuvre originale', 'ui.tabComp': 'Composition', 'ui.rotate': 'Glisser pour pivoter · pincer pour zoomer', 'ui.orderPiece': 'Commander',
     'ui.skip': 'Passer ›', 'ui.init': 'Initialiser ▸', 'ui.soundRec': 'Son recommandé', 'ui.approach': 'Approche', 'ui.dist': 'DISTANCE HORIZON', 'ui.capture': 'CAPTURE GRAVITATIONNELLE',
-    'ui.shape': 'Forme', 'shape.rect': 'Rectangle', 'shape.square': 'Carré',
+    'aria.fold': 'Replier ou déplier le texte', 'ui.shape': 'Forme', 'shape.rect': 'Rectangle', 'shape.square': 'Carré',
     'aria.stage': 'Archive 3D des tableaux en dés', 'aria.prev': 'Œuvre précédente', 'aria.next': 'Œuvre suivante', blackDice: 'Dés noirs', backL: ['Dés à jouer, assemblés à la main', 'Pièce unique · 1/1', 'signé au dos'], madeL: 'Sur mesure',
     'ui.nDice': 'Nombre de dés', 'ui.sizeDice': 'Taille des dés', 'ui.privacy': 'Ta photo reste sur ton appareil · rien n’est envoyé', 'ui.sendTitle': 'Envoyer à JLF D’ICE', 'ui.openConv': 'Ouvrir la conversation', 'ui.close': 'Fermer',
     'chip.Dés à jouer': 'Dés à jouer', 'chip.Fait main': 'Fait main', 'chip.Confidentiel': 'Confidentiel', 'chip.Pièce unique': 'Pièce unique', 'chip.Sur mesure': 'Sur mesure',
@@ -854,7 +882,7 @@ const I18N = {
     'ui.archive': 'Archive', 'ui.sound': 'SOUND', 'ui.share': 'SHARE', 'ui.create': '✦ CREATE', 'ui.swipe': '◂ swipe · tap to open ▸', 'ui.back': '‹ Back', 'ui.analysing': 'ANALYSIS IN PROGRESS',
     'ui.data': 'Data · original artwork', 'ui.tabOrig': 'Original', 'ui.tabComp': 'Composition', 'ui.rotate': 'Drag to rotate · pinch to zoom', 'ui.orderPiece': 'Order',
     'ui.skip': 'Skip ›', 'ui.init': 'Initialise ▸', 'ui.soundRec': 'Sound recommended', 'ui.approach': 'Approach', 'ui.dist': 'DISTANCE TO HORIZON', 'ui.capture': 'GRAVITATIONAL CAPTURE',
-    'ui.shape': 'Shape', 'shape.rect': 'Rectangle', 'shape.square': 'Square',
+    'aria.fold': 'Collapse or expand the text', 'ui.shape': 'Shape', 'shape.rect': 'Rectangle', 'shape.square': 'Square',
     'aria.stage': '3D archive of dice paintings', 'aria.prev': 'Previous piece', 'aria.next': 'Next piece', blackDice: 'Black dice', backL: ['Playing dice, assembled by hand', 'One of a kind · 1/1', 'signed on the back'], madeL: 'Made to order',
     'ui.nDice': 'Number of dice', 'ui.sizeDice': 'Dice size', 'ui.privacy': 'Your photo stays on your device · nothing is uploaded', 'ui.sendTitle': 'Send to JLF D’ICE', 'ui.openConv': 'Open the chat', 'ui.close': 'Close',
     'chip.Dés à jouer': 'Playing dice', 'chip.Fait main': 'Handmade', 'chip.Confidentiel': 'Confidential', 'chip.Pièce unique': 'One of a kind', 'chip.Sur mesure': 'Made to order',
@@ -879,7 +907,7 @@ const I18N = {
     'ui.archive': 'Archivo', 'ui.sound': 'SONIDO', 'ui.share': 'COMPARTIR', 'ui.create': '✦ CREAR', 'ui.swipe': '◂ desliza · toca para abrir ▸', 'ui.back': '‹ Volver', 'ui.analysing': 'ANÁLISIS EN CURSO',
     'ui.data': 'Datos · obra original', 'ui.tabOrig': 'Obra original', 'ui.tabComp': 'Composición', 'ui.rotate': 'Desliza para girar · pellizca para ampliar', 'ui.orderPiece': 'Encargar',
     'ui.skip': 'Saltar ›', 'ui.init': 'Iniciar ▸', 'ui.soundRec': 'Sonido recomendado', 'ui.approach': 'Aproximación', 'ui.dist': 'DISTANCIA AL HORIZONTE', 'ui.capture': 'CAPTURA GRAVITATORIA',
-    'ui.shape': 'Forma', 'shape.rect': 'Rectángulo', 'shape.square': 'Cuadrado',
+    'aria.fold': 'Plegar o desplegar el texto', 'ui.shape': 'Forma', 'shape.rect': 'Rectángulo', 'shape.square': 'Cuadrado',
     'aria.stage': 'Archivo 3D de cuadros de dados', 'aria.prev': 'Obra anterior', 'aria.next': 'Obra siguiente', blackDice: 'Dados negros', backL: ['Dados de juego, montados a mano', 'Pieza única · 1/1', 'firmado al dorso'], madeL: 'A medida',
     'ui.nDice': 'Número de dados', 'ui.sizeDice': 'Tamaño de los dados', 'ui.privacy': 'Tu foto se queda en tu dispositivo · no se envía nada', 'ui.sendTitle': 'Enviar a JLF D’ICE', 'ui.openConv': 'Abrir el chat', 'ui.close': 'Cerrar',
     'chip.Dés à jouer': 'Dados de juego', 'chip.Fait main': 'Hecho a mano', 'chip.Confidentiel': 'Confidencial', 'chip.Pièce unique': 'Pieza única', 'chip.Sur mesure': 'A medida',
@@ -975,7 +1003,8 @@ function scan(i) { reveal[i].t0 = tt; if (sound) SFX.scan(); }
 function chipHTML(c) { return Array.isArray(c) ? `<span class="chip ${c[1]}">${c[0]}</span>` : `<span class="chip">${c}</span>`; }
 function esc(t) { return String(t).replace(/[&<>"]/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;'}[c])); }
 function renderInfo(i, scramble) {
-  const it = ITEMS[i], st = itemState(it), col = (STATUS[st.status] || STATUS.dispo)[1], label = t('st.' + (STATUS[st.status] ? st.status : 'dispo'));
+  const it = ITEMS[i]; setFold(i);
+  const st = itemState(it), col = (STATUS[st.status] || STATUS.dispo)[1], label = t('st.' + (STATUS[st.status] ? st.status : 'dispo'));
   infoEl.querySelector('.num').textContent = it.custom ? `${t('object')} ∞ // ${t(it.placeholder ? 'toCreate' : 'forYou')}` : `${t('object')} ${it.num} // ${t(it.locked ? 'classified' : 'archived')}`;
   const nm = infoEl.querySelector('.name'); if (scramble) decrypt(nm, itName(it)); else nm.textContent = itName(it);
   infoEl.querySelector('.sub').textContent = itSub(it);
@@ -1010,6 +1039,15 @@ function showInfo(i, animate = true) {
   infoEl.classList.add('out');
   infoTimer = setTimeout(() => { renderInfo(i, true); infoEl.classList.remove('out'); }, 200);
 }
+/* fold arrow on the made-to-order panel: slides the text down so the painting and the life-size silhouette are fully visible */
+let folded = false, foldK = 0;
+function setFold(i) {
+  const on = ITEMS[i] && ITEMS[i].custom, f = on && folded;
+  $('fold').hidden = !on; infoEl.classList.toggle('fold', !!f); FRAME.classList.toggle('folded', !!f);
+  $('fold').setAttribute('aria-expanded', String(!f)); $('fold').textContent = f ? '▴' : '▾';
+  $('fsum').textContent = $('dinfo').textContent;
+}
+$('fold').addEventListener('click', e => { e.stopPropagation(); folded = !folded; buzz(8); if (sound) blip(folded ? 520 : 380, folded ? 300 : 620, .12, .05, 'sine'); setFold(sel); });
 let toastTimer = 0;
 function toast(html, deny) { toastEl.innerHTML = html; toastEl.classList.toggle('deny', !!deny); toastEl.classList.add('on'); clearTimeout(toastTimer); toastTimer = setTimeout(() => toastEl.classList.remove('on'), 2400); }
 function glitch(cls = 'glitch', ms = 340) { FRAME.classList.remove(cls); void FRAME.offsetWidth; FRAME.classList.add(cls); setTimeout(() => FRAME.classList.remove(cls), ms); }
@@ -1128,8 +1166,17 @@ function toGrid(img, C, Rr) {
   const d = g2.getImageData(0, 0, C, Rr).data, L = new Float32Array(C * Rr);
   for (let i = 0; i < C * Rr; i++) L[i] = (.2126 * d[i * 4] + .7152 * d[i * 4 + 1] + .0722 * d[i * 4 + 2]) / 255;
   const srt = Array.from(L).sort((x, y) => x - y), lo = srt[Math.floor(srt.length * .02)], hi = srt[Math.floor(srt.length * .98)] || 1;
-  let s = '';
-  for (let i = 0; i < L.length; i++) { const v = Math.pow(clamp((L[i] - lo) / Math.max(.05, hi - lo)), .85); s += v < .05 ? '0' : String(Math.min(6, 1 + Math.floor(v * 6))); }
+  let s = '', seed = 0;
+  for (let i = 0; i < L.length; i += 97) seed = (seed * 31 + Math.round(L[i] * 255)) % 1000003;
+  /* the on-screen preview is deliberately "salted": about 15 % of the dice are shifted by one face. From a distance the portrait reads the same,
+     but the grid can't be copied die by die — the real build plan is recomputed in the workshop from the original photo. */
+  for (let i = 0; i < L.length; i++) {
+    const v = Math.pow(clamp((L[i] - lo) / Math.max(.05, hi - lo)), .85);
+    let f = v < .05 ? 0 : Math.min(6, 1 + Math.floor(v * 6));
+    const h = hashR(seed + i * 7.13);
+    if (f > 0 && h < .15) f = Math.max(1, Math.min(6, f + (h < .075 ? -1 : 1)));
+    s += f;
+  }
   return s;
 }
 function plusGrid(C, Rr) {
@@ -1139,6 +1186,7 @@ function plusGrid(C, Rr) {
   const d = g.getImageData(0, 0, C, Rr).data; let s = ''; for (let i = 0; i < C * Rr; i++) s += d[i * 4] > 110 ? '6' : '0'; return s;
 }
 let CUSTOM = -1;
+const ZMAX = () => sel === CUSTOM ? 1.25 : 2.2;
 function setCustom(grid, C, Rr, generated) {
   GR.custom = grid; GR.dims.custom = [C, Rr];
   const item = generated
@@ -1163,7 +1211,7 @@ function renderDiceSel() {
   box.querySelectorAll('.dopt').forEach(b => b.addEventListener('click', () => { diceN = +b.dataset.n; renderDiceSel(); if (lastImg) generate(lastImg); }));
   sbox.querySelectorAll('.dopt').forEach(b => b.addEventListener('click', () => { dieMM = +b.dataset.s; renderDiceSel(); }));
   const [C, Rr] = gridDims(diceN);
-  $('dinfo').textContent = `${fmtN(C * Rr)} ${t('dice')} · ${C} × ${Rr} · ${t('format')} ≈ ${cm(C, dieMM)} × ${cm(Rr, dieMM)} cm`;
+  $('fsum').textContent = $('dinfo').textContent = `${fmtN(C * Rr)} ${t('dice')} · ${C} × ${Rr} · ${t('format')} ≈ ${cm(C, dieMM)} × ${cm(Rr, dieMM)} cm`;
 }
 function generate(img) {
   lastImg = img; lastRef = Math.random().toString(36).slice(2, 6).toUpperCase();
@@ -1285,7 +1333,7 @@ FRAME.addEventListener('pointermove', e => {
   if (!ptrs.has(e.pointerId) || !pStart) return;
   ptrs.set(e.pointerId, {x: e.clientX, y: e.clientY});
   const W = FRAME.clientWidth;
-  if (ptrs.size === 2 && mode === 'detail') { const [a, b] = [...ptrs.values()]; zoom = Math.max(1, Math.min(2.2, zoom0 * Math.hypot(a.x - b.x, a.y - b.y) / (pinch0 || 1))); pStart.moved = 99; return; }
+  if (ptrs.size === 2 && mode === 'detail') { const [a, b] = [...ptrs.values()]; zoom = Math.max(1, Math.min(ZMAX(), zoom0 * Math.hypot(a.x - b.x, a.y - b.y) / (pinch0 || 1))); pStart.moved = 99; return; }
   const dx = e.clientX - pStart.x, now = performance.now(), ddx = e.clientX - pStart.lx, ddy = e.clientY - pStart.ly, dtm = Math.max(1, now - pStart.lt);
   pStart.moved = Math.max(pStart.moved, Math.hypot(dx, e.clientY - pStart.y));
   if (mode === 'menu') {
@@ -1313,7 +1361,7 @@ function endPtr(e) {
   pStart = null;
 }
 FRAME.addEventListener('pointerup', endPtr); FRAME.addEventListener('pointercancel', endPtr);
-FRAME.addEventListener('wheel', e => { if (mode === 'detail') { e.preventDefault(); zoom = Math.max(1, Math.min(2.2, zoom * Math.exp(-e.deltaY * .0015))); } else if (mode === 'menu' && Math.abs(e.deltaX) > 30) goTo(sel + Math.sign(e.deltaX)); }, {passive: false});
+FRAME.addEventListener('wheel', e => { if (mode === 'detail') { e.preventDefault(); zoom = Math.max(1, Math.min(ZMAX(), zoom * Math.exp(-e.deltaY * .0015))); } else if (mode === 'menu' && Math.abs(e.deltaX) > 30) goTo(sel + Math.sign(e.deltaX)); }, {passive: false});
 
 /* ---- gate boot sequence ---- */
 let bootDone = false;
@@ -1336,11 +1384,11 @@ function bootFull() { const L = bootLines(); $('boot').innerHTML = L.map((l, i) 
 const starsCv = $('stars'), sctx = starsCv.getContext('2d');
 const SN = 520, ST = [];
 for (let i = 0; i < SN; i++) ST.push({x: (Math.random() - .5) * 2, y: (Math.random() - .5) * 2, z: Math.random(), pz: 0, c: Math.random()});
-let warpV = .06, travelT0 = 0, fromTravel = false;
+let warpV = .06, travelT0 = 0, fromTravel = false; const TRAVEL = 4200;
 function sizeStars() { const r = FRAME.getBoundingClientRect(), d = Math.min(devicePixelRatio, 2); starsCv.width = Math.max(1, Math.round(r.width * d)); starsCv.height = Math.max(1, Math.round(r.height * d)); }
 sizeStars(); addEventListener('resize', sizeStars);
 function drawStars(dt, glow, see) {
-  const W = starsCv.width, H = starsCv.height, cx = W / 2, cy = H * .46, f = Math.min(W, H) * .9;
+  const W = starsCv.width, H = starsCv.height, cx = W / 2, cy = H * .5, f = Math.min(W, H) * .9;
   if (see) sctx.clearRect(0, 0, W, H);
   else { sctx.fillStyle = `rgba(0,3,7,${Math.min(1, .35 + 2.5 * dt / Math.max(.02, warpV))})`; sctx.fillRect(0, 0, W, H); }
   if (glow > 0) { const gr = sctx.createRadialGradient(cx, cy, 0, cx, cy, f * .9); gr.addColorStop(0, `rgba(255,170,90,${.35 * glow})`); gr.addColorStop(.25, `rgba(90,140,255,${.18 * glow})`); gr.addColorStop(1, 'rgba(0,0,0,0)'); sctx.fillStyle = gr; sctx.fillRect(0, 0, W, H); }
@@ -1358,7 +1406,7 @@ function startTravel(l) {
   setLang(l);
   try { initAudio(); sound = true; } catch (e) { sound = false; }
   askTilt();
-  if (sound) { noiseSweep(120, 5000, 2.6, .12); blip(55, 140, 2.6, .16, 'sine'); }
+  if (sound) { noiseSweep(120, 5000, 4.2, .12); blip(55, 140, 4.2, .16, "sine"); }
   buzz(20); mode = 'travel'; travelT0 = performance.now();
   FRAME.classList.remove('gate'); FRAME.classList.add('travel');
 }
@@ -1457,11 +1505,14 @@ $('lang').addEventListener('click', () => setLang(LANGS[(LANGS.indexOf(LANG) + 1
 function loop(now) {
   const dt = Math.min(.05, Math.max(0, (now - last) / 1000)); last = now; tt += dt;
   if (mode === 'gate' || mode === 'travel') {
-    const k = mode === 'travel' ? clamp((now - travelT0) / 2400) : 0;
-    warpV = mode === 'gate' ? .07 : .07 + 3.2 * Math.pow(k, 2.2);
-    starsCv.style.opacity = 1; drawStars(dt, mode === 'travel' ? Math.pow(k, 3) : 0, false);
-    blackEl.style.opacity = 0;
-    if (mode === 'travel' && k >= 1) { fromTravel = true; enterIntro(); }
+    const k = mode === 'travel' ? clamp((now - travelT0) / TRAVEL) : 0;
+    starsCv.style.opacity = 1; blackEl.style.opacity = 0;
+    if (mode === 'travel') {
+      /* the stars accelerate into a warp while the black hole, rendered for real behind them, grows from a speck */
+      warpV = .07 + 3.2 * ease(clamp(k / .45));
+      renderApproach(k); drawStars(dt, 0, true);
+    } else { warpV = .07; drawStars(dt, 0, false); }
+    if (mode === 'travel' && k >= 1) { fromTravel = true; window.SEAMLESS = true; enterIntro(); }
     requestAnimationFrame(loop); return;
   }
   if (mode === 'intro') {
@@ -1496,7 +1547,8 @@ function loop(now) {
     g.rotation.set(Math.sin(tt * .7 * speed + i) * .06 * (1 - dk) + dk * pitch, spin + Math.sin(tt * .55 * speed + i * 1.7) * (.1 + .08 * (1 - focus)) * (1 - dk) + dk * yaw - d * .35, Math.sin(tt * .4 + i) * .025 * (1 - dk));
     const sc = (.58 + .42 * focus) * edge * (1 + dk * ((ITEMS[i].about ? .08 : .3) + (zoom - 1) * .9)) * (isSel ? 1 : 1 - detK);
     /* made-to-order slot: real proportions next to a 1.75 m person, shrunk together so both stay on screen */
-    const fit = i === CUSTOM ? Math.min(1, 1.05 / physK, 64 / (2 * g.userData.box[0] * physK + 50)) : 1;
+    const fit = i === CUSTOM ? Math.min(1, 1.05 / physK, 64 / (2 * g.userData.box[0] * physK + 50)) * (1 + .16 * foldK * (1 - dk)) : 1;
+    if (i === CUSTOM) g.position.y -= 9 * foldK * sc * (1 - dk);
     const pk = i === CUSTOM ? physK * fit : 1;
     if (i === CUSTOM) g.position.x -= 13 * sc * fit * (1 - dk);
     g.scale.setScalar(Math.max(.0001, sc * pk)); g.visible = sc > .002;
@@ -1520,6 +1572,7 @@ function loop(now) {
   parX += (tgX - parX) * (1 - Math.exp(-dt * 4)); parY += (tgY - parY) * (1 - Math.exp(-dt * 4));
   camera.position.set(camBase.x + parX * 14, camBase.y - parY * 9, camBase.z); camera.lookAt(0, 2, 0);
   physK += (physTarget().k - physK) * (1 - Math.exp(-dt * 5));
+  foldK += ((folded && sel === CUSTOM && mode === 'menu' ? 1 : 0) - foldK) * (1 - Math.exp(-dt * 7));
   const g = P[sel]; g.updateMatrixWorld(); placeReticle(g, (1 - detK * .6) * (1 - exV));
   if (mode === 'detail') $('readout').innerHTML = `ROT ${(yaw * 57.3 >= 0 ? '+' : '−') + Math.abs(((yaw * 57.3) % 360)).toFixed(1).padStart(5, '0')}°<br>INCL ${(pitch * 57.3 >= 0 ? '+' : '−') + Math.abs(pitch * 57.3).toFixed(1).padStart(4, '0')}°<br>ZOOM ×${zoom.toFixed(2)}<br>${t('material')}${exV > .02 ? '<br><span style="color:var(--warn)">' + t('exActive') + '</span>' : ''}`;
   if ((tickT += dt) > .25) { tickT = 0; ticker(); }
