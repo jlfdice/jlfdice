@@ -240,6 +240,8 @@ html, body { height: 100%; margin: 0; overflow: hidden; background: #000; color:
 #ddice { margin-top: 0; background: rgba(0,8,14,.72); border: 1px solid var(--line); padding: 2.2cqw 2.6cqw; backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
 #ddice[hidden] { display: none; }
 #ddice .dopt { padding: 1.2cqw 1.9cqw; font-size: 2.4cqw; }
+#send img { -webkit-touch-callout: default; -webkit-user-select: auto; user-select: auto; pointer-events: auto; }
+#send { -webkit-user-select: auto; user-select: auto; }
 </style>
 <template id="markup"><div id="frame" class="gate">
 <div id="bg"></div>
@@ -272,7 +274,7 @@ html, body { height: 100%; margin: 0; overflow: hidden; background: #000; color:
 <button type="button" class="flag" data-l="ru"><svg viewBox="0 0 9 6" aria-hidden="true"><rect width="9" height="2" fill="#fff"/><rect y="2" width="9" height="2" fill="#0039A6"/><rect y="4" width="9" height="2" fill="#D52B1E"/></svg><span>Русский</span></button>
 </div><small data-i="ui.soundRec">Son recommandé</small></div>
 <div id="toast" role="status"></div>
-<div id="send" hidden><h2 data-i="ui.sendTitle">Envoyer à JLF D’ICE</h2><img id="sendimg" alt="Fiche de commande avec ta photo et l’aperçu en dés"><ol id="sendsteps"></ol><div class="row"><a class="btn primary" id="sendig" target="_blank" rel="noopener" data-i="ui.openConv">Ouvrir la conversation</a><button class="btn" id="sendclose" type="button" data-i="ui.close">Fermer</button></div></div>
+<div id="send" hidden><h2 data-i="ui.sendTitle">Envoyer à JLF D’ICE</h2><img id="sendimg" alt="Fiche de commande avec ta photo et l’aperçu en dés"><div class="row"><button class="btn primary" id="savesheet" type="button" data-i="saveSheet">Enregistrer la fiche</button><a class="btn" id="sheetdl" download="commande-jlfdice.png" data-i="dl">Télécharger</a></div><ol id="sendsteps"></ol><div class="row"><a class="btn" id="sendig" target="_blank" rel="noopener" data-i="ui.openConv">Ouvrir la conversation</a><button class="btn" id="sendclose" type="button" data-i="ui.close">Fermer</button></div></div>
 <div id="crop" hidden role="dialog" aria-modal="true" aria-labelledby="croph"><h2 id="croph" data-i="crop.title">Cadrage</h2><div class="cstage"><div id="cwin"><canvas id="cropcv" aria-label="Photo à cadrer"></canvas><figure class="cpv"><canvas id="croppv" aria-hidden="true"></canvas><figcaption data-i="crop.pv">Aperçu dés</figcaption></figure></div><canvas id="cbig" role="img" aria-label="Aperçu en dés"></canvas></div><div id="cdsel"></div><label class="czl" for="czoom"><span data-i="crop.zoom">Zoom</span><input id="czoom" type="range" min="1" max="3" step="0.01" value="1"></label><small data-i="crop.hint">Glisse pour déplacer · pince ou curseur pour zoomer</small><div class="row"><button class="btn primary" id="cok" type="button" data-i="crop.ok">Valider</button><button class="btn" id="ccancel" type="button" data-i="crop.cancel">Annuler</button></div></div>
 <div id="proc" hidden><div class="ring"></div><b id="proct">Analyse de l’image</b><span id="procs" class="mono">0 %</span><small data-i="ui.privacy">Ta photo reste sur ton appareil · rien n’est envoyé</small></div>
 <div id="panel" hidden>
@@ -893,7 +895,7 @@ const I18N = {
     err: 'ERREUR', errRead: 'Cette image n’a pas pu être lue. Essaie une autre photo.', badFmt: 'FORMAT NON LU', badFmtTxt: 'Choisis une photo JPEG ou PNG.',
     done: 'PORTRAIT GÉNÉRÉ', doneTxt: '{n} dés · ta photo devient un tableau.', ready: 'PRÊT', readyTxt: 'Choisis Instagram, puis la conversation avec @{h}.',
     dm: 'Bonjour ! Je voudrais un portrait en dés sur mesure : {n} dés de {mm} mm (grille {c} × {r}, ≈ {w} × {hh} cm). Code atelier : {code}. Je t’envoie la fiche et ma photo originale.',
-    step1: 'Enregistre cette fiche : appui long dessus → « Enregistrer l’image », ou fais une capture d’écran.', step2: 'Ouvre la conversation avec @{h}.', step3: 'Envoie la fiche <b>et ta photo originale</b> (en pleine qualité). Ton message est déjà copié : colle-le.',
+    saveSheet: 'Enregistrer la fiche', dl: 'Télécharger', saved: 'FICHE PRÊTE', step1: 'Appuie sur « Enregistrer la fiche » (ou appui long sur l’image → « Enregistrer »).', step2: 'Ouvre la conversation avec @{h}.', step3: 'Envoie la fiche <b>et ta photo originale</b> (en pleine qualité). Ton message est déjà copié : colle-le.',
     denied: 'ACCÈS REFUSÉ', soon: 'Révélation bientôt', boot: ['> connexion au signal', '> déchiffrement de l’archive', '> {n} objets détectés', '> {k} objet classifié', '> prêt'],
     material: 'MATIÈRE · DÉS À JOUER', human: 'ÉCHELLE · 1,75 M',
     'ui.archive': 'Archive', 'ui.sound': 'SON', 'ui.share': 'PARTAGER', 'ui.create': '✦ CRÉER', 'ui.swipe': '◂ glisser · toucher pour ouvrir ▸', 'ui.back': '‹ Retour', 'ui.analysing': 'ANALYSE EN COURS',
@@ -918,7 +920,7 @@ const I18N = {
     err: 'ERROR', errRead: 'This image could not be read. Try another photo.', badFmt: 'UNREADABLE FORMAT', badFmtTxt: 'Choose a JPEG or PNG photo.',
     done: 'PORTRAIT GENERATED', doneTxt: '{n} dice · your photo becomes a painting.', ready: 'READY', readyTxt: 'Choose Instagram, then the chat with @{h}.',
     dm: 'Hello! I would like a custom dice portrait: {n} dice of {mm} mm (grid {c} × {r}, ≈ {w} × {hh} cm). Workshop code: {code}. Sending you the order sheet and my original photo.',
-    step1: 'Save this sheet: long-press it → “Save image”, or take a screenshot.', step2: 'Open the chat with @{h}.', step3: 'Send the sheet <b>and your original photo</b> (full quality). Your message is already copied: paste it.',
+    saveSheet: 'Save the sheet', dl: 'Download', saved: 'SHEET READY', step1: 'Tap “Save the sheet” (or long-press the image → “Save”).', step2: 'Open the chat with @{h}.', step3: 'Send the sheet <b>and your original photo</b> (full quality). Your message is already copied: paste it.',
     denied: 'ACCESS DENIED', soon: 'Reveal coming soon', boot: ['> connecting to signal', '> decrypting archive', '> {n} objects detected', '> {k} object classified', '> ready'],
     material: 'MATERIAL · PLAYING DICE', human: 'SCALE · 1.75 M',
     'ui.archive': 'Archive', 'ui.sound': 'SOUND', 'ui.share': 'SHARE', 'ui.create': '✦ CREATE', 'ui.swipe': '◂ swipe · tap to open ▸', 'ui.back': '‹ Back', 'ui.analysing': 'ANALYSIS IN PROGRESS',
@@ -943,7 +945,7 @@ const I18N = {
     err: 'ERROR', errRead: 'No se pudo leer esta imagen. Prueba con otra foto.', badFmt: 'FORMATO NO LEÍDO', badFmtTxt: 'Elige una foto JPEG o PNG.',
     done: 'RETRATO GENERADO', doneTxt: '{n} dados · tu foto se convierte en un cuadro.', ready: 'LISTO', readyTxt: 'Elige Instagram y luego el chat con @{h}.',
     dm: '¡Hola! Quisiera un retrato de dados a medida: {n} dados de {mm} mm (cuadrícula {c} × {r}, ≈ {w} × {hh} cm). Código de taller: {code}. Te envío la ficha y mi foto original.',
-    step1: 'Guarda esta ficha: mantén pulsado → «Guardar imagen», o haz una captura.', step2: 'Abre el chat con @{h}.', step3: 'Envía la ficha <b>y tu foto original</b> (en calidad completa). Tu mensaje ya está copiado: pégalo.',
+    saveSheet: 'Guardar la ficha', dl: 'Descargar', saved: 'FICHA LISTA', step1: 'Pulsa «Guardar la ficha» (o mantén pulsada la imagen → «Guardar»).', step2: 'Abre el chat con @{h}.', step3: 'Envía la ficha <b>y tu foto original</b> (en calidad completa). Tu mensaje ya está copiado: pégalo.',
     denied: 'ACCESO DENEGADO', soon: 'Revelación próximamente', boot: ['> conectando a la señal', '> descifrando el archivo', '> {n} objetos detectados', '> {k} objeto clasificado', '> listo'],
     material: 'MATERIAL · DADOS', human: 'ESCALA · 1,75 M',
     'ui.archive': 'Archivo', 'ui.sound': 'SONIDO', 'ui.share': 'COMPARTIR', 'ui.create': '✦ CREAR', 'ui.swipe': '◂ desliza · toca para abrir ▸', 'ui.back': '‹ Volver', 'ui.analysing': 'ANÁLISIS EN CURSO',
@@ -968,7 +970,7 @@ const I18N = {
     err: 'ОШИБКА', errRead: 'Не удалось прочитать изображение. Попробуй другое фото.', badFmt: 'ФОРМАТ НЕ ПОДДЕРЖИВАЕТСЯ', badFmtTxt: 'Выбери фото в формате JPEG или PNG.',
     done: 'ПОРТРЕТ СОЗДАН', doneTxt: '{n} кубиков · твоё фото становится картиной.', ready: 'ГОТОВО', readyTxt: 'Выбери Instagram, затем диалог с @{h}.',
     dm: 'Здравствуйте! Я хотел(а) бы портрет из кубиков на заказ: {n} кубиков по {mm} мм (сетка {c} × {r}, ≈ {w} × {hh} см). Код мастерской: {code}. Отправляю карточку заказа и оригинал фото.',
-    step1: 'Сохрани эту карточку: удерживай → «Сохранить изображение» или сделай скриншот.', step2: 'Открой диалог с @{h}.', step3: 'Отправь карточку <b>и оригинал фото</b> (в полном качестве). Сообщение уже скопировано — просто вставь его.',
+    saveSheet: 'Сохранить карточку', dl: 'Скачать', saved: 'КАРТОЧКА ГОТОВА', step1: 'Нажми «Сохранить карточку» (или удерживай изображение → «Сохранить»).', step2: 'Открой диалог с @{h}.', step3: 'Отправь карточку <b>и оригинал фото</b> (в полном качестве). Сообщение уже скопировано — просто вставь его.',
     denied: 'ДОСТУП ЗАПРЕЩЁН', soon: 'Скоро раскрытие', boot: ['> подключение к сигналу', '> расшифровка архива', '> обнаружено объектов: {n}', '> засекречено объектов: {k}', '> готово'],
     material: 'МАТЕРИАЛ · ИГРАЛЬНЫЕ КУБИКИ', human: 'МАСШТАБ · 1,75 М',
     'ui.archive': 'Архив', 'ui.sound': 'ЗВУК', 'ui.share': 'ПОДЕЛИТЬСЯ', 'ui.create': '✦ СОЗДАТЬ', 'ui.swipe': '◂ листай · нажми, чтобы открыть ▸', 'ui.back': '‹ Назад', 'ui.analysing': 'ИДЁТ АНАЛИЗ',
@@ -1322,7 +1324,7 @@ function renderDiceSel() {
   fbox.querySelectorAll('.dopt').forEach(b => b.addEventListener('click', () => { shape = b.dataset.f; renderDiceSel(); if (!$('crop').hidden) reqCrop(); else if (lastImg) generate(lastImg); else if (ITEMS[CUSTOM] && ITEMS[CUSTOM].placeholder) { const [C, Rr] = gridDims(diceN); setCustom(plusGrid(Math.round(40 * C / Rr), 40), Math.round(40 * C / Rr), 40, false); } }));
   sbox.innerHTML = SIZE_OPTS.map(n => `<button class="dopt" type="button" role="radio" aria-checked="${n === dieMM}" data-s="${n}">${n} mm</button>`).join('');
   box.querySelectorAll('.dopt').forEach(b => b.addEventListener('click', () => { diceN = +b.dataset.n; renderDiceSel(); if (!$('crop').hidden) reqCrop(); else if (lastImg) generate(lastImg); }));
-  sbox.querySelectorAll('.dopt').forEach(b => b.addEventListener('click', () => { dieMM = +b.dataset.s; renderDiceSel(); }));
+  sbox.querySelectorAll('.dopt').forEach(b => b.addEventListener('click', () => { dieMM = +b.dataset.s; renderDiceSel(); if (lastImg) prepSheet(); }));
   const [C, Rr] = gridDims(diceN);
   $('fsum').textContent = $('dinfo').textContent = `${fmtN(C * Rr)} ${t('dice')} · ${C} × ${Rr} · ${t('format')} ≈ ${cm(C, dieMM)} × ${cm(Rr, dieMM)} cm`;
 }
@@ -1338,7 +1340,7 @@ function generate(img) {
       clearInterval(tick); $('proc').hidden = true;
       if (mode === 'detail') closeDetail();
       if (sel === CUSTOM) { showInfo(CUSTOM); setTimeout(() => scan(CUSTOM), 250); } else goTo(CUSTOM);
-      buzz([30, 40, 80]); toast(`<b style="color:var(--holo);margin:0">${t('done')}</b>`);
+      buzz([30, 40, 80]); toast(`<b style="color:var(--holo);margin:0">${t('done')}</b>`); prepSheet();
     }, Math.max(0, 1900 - (performance.now() - t0)));
   }, 60);
 }
@@ -1445,27 +1447,48 @@ function orderSheet() {
   g.fillStyle = '#ffb347'; g.font = '500 24px "JetBrains Mono", monospace'; g.fillText('@' + STATE.handle, 70, H - 70);
   return new Promise(res => c.toBlob(b => res(b), 'image/png'));
 }
+/* the order sheet is prepared in advance: iOS only opens the share sheet if it's called right away from the tap */
+let sheet = {key: '', blob: null, busy: null};
+const sheetKey = () => lastImg ? workshopCode() + '|' + GR.custom.length : '';
+function prepSheet() {
+  const k = sheetKey(); if (!k || sheet.key === k) return sheet.busy || Promise.resolve(sheet.blob);
+  sheet.key = k; sheet.blob = null;
+  sheet.busy = orderSheet().then(b => { if (sheet.key === k) sheet.blob = b; return b; }).catch(() => null).finally(() => { sheet.busy = null; });
+  return sheet.busy;
+}
+const sheetFile = b => new File([b], `commande-jlfdice-${lastRef}.png`, {type: 'image/png'});
+function dmText() { const [C, Rr] = GR.dims.custom; return t('dm', {n: fmtN(C * Rr), mm: dieMM, c: C, r: Rr, w: cm(C, dieMM), hh: cm(Rr, dieMM), code: workshopCode()}); }
 async function sendToArtist() {
   if (!lastImg) { pickPhoto(); return; }
-  const [C, Rr] = GR.dims.custom;
-  const text = t('dm', {n: fmtN(C * Rr), mm: dieMM, c: C, r: Rr, w: cm(C, dieMM), hh: cm(Rr, dieMM), code: workshopCode()});
-  let blob = null; try { blob = await orderSheet(); } catch (e) {}
-  if (blob) {
-    const file = new File([blob], `commande-jlfdice-${lastRef}.png`, {type: 'image/png'});
-    const files = lastFile ? [file, lastFile] : [file];
+  const text = dmText();
+  try { navigator.clipboard.writeText(text).catch(() => {}); } catch (e) {}
+  const ready = sheet.key === sheetKey() && sheet.blob;
+  if (ready) {
+    const file = sheetFile(sheet.blob), files = lastFile ? [file, lastFile] : [file];
     try {
       const share = navigator.canShare && navigator.canShare({files}) ? files : (navigator.canShare && navigator.canShare({files: [file]}) ? [file] : null);
       if (share) { await navigator.share({files: share, text}); toast(`<b style="color:var(--holo)">${t('ready')}</b>` + t('readyTxt', {h: esc(STATE.handle)})); return; }
-    }
-    catch (e) { if (e && e.name === 'AbortError') return; }
+    } catch (e) { if (e && e.name === 'AbortError') return; }
   }
-  /* no file sharing here: show the sheet so it can be saved, then open the conversation */
-  try { await navigator.clipboard.writeText(text); } catch (e) {}
-  $('sendimg').src = blob ? URL.createObjectURL(blob) : '';
-  $('sendimg').hidden = !blob;
+  /* fallback: show the sheet with its own save button (a fresh tap), a download link, and long-press still works */
+  const blob = sheet.blob && sheet.key === sheetKey() ? sheet.blob : await prepSheet();
+  if (blob) {
+    const fr = new FileReader(); fr.onload = () => { $('sendimg').src = fr.result; $('sheetdl').href = fr.result; }; fr.readAsDataURL(blob);
+    $('sheetdl').download = `commande-jlfdice-${lastRef}.png`;
+  }
+  $('sendimg').hidden = !blob; $('savesheet').hidden = !blob; $('sheetdl').hidden = !blob;
   $('sendsteps').innerHTML = `<li>${t('step1')}</li><li>${t('step2', {h: esc(STATE.handle)})}</li><li>${t('step3')}</li>`;
   $('sendig').href = igDM(); $('send').hidden = false;
 }
+$('savesheet').addEventListener('click', async () => {
+  const b = sheet.blob; if (!b) return;
+  const file = sheetFile(b), files = lastFile ? [file, lastFile] : [file];
+  try {
+    const share = navigator.canShare && navigator.canShare({files}) ? files : (navigator.canShare && navigator.canShare({files: [file]}) ? [file] : null);
+    if (share) { await navigator.share({files: share}); toast(`<b style="color:var(--holo);margin:0">${t('saved')}</b>`); return; }
+  } catch (e) { if (e && e.name === 'AbortError') return; }
+  $('sheetdl').click();
+});
 $('sendclose').addEventListener('click', () => { $('send').hidden = true; });
 
 /* ---- navigation ---- */
@@ -1505,7 +1528,7 @@ function renderDetailDice() {
     diceN = +b.dataset.n; const [C, Rr] = gridDims(diceN);
     if (exTarget) setExplode(false);
     setCustom(toGrid(lastImg, C, Rr), C, Rr, true); scan(CUSTOM); if (sound) SFX.scan(); buzz(12);
-    renderDiceSel(); renderDetailDice(); if (!$('comp').hidden) renderComp(ITEMS[CUSTOM]);
+    renderDiceSel(); renderDetailDice(); if (!$('comp').hidden) renderComp(ITEMS[CUSTOM]); prepSheet();
   }));
   const [C, Rr] = gridDims(diceN);
   $('ddinfo').textContent = `${fmtN(C * Rr)} ${t('dice')} · ${C} × ${Rr} · ≈ ${cm(C, dieMM)} × ${cm(Rr, dieMM)} cm`;
@@ -1524,7 +1547,7 @@ addEventListener('keydown', e => {
 /* ---- pointer: swipe in the menu, rotate / pinch in detail ---- */
 const ptrs = new Map(); let pStart = null, pinch0 = 0, zoom0 = 1;
 FRAME.addEventListener('pointerdown', e => {
-  if (e.target.closest('button, a, #panel, #gate')) return;
+  if (e.target.closest('button, a, #panel, #gate, #send, #crop, #proc')) return;
   if (mode !== 'menu' && mode !== 'detail') return;
   FRAME.setPointerCapture(e.pointerId);
   ptrs.set(e.pointerId, {x: e.clientX, y: e.clientY});
