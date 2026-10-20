@@ -155,7 +155,7 @@ input:focus-visible, button:focus-visible { outline: 2px solid var(--holo); outl
 <div id="cropbox"><div class="row"><span class="zl">ZOOM</span><input id="czoom" type="range" min="1" max="3" step="0.01" value="1" aria-label="Zoom du cadrage"></div><div class="hint">Déplace le cadre lumineux sur la zone à garder · tire ses coins pour l'agrandir ou le réduire · aperçu en dés ci-dessous</div><canvas id="cpv" aria-hidden="true"></canvas><label class="chk"><input type="checkbox" id="o-orient" checked> <span><b>Détail max : orienter les dés 2, 3 et 6</b><small>Les points suivent les contours du visage (lunettes, yeux, bouche…). Le plan indique le sens de chaque dé par de petits traits.</small></span></label><div id="mixbox"><label>Dés utilisés</label><div class="chips" id="o-white" role="radiogroup" aria-label="Dés utilisés"></div><div class="hint" id="o-white-h"></div>
 <label>Dés de couleur pour les détails</label><div class="chips" id="o-cols" role="group" aria-label="Dés de couleur"></div>
 <div id="o-amtw" hidden><label>Quantité de couleur</label><div class="chips" id="o-amt" role="radiogroup" aria-label="Quantité de couleur"></div></div>
-<div class="hint">Les zones bien colorées de la photo (yeux, lèvres, vêtements…) reçoivent un dé de la couleur la plus proche. Le plan, l’image HD, la 3D et le mode chantier en tiennent compte.</div></div><div class="row" style="margin-top:10px"><span class="info" id="cropstate"></span><button class="btn" id="cropreset" type="button">Revenir au cadrage du client</button></div></div>
+<div class="hint">Seules les couleurs cochées sont utilisées, et uniquement là où la photo a vraiment cette couleur (yeux, lèvres, vêtements…). Le reste reste en noir et blanc. Le plan, l’image HD, la 3D et le mode chantier en tiennent compte.</div></div><div class="row" style="margin-top:10px"><span class="info" id="cropstate"></span><button class="btn" id="cropreset" type="button">Revenir au cadrage du client</button></div></div>
 </section>
 
 <section class="card">
@@ -375,7 +375,7 @@ function diceFaces(img, sx, sy, sw, sh, C, R, K = 4, orient = false, mix = null)
       if (ch < mix.thr || Lc < 12) continue;
       let best = null, bd = 1e9;
       for (const col of mix.colors) { const dh = Math.abs(Math.atan2(ac * col.b - bc * col.a, ac * col.a + bc * col.b)); if (dh < bd) { bd = dh; best = col; } }
-      if (best && bd < .6) D[i] = best.t;
+      if (best && bd < .35 && Math.abs(Lc - best.L) < 45) D[i] = best.t;   /* only a close match to a ticked colour: other hues stay black & white */
     }
   }
   for (let i = 0; i < G.length; i++) { V[i] = Math.pow(Math.max(0, Math.min(1, (G[i] - lo) / Math.max(.05, hi - lo))), .9); T[i] = a + V[i] * (b - a); }
@@ -520,7 +520,7 @@ function mixParams() {
   if (!MIX.white && !MIX.colors.length) return null;
   const tonal = []; for (let f = 0; f < 7; f++) tonal.push([0, f, TYPE_LV[0][f]]);
   if (MIX.white) for (let f = 0; f < 7; f++) tonal.push([1, f, TYPE_LV[1][f]]);
-  const colors = MIX.colors.map(t => { const [, a, b] = labOf(...hexRgb(DTYPES[t].body)); return {t, a, b, lv: TYPE_LV[t]}; });
+  const colors = MIX.colors.map(t => { const [L, a, b] = labOf(...hexRgb(DTYPES[t].body)); return {t, L, a, b, lv: TYPE_LV[t]}; });
   return {tonal, hi: Math.max(...tonal.map(x => x[2])), colors, thr: AMT_THR[MIX.amt] || 34};
 }
 const mixLabel = D => { const used = new Set(D || []); const w = used.has(1), c = [...used].filter(t => t > 1).sort((a, b) => a - b).map(t => DTYPES[t].n);
