@@ -453,6 +453,19 @@ html:not(.intro-on) .intro { display: none; }
 .contact-cards.dark .cc-copy.solid { background: var(--paper); color: var(--ink); border-color: var(--paper); }
 @media (max-width: 480px) { .contact-cards.dark .cc { grid-template-areas: "k" "v" "a"; grid-template-columns: 1fr; gap: 6px; } .cc-acts { margin-top: 8px; } .cc-acts .cc-copy { flex: 1; justify-content: center; } }
 
+/* ---------- colour fades between sections ---------- */
+:root { --fade: clamp(170px, 28vh, 320px); }
+.band, #etapes, .final { position: relative; }
+.band::before, #etapes::before, .final::after { content: ""; position: absolute; left: 0; right: 0; top: 0; height: var(--fade); pointer-events: none; z-index: 0; }
+.band > .wrap, #etapes > .wrap { position: relative; z-index: 1; }
+.band { padding-top: calc(var(--fade) + clamp(20px, 4vw, 60px)); }
+.band::before { background: linear-gradient(180deg, var(--paper) 0%, #D9DEE8 14%, #8D9BBF 34%, #2B3A6E 58%, #0B1027 80%, var(--night) 100%); }
+#etapes { padding-top: calc(var(--fade) + clamp(20px, 4vw, 60px)); }
+#etapes::before { background: linear-gradient(180deg, var(--night) 0%, #0A1236 18%, #1E3B9E 38%, #5C8CFF 56%, #B9DCFF 74%, #E4EBF2 88%, var(--paper) 100%); }
+.final::after { z-index: 1; background: linear-gradient(180deg, var(--paper) 0%, #DCE4F0 14%, #8FA6D6 32%, #2C4294 54%, #0C1436 78%, rgba(6, 6, 7, 0) 100%); }
+.final .wrap { padding-top: calc(var(--fade) + 6vh); }
+.foot { background: radial-gradient(90% 260px at 50% 0, #0F24AA 0%, rgba(15, 36, 170, 0) 100%), linear-gradient(180deg, #0D1E98 0%, #0B1983 22%, #0A1678 45%, #0A1678 100%); }
+
 </style>
 <script>(function(){var d=document.documentElement;d.classList.add("js");try{if(!sessionStorage.getItem("jlf-intro")&&!matchMedia("(prefers-reduced-motion: reduce)").matches)d.classList.add("intro-on")}catch(e){d.classList.add("intro-on")}})()</script>
 </head>
@@ -947,17 +960,38 @@ function buildMarquee() {
 const HAS3 = typeof THREE !== 'undefined';
 function faceTexture(v, size = 512) {
   const c = mk(size, size), g = c.getContext('2d');
-  const gr = g.createRadialGradient(size * .35, size * .3, size * .05, size * .5, size * .5, size * .75);
-  gr.addColorStop(0, '#26262B'); gr.addColorStop(1, '#101012'); g.fillStyle = gr; g.fillRect(0, 0, size, size);
-  const d = size * .25, r = size * .088;
+  g.fillStyle = '#0B0B0D'; g.fillRect(0, 0, size, size);
+  const d = size * .25, r = size * .09;
   for (const [x, y] of PIPS[v]) {
     const cx = size / 2 + x * d, cy = size / 2 + y * d;
-    g.fillStyle = 'rgba(0,0,0,.55)'; g.beginPath(); g.arc(cx, cy + r * .12, r * 1.12, 0, 7); g.fill();
-    const pg = g.createRadialGradient(cx - r * .35, cy - r * .4, r * .1, cx, cy, r);
-    pg.addColorStop(0, '#FFFFFF'); pg.addColorStop(.55, '#F1EDE2'); pg.addColorStop(1, '#C9C3B4');
+    const pg = g.createRadialGradient(cx, cy - r * .25, r * .1, cx, cy, r);
+    pg.addColorStop(0, '#FFFFFF'); pg.addColorStop(.7, '#F3EFE5'); pg.addColorStop(1, '#D9D3C4');
     g.fillStyle = pg; g.beginPath(); g.arc(cx, cy, r, 0, 7); g.fill();
   }
-  const t = new THREE.CanvasTexture(c); t.anisotropy = 4; if (THREE.sRGBEncoding) t.encoding = THREE.sRGBEncoding; return t;
+  const t = new THREE.CanvasTexture(c); t.anisotropy = 8; if (THREE.sRGBEncoding) t.encoding = THREE.sRGBEncoding; return t;
+}
+/* grey map used twice: as relief (pips sunk into the varnish) and as roughness (glossy body, satin pips) */
+function pipMap(v, size, base, pip, soft) {
+  const c = mk(size, size), g = c.getContext('2d'); g.fillStyle = base; g.fillRect(0, 0, size, size);
+  const d = size * .25, r = size * .09;
+  for (const [x, y] of PIPS[v]) {
+    const cx = size / 2 + x * d, cy = size / 2 + y * d, gr = g.createRadialGradient(cx, cy, r * (soft ? .55 : .9), cx, cy, r * 1.08);
+    gr.addColorStop(0, pip); gr.addColorStop(1, base); g.fillStyle = gr; g.beginPath(); g.arc(cx, cy, r * 1.1, 0, 7); g.fill();
+  }
+  const t = new THREE.CanvasTexture(c); t.anisotropy = 8; return t;
+}
+/* studio reflections: two softboxes above, a thin light strip, the blue horizon below */
+function studioEnv(renderer) {
+  const c = mk(1024, 512), g = c.getContext('2d');
+  let gr = g.createLinearGradient(0, 0, 0, 512); gr.addColorStop(0, '#0d0f16'); gr.addColorStop(.55, '#050608'); gr.addColorStop(.78, '#0b1a5e'); gr.addColorStop(1, '#2b54ff');
+  g.fillStyle = gr; g.fillRect(0, 0, 1024, 512);
+  g.filter = 'blur(6px)'; g.fillStyle = '#ffffff';
+  g.fillRect(150, 70, 220, 80); g.fillRect(620, 60, 260, 70);
+  g.fillStyle = 'rgba(230,240,255,.85)'; g.fillRect(0, 205, 1024, 10);
+  g.fillStyle = 'rgba(170,215,255,.9)'; g.fillRect(420, 120, 120, 40);
+  g.filter = 'none';
+  const t = new THREE.CanvasTexture(c); t.mapping = THREE.EquirectangularReflectionMapping; if (THREE.sRGBEncoding) t.encoding = THREE.sRGBEncoding;
+  const pm = new THREE.PMREMGenerator(renderer), env = pm.fromEquirectangular(t).texture; t.dispose(); pm.dispose(); return env;
 }
 function roundedBox(size, radius, seg) {
   const geo = new THREE.BoxGeometry(size, size, size, seg, seg, seg), p = geo.attributes.position, h = size / 2 - radius, v = new THREE.Vector3(), n = geo.attributes.normal;
@@ -969,7 +1003,10 @@ function roundedBox(size, radius, seg) {
   geo.computeVertexNormals(); return geo;
 }
 let DIE_MATS = null;
-const dieMats = () => DIE_MATS || (DIE_MATS = [1, 6, 2, 5, 3, 4].map(v => new THREE.MeshStandardMaterial({map: faceTexture(v), roughness: .3, metalness: .05})));
+const dieMats = () => DIE_MATS || (DIE_MATS = [1, 6, 2, 5, 3, 4].map(v => new THREE.MeshPhysicalMaterial({
+  map: faceTexture(v), bumpMap: pipMap(v, 512, '#9a9a9a', '#3a3a3a', true), bumpScale: .02,
+  roughnessMap: pipMap(v, 256, '#1c1c1c', '#9a9a9a', false), roughness: 1, metalness: 0,
+  clearcoat: 1, clearcoatRoughness: .03, reflectivity: .55, envMapIntensity: 1.25})));
 function visible(el, cb) { if (!('IntersectionObserver' in window)) { cb(true); return; } new IntersectionObserver(es => cb(es[0].isIntersecting), {rootMargin: '120px'}).observe(el); }
 
 /* ---------- the big die you can spin ---------- */
@@ -1009,14 +1046,16 @@ const Die = (() => {
 /* ---------- final: dice rain in 3D ---------- */
 (() => {
   const cv = $('#rain'), sec = cv && cv.closest('.final'); if (!cv || !HAS3) return;
-  const r = new THREE.WebGLRenderer({canvas: cv, antialias: true, alpha: true}); r.setPixelRatio(Math.min(1.6, dprOf()));
+  const r = new THREE.WebGLRenderer({canvas: cv, antialias: true, alpha: true, powerPreference: 'high-performance'}); r.setPixelRatio(Math.min(innerWidth < 700 ? 1.75 : 2, dprOf()));
   if (THREE.sRGBEncoding) r.outputEncoding = THREE.sRGBEncoding;
-  const scene = new THREE.Scene(); scene.fog = new THREE.Fog(0x05060a, 9, 24);
+  r.toneMapping = THREE.ACESFilmicToneMapping; r.toneMappingExposure = 1.15;
+  const scene = new THREE.Scene(); scene.fog = new THREE.Fog(0x05060a, 10, 26); scene.environment = studioEnv(r);
   const cam = new THREE.PerspectiveCamera(42, 1, .1, 60); cam.position.set(0, 0, 12);
-  scene.add(new THREE.AmbientLight(0x8899bb, .55));
-  const key = new THREE.DirectionalLight(0xffffff, 1.2); key.position.set(-4, 6, 8); scene.add(key);
-  const blue = new THREE.PointLight(0x3d6bff, 4, 30); blue.position.set(0, -9, 3); scene.add(blue);
-  const N = innerWidth < 700 ? 46 : 110, geo = roundedBox(1, .16, 4), mesh = new THREE.InstancedMesh(geo, dieMats(), N); scene.add(mesh);
+  scene.add(new THREE.AmbientLight(0x8899bb, .18));
+  const key = new THREE.DirectionalLight(0xffffff, 1.6); key.position.set(-4, 6, 8); scene.add(key);
+  const rimL = new THREE.DirectionalLight(0xdfeaff, 1.1); rimL.position.set(5, 4, -6); scene.add(rimL);
+  const blue = new THREE.PointLight(0x3d6bff, 5, 30); blue.position.set(0, -9, 3); scene.add(blue);
+  const N = innerWidth < 700 ? 46 : 110, geo = roundedBox(1, .14, 7), mesh = new THREE.InstancedMesh(geo, dieMats(), N); scene.add(mesh);
   let seed = 3; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
   const D = Array.from({length: N}, () => ({x: (rnd() - .5) * 26, y: (rnd() - .5) * 18, z: -rnd() * 12 + 2, s: .35 + rnd() * .55, vy: .6 + rnd() * 1.1, rx: rnd() * 6, ry: rnd() * 6, wx: (rnd() - .5) * 1.6, wy: (rnd() - .5) * 1.6}));
   D.forEach(d => { if (Math.abs(d.x) < 3.2 && d.z > -3) d.x += Math.sign(d.x || 1) * 3.4; });
