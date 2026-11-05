@@ -478,6 +478,21 @@ html:not(.intro-on) .intro { display: none; }
 @media (prefers-reduced-motion: reduce) { .snd[aria-pressed="true"] .bars i { animation: none; height: 10px; } }
 @media (max-width: 420px) { .nav-right { gap: 6px; } .lang button { min-width: 34px; } }
 
+/* ---------- bottom of page: one single blue ---------- */
+:root { --sea: #0A1678; }
+.final::before { background: radial-gradient(closest-side, var(--sea) 0, var(--sea) 84.6%, #13289E 86.6%, #2D57E8 87.6%, #9DD0FF 88.05%, #F2FAFF 88.2%, rgba(150, 200, 255, .55) 88.7%, rgba(70, 115, 250, .26) 90.6%, rgba(40, 70, 210, .1) 94%, rgba(20, 40, 160, 0) 100%) !important; }
+.f-sun { position: absolute; left: 50%; bottom: var(--arc-top, 23vw); width: min(1100px, 120vw); height: 36vh; transform: translate(-50%, 50%); pointer-events: none; z-index: 0;
+  background: radial-gradient(closest-side, rgba(190, 225, 255, .30), rgba(90, 140, 255, .10) 50%, transparent 100%); mix-blend-mode: screen; }
+@media (max-width: 899px) { .f-sun { --arc-top: 20.4vw; height: 26vh; } }
+.foot { background: var(--sea) !important; }
+.foot-mark { opacity: 1; filter: drop-shadow(0 20px 60px rgba(120, 170, 255, .25)); }
+.foot-col a { position: relative; }
+.foot-col a::after { content: ""; position: absolute; left: 0; bottom: 4px; height: 1px; width: 100%; background: currentColor; transform: scaleX(0); transform-origin: left; transition: transform .35s var(--ease); opacity: .6; }
+.foot-col a:hover::after { transform: scaleX(1); }
+.foot-bot { border-top-color: rgba(230, 235, 255, .16); }
+[data-par] { will-change: transform; }
+#rain { -webkit-mask-image: linear-gradient(180deg, #000 0, #000 78%, transparent 100%); mask-image: linear-gradient(180deg, #000 0, #000 78%, transparent 100%); }
+
 </style>
 <script>(function(){var d=document.documentElement;d.classList.add("js");try{if(!sessionStorage.getItem("jlf-intro")&&!matchMedia("(prefers-reduced-motion: reduce)").matches)d.classList.add("intro-on")}catch(e){d.classList.add("intro-on")}})()</script>
 </head>
@@ -500,7 +515,6 @@ html:not(.intro-on) .intro { display: none; }
       <li><a href="#contact" data-i="n.quote">Contact</a></li>
     </ul>
     <div class="nav-right">
-      <button class="snd" id="snd" type="button" aria-pressed="false" data-ia="a.snd" aria-label="Activer le son"><span class="bars" aria-hidden="true"><i></i><i></i><i></i><i></i></span></button>
       <div class="lang" role="group" aria-label="Langue / Language"><button type="button" data-lang="fr" aria-pressed="true">FR</button><button type="button" data-lang="en" aria-pressed="false">EN</button></div>
       <a class="btn btn-light" href="#contact" data-i="n.order">Commander</a>
       <button class="burger" id="burger" type="button" data-ia="a.menu" aria-label="Ouvrir le menu" aria-expanded="false" aria-controls="menu"><span></span></button>
@@ -561,7 +575,7 @@ html:not(.intro-on) .intro { display: none; }
   <section class="light sec" id="manifeste" data-ia="a.tech" aria-label="La technique">
     <div class="wrap mf">
       <p class="eyebrow" data-n="02" data-fade data-i="m.eye">La technique</p>
-      <div class="mf-top">
+      <div class="mf-top" data-par=".05">
         <div class="mf-big" data-fade>
           <span data-i="m.upto">Jusqu’à</span>
           <b data-count="10000">10 000</b>
@@ -588,7 +602,7 @@ html:not(.intro-on) .intro { display: none; }
 
   <section class="band sec" id="sur-mesure" aria-labelledby="sm-t">
     <div class="wrap">
-      <div class="band-head">
+      <div class="band-head" data-par=".06">
         <div style="display:grid;gap:24px">
           <p class="eyebrow" data-n="03" data-fade data-i="s.eye">Sur mesure</p>
           <h2 class="disp d2 reveal" id="sm-t">
@@ -630,7 +644,7 @@ html:not(.intro-on) .intro { display: none; }
 
   <section class="light sec" id="etapes" aria-labelledby="et-t">
     <div class="wrap">
-      <div class="steps-head">
+      <div class="steps-head" data-par=".06">
         <p class="eyebrow" data-n="04" data-fade data-i="e.eye">Comment ça marche</p>
         <h2 class="disp d2 reveal" id="et-t">
           <span class="ln"><span data-i="e.l1">De la photo</span></span>
@@ -662,6 +676,7 @@ html:not(.intro-on) .intro { display: none; }
 
   <section class="final" id="contact" aria-labelledby="fi-t">
     <canvas id="rain" aria-hidden="true"></canvas>
+    <div class="f-sun" aria-hidden="true"></div>
     <div class="wrap">
       <p class="eyebrow" data-n="06" data-fade data-i="z.eye">Contact</p>
       <h2 class="disp d1 reveal" id="fi-t">
@@ -704,14 +719,14 @@ html:not(.intro-on) .intro { display: none; }
         <h4 data-i="ft.contact">Contact</h4>
         <a href="mailto:jlfdice@gmail.com">jlfdice@gmail.com</a>
         <a data-ig-profile href="https://www.instagram.com/jlf2ice/" target="_blank" rel="noopener">Instagram ↗</a>
-        <a data-ig-dm href="https://ig.me/m/jlf2ice" target="_blank" rel="noopener">@<span data-handle>jlf2ice</span></a>
+        <a data-ig-dm href="https://ig.me/m/jlf2ice" target="_blank" rel="noopener"><span>@<span data-handle>jlf2ice</span></span></a>
       </div>
       <div class="foot-col">
         <h4 data-i="ft.lang">Langue</h4>
         <div><div class="lang" role="group" aria-label="Langue / Language"><button type="button" data-lang="fr" aria-pressed="true">FR</button><button type="button" data-lang="en" aria-pressed="false">EN</button></div></div>
       </div>
     </div>
-    <div class="foot-mark" aria-hidden="true"><svg aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg" viewBox="-36 -12 478 126"><g transform="translate(0.0,0.0) scale(1)"><g transform="skewX(-14)"><path d="M30,0 L52,0 L52,80 L32,100 L0,100 L10,78 L30,78 Z M58,0 L80,0 L80,78 L100,78 L118,100 L58,100 Z M124,0 L182,0 L171,20 L146,20 L146,40 L167,40 L159,58 L146,58 L146,100 L124,100 Z M208,0 L244,0 L264,20 L264,80 L244,100 L208,100 Z M230,21 L237,21 L242,26 L242,74 L237,79 L230,79 Z M270,0 L292,0 L285,64 L277,64 Z M320,0 L360,0 L349,20 L329,20 L324,25 L324,75 L329,80 L349,80 L360,100 L320,100 L302,82 L302,18 Z M366,0 L424,0 L413,20 L388,20 L388,40 L409,40 L401,58 L388,58 L388,80 L413,80 L424,100 L366,100 Z" fill="currentColor" fill-rule="evenodd" stroke="currentColor" stroke-width="1.4"></path></g><g transform="rotate(-15 259.31 87)"><rect x="246.31" y="74" width="26" height="26" rx="5.2" fill="#0A0A0B" stroke="currentColor" stroke-width="3"></rect><g fill="currentColor"><circle cx="253.33" cy="81.02" r="2.73"></circle><circle cx="265.29" cy="81.02" r="2.73"></circle><circle cx="259.31" cy="87.00" r="2.73"></circle><circle cx="253.33" cy="92.98" r="2.73"></circle><circle cx="265.29" cy="92.98" r="2.73"></circle></g></g></g></svg></div>
+    <div class="foot-mark" aria-hidden="true"><svg aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg" viewBox="-36 -12 478 126"><defs><linearGradient id="lgf" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFFFFF"/><stop offset="1" stop-color="#9AC8FF"/></linearGradient></defs><g transform="translate(0.0,0.0) scale(1)"><g transform="skewX(-14)"><path d="M30,0 L52,0 L52,80 L32,100 L0,100 L10,78 L30,78 Z M58,0 L80,0 L80,78 L100,78 L118,100 L58,100 Z M124,0 L182,0 L171,20 L146,20 L146,40 L167,40 L159,58 L146,58 L146,100 L124,100 Z M208,0 L244,0 L264,20 L264,80 L244,100 L208,100 Z M230,21 L237,21 L242,26 L242,74 L237,79 L230,79 Z M270,0 L292,0 L285,64 L277,64 Z M320,0 L360,0 L349,20 L329,20 L324,25 L324,75 L329,80 L349,80 L360,100 L320,100 L302,82 L302,18 Z M366,0 L424,0 L413,20 L388,20 L388,40 L409,40 L401,58 L388,58 L388,80 L413,80 L424,100 L366,100 Z" fill="url(#lgf)" fill-rule="evenodd" stroke="none"></path></g><g transform="rotate(-15 259.31 87)"><rect x="246.31" y="74" width="26" height="26" rx="5.2" fill="#0A0A0B" stroke="currentColor" stroke-width="3"></rect><g fill="currentColor"><circle cx="253.33" cy="81.02" r="2.73"></circle><circle cx="265.29" cy="81.02" r="2.73"></circle><circle cx="259.31" cy="87.00" r="2.73"></circle><circle cx="253.33" cy="92.98" r="2.73"></circle><circle cx="265.29" cy="92.98" r="2.73"></circle></g></g></g></svg></div>
     <div class="foot-bot">
       <span>© <span id="yr">2026</span> JLF D!CE · <span data-i="ft.c">Œuvres originales en dés · Reproduction interdite</span></span>
       <button class="totop" type="button" id="totop"><span data-i="ft.top">Haut de page</span> ↑</button>
@@ -768,23 +783,30 @@ const fbm = (x, y, z) => { let a = 0, amp = .55, f = 1; for (let i = 0; i < 4; i
 const Planet = (() => {
   const cv = $('#planet'); if (!cv) return {kick() {}};
   const g = cv.getContext('2d');
-  const L = (() => { const v = [-.34, -.84, -.42], l = Math.hypot(v[0], v[1], v[2]); return v.map(a => a / l); })();
+  const nrm = v => { const l = Math.hypot(v[0], v[1], v[2]); return v.map(a => a / l); };
+  const L = nrm([-.36, -.82, -.44]), Hh = nrm([L[0], L[1], L[2] + 1]);
   const lxy = Math.hypot(L[0], L[1]), Lx = L[0] / lxy, Ly = L[1] / lxy;
   const TX = [Math.cos(.42), Math.sin(.42)], TZ = [Math.cos(-.28), Math.sin(-.28)];
-  let W = 0, H = 0, cw = 0, ch = 0, R, cx, cy, die, N = 0, CL, SL, CO, SO, FC, sp, back, glow, theta = .6, vis = true, raf = 0, lastT = 0, spin = 0;
-  function project(k, ct, st) {
-    const sinL = SO[k] * ct + CO[k] * st, cosL = CO[k] * ct - SO[k] * st, cl = CL[k];
-    const x = cl * sinL, y = SL[k], z = cl * cosL;
-    const y1 = y * TX[0] - z * TX[1], z1 = y * TX[1] + z * TX[0];
-    return [x * TZ[0] - y1 * TZ[1], x * TZ[1] + y1 * TZ[0], z1];
+  let W = 0, H = 0, cw = 0, ch = 0, R, cx, cy, die, N = 0, CL, SL, CO, SO, FC, sp, glint, back, glow, stars = [], theta = .6, vis = true, raf = 0, lastT = 0, spin = 0, slow = 0, odd = false, dpr = 1;
+  /* glossy die seen from the front: dark varnished body, bevel light, ivory pips */
+  function gloss(v, px) {
+    const c = mk(px, px), q = c.getContext('2d'), m = px * .05, r = px * .2;
+    let gr = q.createLinearGradient(0, 0, px, px); gr.addColorStop(0, '#3A3A42'); gr.addColorStop(.5, '#16161A'); gr.addColorStop(1, '#060607');
+    q.fillStyle = gr; rrect(q, m, m, px - 2 * m, px - 2 * m, r); q.fill();
+    gr = q.createRadialGradient(px * .32, px * .28, 0, px * .32, px * .28, px * .55); gr.addColorStop(0, 'rgba(255,255,255,.22)'); gr.addColorStop(1, 'rgba(255,255,255,0)');
+    q.fillStyle = gr; rrect(q, m, m, px - 2 * m, px - 2 * m, r); q.fill();
+    const pr = px * .095, d = px * .255;
+    for (const [x, y] of PIPS[v]) { const X = px / 2 + x * d, Y = px / 2 + y * d, pg = q.createRadialGradient(X - pr * .3, Y - pr * .3, 0, X, Y, pr);
+      pg.addColorStop(0, '#FFFFFF'); pg.addColorStop(.7, '#EEEADF'); pg.addColorStop(1, '#BDB7A8'); q.fillStyle = pg; q.beginPath(); q.arc(X, Y, pr, 0, 6.2832); q.fill(); }
+    return c;
   }
   function layout() {
     const r = cv.getBoundingClientRect(); if (!r.width) return;
-    const dpr = dprOf(); cw = r.width; ch = r.height; W = Math.round(cw * dpr); H = Math.round(ch * dpr); cv.width = W; cv.height = H;
+    dpr = Math.min(1.6, window.devicePixelRatio || 1); cw = r.width; ch = r.height; W = Math.round(cw * dpr); H = Math.round(ch * dpr); cv.width = W; cv.height = H;
     const wide = cw >= 900; let Rc, X, Y;
     if (wide) { Rc = Math.max(ch * .82, cw * .42); X = cw * .9; Y = ch * .93; }
     else { Rc = Math.max(cw * 1.02, 360); X = cw * .62; Y = ch + Rc * .3; }
-    R = Rc * dpr; cx = X * dpr; cy = Y * dpr; die = (wide ? 13 : 10.5) * dpr;
+    R = Rc * dpr; cx = X * dpr; cy = Y * dpr; die = (wide ? 12.5 : 10) * dpr;
     const ang = die / R, rings = Math.floor(Math.PI / ang), tmp = [];
     for (let i = 0; i < rings; i++) {
       const lat = -Math.PI / 2 + (i + .5) * Math.PI / rings, cl = Math.cos(lat), sl = Math.sin(lat), n = Math.max(1, Math.floor(2 * Math.PI * cl / ang));
@@ -796,75 +818,83 @@ const Planet = (() => {
       const v = fbm(CL[k] * SO[k] * 2.3 + 5, SL[k] * 2.3 + 1, CL[k] * CO[k] * 2.3 + 3);
       FC[k] = clamp(Math.round((v - .3) / .42 * 6), 0, 6);
     }
-    sp = [0, 1, 2, 3, 4, 5, 6].map(v => dieSprite(v, Math.ceil(die)));
-    /* static back: night, a few stars, the dark body of the sphere with a whisper of its dice */
+    const spx = Math.ceil(die * 2.2); sp = [0, 1, 2, 3, 4, 5, 6].map(v => gloss(v, spx));
+    glint = mk(64, 64); { const q = glint.getContext('2d'), gr = q.createRadialGradient(32, 32, 0, 32, 32, 32); gr.addColorStop(0, 'rgba(255,255,255,1)'); gr.addColorStop(.25, 'rgba(220,240,255,.55)'); gr.addColorStop(1, 'rgba(160,210,255,0)'); q.fillStyle = gr; q.fillRect(0, 0, 64, 64); }
+    /* back: deep space with a hint of nebula, then the sphere's night side */
     back = mk(W, H); let q = back.getContext('2d');
-    q.fillStyle = '#060607'; q.fillRect(0, 0, W, H);
+    let gr = q.createLinearGradient(0, 0, 0, H); gr.addColorStop(0, '#05060A'); gr.addColorStop(1, '#060607'); q.fillStyle = gr; q.fillRect(0, 0, W, H);
+    gr = q.createRadialGradient(cx + Lx * R * 1.15, cy + Ly * R * 1.15, 0, cx + Lx * R * 1.15, cy + Ly * R * 1.15, R * 1.3);
+    gr.addColorStop(0, 'rgba(40,70,160,.20)'); gr.addColorStop(.5, 'rgba(25,40,110,.08)'); gr.addColorStop(1, 'rgba(10,15,40,0)'); q.fillStyle = gr; q.fillRect(0, 0, W, H);
     let seed = 7; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
-    for (let i = 0; i < 170; i++) {
-      const x = rnd() * W, y = rnd() * H, a = .06 + rnd() * .32, z = (rnd() * 1.1 + .5) * dpr;
-      if (Math.hypot(x - cx, y - cy) < R * 1.03) continue;
-      q.fillStyle = `rgba(235,242,255,${a.toFixed(2)})`; q.fillRect(x, y, z, z);
-    }
-    let gr = q.createRadialGradient(cx + Lx * R * .6, cy + Ly * R * .6, R * .05, cx, cy, R);
-    gr.addColorStop(0, '#11131A'); gr.addColorStop(1, '#040405');
+    stars = [];
+    for (let i = 0; i < 230; i++) { const x = rnd() * W, y = rnd() * H; if (Math.hypot(x - cx, y - cy) < R * 1.04) continue; stars.push([x, y, (rnd() * 1.2 + .4) * dpr, .05 + rnd() * .4, rnd() * 6.28, .4 + rnd() * 1.6]); }
+    gr = q.createRadialGradient(cx + Lx * R * .55, cy + Ly * R * .55, R * .05, cx, cy, R);
+    gr.addColorStop(0, '#141826'); gr.addColorStop(.55, '#08090D'); gr.addColorStop(1, '#030304');
     q.fillStyle = gr; q.beginPath(); q.arc(cx, cy, R, 0, 2 * Math.PI); q.fill();
-    const ct = Math.cos(theta), st = Math.sin(theta);
-    for (let k = 0; k < N; k++) {
-      const [x2, y2, z1] = project(k, ct, st); if (z1 < .25) continue;
-      const px = cx + x2 * R, py = cy + y2 * R; if (px < -die || py < -die || px > W + die || py > H + die) continue;
-      const s = die * (.3 + .7 * Math.sqrt(z1)); q.globalAlpha = .045 * z1; q.drawImage(sp[FC[k]], px - s / 2, py - s / 2, s, s);
-    }
-    q.globalAlpha = 1;
-    /* glow: atmosphere ring + fresnel rim, both strongest toward the light, plus a sunrise flare */
+    /* glow: scattering ring + fresnel rim toward the light, a cool back-rim on the far side, sunrise flare */
     glow = mk(W, H); q = glow.getContext('2d');
-    gr = q.createRadialGradient(cx, cy, R * .985, cx, cy, R * 1.26);
-    gr.addColorStop(0, 'rgba(190,232,255,.8)'); gr.addColorStop(.05, 'rgba(120,180,255,.5)'); gr.addColorStop(.28, 'rgba(60,100,255,.17)'); gr.addColorStop(1, 'rgba(30,50,200,0)');
-    q.fillStyle = gr; q.beginPath(); q.arc(cx, cy, R * 1.26, 0, 2 * Math.PI); q.arc(cx, cy, R * .985, 0, 2 * Math.PI, true); q.fill();
-    gr = q.createRadialGradient(cx, cy, R * .74, cx, cy, R);
-    gr.addColorStop(0, 'rgba(90,150,255,0)'); gr.addColorStop(.82, 'rgba(110,170,255,.09)'); gr.addColorStop(1, 'rgba(205,238,255,.5)');
+    gr = q.createRadialGradient(cx, cy, R * .99, cx, cy, R * 1.3);
+    gr.addColorStop(0, 'rgba(200,236,255,.9)'); gr.addColorStop(.04, 'rgba(130,190,255,.55)'); gr.addColorStop(.16, 'rgba(70,115,255,.25)'); gr.addColorStop(.45, 'rgba(40,70,210,.08)'); gr.addColorStop(1, 'rgba(20,40,160,0)');
+    q.fillStyle = gr; q.beginPath(); q.arc(cx, cy, R * 1.3, 0, 2 * Math.PI); q.arc(cx, cy, R * .99, 0, 2 * Math.PI, true); q.fill();
+    gr = q.createRadialGradient(cx, cy, R * .7, cx, cy, R);
+    gr.addColorStop(0, 'rgba(90,150,255,0)'); gr.addColorStop(.8, 'rgba(110,170,255,.08)'); gr.addColorStop(.96, 'rgba(180,225,255,.32)'); gr.addColorStop(1, 'rgba(230,246,255,.6)');
     q.fillStyle = gr; q.beginPath(); q.arc(cx, cy, R, 0, 2 * Math.PI); q.fill();
     q.globalCompositeOperation = 'destination-in';
-    const lg = q.createLinearGradient(cx - Lx * R * 1.25, cy - Ly * R * 1.25, cx + Lx * R * 1.25, cy + Ly * R * 1.25);
-    lg.addColorStop(0, 'rgba(0,0,0,.05)'); lg.addColorStop(.5, 'rgba(0,0,0,.2)'); lg.addColorStop(.78, 'rgba(0,0,0,.7)'); lg.addColorStop(1, 'rgba(0,0,0,1)');
+    const lg = q.createLinearGradient(cx - Lx * R * 1.3, cy - Ly * R * 1.3, cx + Lx * R * 1.3, cy + Ly * R * 1.3);
+    lg.addColorStop(0, 'rgba(0,0,0,.22)'); lg.addColorStop(.35, 'rgba(0,0,0,.06)'); lg.addColorStop(.6, 'rgba(0,0,0,.28)'); lg.addColorStop(.82, 'rgba(0,0,0,.8)'); lg.addColorStop(1, 'rgba(0,0,0,1)');
     q.fillStyle = lg; q.fillRect(0, 0, W, H);
     q.globalCompositeOperation = 'lighter';
     const ll = q.createLinearGradient(cx - Lx * R, cy - Ly * R, cx + Lx * R, cy + Ly * R);
-    ll.addColorStop(0, 'rgba(225,245,255,0)'); ll.addColorStop(.55, 'rgba(225,245,255,.12)'); ll.addColorStop(1, 'rgba(235,248,255,.95)');
-    q.strokeStyle = ll; q.lineWidth = 1.5 * dpr; q.beginPath(); q.arc(cx, cy, R, 0, 2 * Math.PI); q.stroke();
-    const fx = cx + Lx * R, fy = cy + Ly * R, fr = R * .3;
+    ll.addColorStop(0, 'rgba(120,170,255,.25)'); ll.addColorStop(.4, 'rgba(225,245,255,0)'); ll.addColorStop(.7, 'rgba(225,245,255,.2)'); ll.addColorStop(1, 'rgba(240,250,255,1)');
+    q.strokeStyle = ll; q.lineWidth = 1.6 * dpr; q.beginPath(); q.arc(cx, cy, R, 0, 2 * Math.PI); q.stroke();
+    q.filter = `blur(${(6 * dpr).toFixed(1)}px)`; q.lineWidth = 6 * dpr; q.globalAlpha = .55; q.beginPath(); q.arc(cx, cy, R, 0, 2 * Math.PI); q.stroke(); q.filter = 'none'; q.globalAlpha = 1;
+    const fx = cx + Lx * R, fy = cy + Ly * R, fr = R * .42;
     gr = q.createRadialGradient(fx, fy, 0, fx, fy, fr);
-    gr.addColorStop(0, 'rgba(255,255,255,.95)'); gr.addColorStop(.07, 'rgba(205,236,255,.55)'); gr.addColorStop(.4, 'rgba(90,140,255,.12)'); gr.addColorStop(1, 'rgba(60,100,255,0)');
+    gr.addColorStop(0, 'rgba(255,255,255,1)'); gr.addColorStop(.05, 'rgba(225,244,255,.7)'); gr.addColorStop(.2, 'rgba(130,185,255,.22)'); gr.addColorStop(.55, 'rgba(70,110,255,.07)'); gr.addColorStop(1, 'rgba(60,100,255,0)');
     q.fillStyle = gr; q.fillRect(fx - fr, fy - fr, fr * 2, fr * 2);
-    q.save(); q.translate(fx, fy); q.rotate(Math.atan2(Ly, Lx) + Math.PI / 2); q.scale(1, .03);
-    gr = q.createRadialGradient(0, 0, 0, 0, 0, R * .95); gr.addColorStop(0, 'rgba(225,242,255,.6)'); gr.addColorStop(1, 'rgba(120,170,255,0)');
-    q.fillStyle = gr; q.beginPath(); q.arc(0, 0, R * .95, 0, 2 * Math.PI); q.fill(); q.restore();
+    [[.95, .028, .7], [1.6, .008, .35]].forEach(([len, th, a]) => { q.save(); q.translate(fx, fy); q.rotate(Math.atan2(Ly, Lx) + Math.PI / 2); q.scale(1, th);
+      const sg = q.createRadialGradient(0, 0, 0, 0, 0, R * len); sg.addColorStop(0, `rgba(230,245,255,${a})`); sg.addColorStop(1, 'rgba(120,170,255,0)'); q.fillStyle = sg; q.beginPath(); q.arc(0, 0, R * len, 0, 2 * Math.PI); q.fill(); q.restore(); });
     q.globalCompositeOperation = 'source-over';
-    draw();
+    draw(0);
   }
-  function draw() {
+  function draw(t) {
     if (!W) return;
-    g.globalCompositeOperation = 'source-over'; g.globalAlpha = 1; g.drawImage(back, 0, 0);
-    const ct = Math.cos(theta), st = Math.sin(theta);
-    for (let k = 0; k < N; k++) {
-      const sinL = SO[k] * ct + CO[k] * st, cosL = CO[k] * ct - SO[k] * st, cl = CL[k];
-      const x = cl * sinL, y = SL[k], z = cl * cosL;
+    g.setTransform(1, 0, 0, 1, 0, 0); g.globalCompositeOperation = 'source-over'; g.globalAlpha = 1; g.drawImage(back, 0, 0);
+    const k = t / 1000; g.fillStyle = '#EAF2FF';
+    for (const [x, y, z, a, ph, sp2] of stars) { g.globalAlpha = a * (.65 + .35 * Math.sin(k * sp2 + ph)); g.fillRect(x, y, z, z); }
+    const ct = Math.cos(theta), st = Math.sin(theta), gl = [];
+    for (let i = 0; i < N; i++) {
+      const sinL = SO[i] * ct + CO[i] * st, cosL = CO[i] * ct - SO[i] * st, cl = CL[i], sl = SL[i];
+      const x = cl * sinL, y = sl, z = cl * cosL;
       const y1 = y * TX[0] - z * TX[1], z1 = y * TX[1] + z * TX[0];
-      if (z1 < .02) continue;
+      if (z1 < .015) continue;
       const x2 = x * TZ[0] - y1 * TZ[1], y2 = x * TZ[1] + y1 * TZ[0];
       const lit = x2 * L[0] + y2 * L[1] + z1 * L[2];
-      if (lit < .025) continue;
+      if (lit < .02) continue;
       const px = cx + x2 * R, py = cy + y2 * R;
       if (px < -die || py < -die || px > W + die || py > H + die) continue;
-      const a = Math.pow(lit, .9) * 1.15, s = die * (.3 + .7 * Math.sqrt(z1));
-      g.globalAlpha = a > 1 ? 1 : a; g.drawImage(sp[FC[k]], px - s / 2, py - s / 2, s, s);
+      /* tangent frame (east, north) → the die lies flat on the sphere, foreshortened toward the limb */
+      const ey1 = -(-sinL) * TX[1], ez = -sinL, ex = cosL, eY1 = 0 * TX[0] - ez * TX[1];
+      const ex2 = ex * TZ[0] - eY1 * TZ[1], ey2 = ex * TZ[1] + eY1 * TZ[0];
+      const nx = -sl * sinL, ny = cl, nz = -sl * cosL, nY1 = ny * TX[0] - nz * TX[1];
+      const nx2 = nx * TZ[0] - nY1 * TZ[1], ny2 = nx * TZ[1] + nY1 * TZ[0];
+      const s = die * .5;
+      g.setTransform(ex2 * s, ey2 * s, -nx2 * s, -ny2 * s, px, py);
+      const a = Math.pow(lit, .85) * 1.2; g.globalAlpha = a > 1 ? 1 : a;
+      g.drawImage(sp[FC[i]], -1.1, -1.1, 2.2, 2.2);
+      const sp3 = x2 * Hh[0] + y2 * Hh[1] + z1 * Hh[2]; if (sp3 > .9) gl.push(px, py, Math.pow((sp3 - .9) / .1, 3));
     }
-    g.globalAlpha = 1; g.globalCompositeOperation = 'lighter'; g.drawImage(glow, 0, 0); g.globalCompositeOperation = 'source-over';
+    g.setTransform(1, 0, 0, 1, 0, 0); g.globalCompositeOperation = 'lighter';
+    for (let i = 0; i < gl.length; i += 3) { const s = die * 1.6; g.globalAlpha = gl[i + 2] * .55; g.drawImage(glint, gl[i] - s / 2, gl[i + 1] - s / 2, s, s); }
+    g.globalAlpha = 1; g.drawImage(glow, 0, 0); g.globalCompositeOperation = 'source-over';
   }
   function loop(t) {
     raf = 0; if (!vis || document.hidden) return;
     const dt = lastT ? Math.min(64, t - lastT) : 16; lastT = t;
-    theta += dt * .000032 + spin; spin *= .9; draw();
+    theta += dt * .00003 + spin; spin *= .9;
+    /* adaptive: on slow devices, redraw every other frame */
+    odd = !odd;
+    if (!(slow > 2 && odd)) { const t0 = performance.now(); draw(t); const d = performance.now() - t0; slow = d > 13 ? Math.min(6, slow + 1) : Math.max(0, slow - .25); }
     raf = requestAnimationFrame(loop);
   }
   function start() { if (REDUCED || raf || !vis) return; lastT = 0; raf = requestAnimationFrame(loop); }
@@ -878,7 +908,7 @@ const Planet = (() => {
 
 /* ---------- languages ---------- */
 const EN = {
-  'a.home': 'JLF D!CE, back to top', 'a.snd': 'Turn sound on', 'a.sndOff': 'Turn sound off', 'a.menu': 'Open menu', 'a.menuX': 'Close menu', 'a.hero': 'JLF D!CE, dice artworks', 'a.tech': 'The technique',
+  'a.home': 'JLF D!CE, back to top', 'a.menu': 'Open menu', 'a.menuX': 'Close menu', 'a.hero': 'JLF D!CE, dice artworks', 'a.tech': 'The technique',
   'n.idea': 'The idea', 'n.custom': 'Commissions', 'n.steps': 'Process', 'n.faq': 'Questions', 'n.order': 'Order',
   'h.eye': 'Dice art · Custom artworks', 'h.l1': 'Every', 'h.l2': 'die', 'h.l3': 'counts.',
   'h.lede': 'JLF D!CE turns a photo into a painting made of thousands of black dice with white pips, placed one by one, by hand.',
@@ -922,7 +952,7 @@ const EN = {
   'mq': ['Every die counts', 'Handmade', 'One of a kind', 'Up to 10,000 dice'],
   'title': 'JLF D!CE · Custom dice artworks'
 };
-const FR = {'a.sndOff': 'Couper le son', 'q.copied': 'Copié ✓', 'q.eName': 'Indiquez votre nom.', 'q.eMail': 'Indiquez une adresse e-mail valide.', 'q.eMsg': 'Dites-moi quelques mots sur votre projet.',
+const FR = {'q.copied': 'Copié ✓', 'q.eName': 'Indiquez votre nom.', 'q.eMail': 'Indiquez une adresse e-mail valide.', 'q.eMsg': 'Dites-moi quelques mots sur votre projet.',
   'q.ePhoto': 'Cette photo dépasse 10 Mo : envoyez une version plus légère, ou l’originale par e-mail.', 'q.subj': 'Nouvelle demande de devis', 'q.sending': 'Envoi…',
   'q.fail': 'La demande n’a pas pu être envoyée.', 'q.failp': 'Écrivez directement à <b>jlfdice@gmail.com</b> ou sur Instagram <b>@jlf2ice</b>, avec votre photo.', 'q.pv1': 'Aperçu uniquement.', 'q.pv2': 'L’envoi fonctionnera une fois le site en ligne sur jlfdice.fr : la demande arrivera directement sur jlfdice@gmail.com.', mq: ['Chaque dé compte', 'Fait main', 'Pièce unique', 'Jusqu’à 10 000 dés'], title: 'JLF D!CE · Œuvres en dés sur mesure', 'a.menuX': 'Fermer le menu'};
 $$('[data-i]').forEach(e => { FR[e.dataset.i] = e.innerHTML; });
@@ -1059,7 +1089,7 @@ const Die = (() => {
 /* ---------- final: dice rain in 3D ---------- */
 (() => {
   const cv = $('#rain'), sec = cv && cv.closest('.final'); if (!cv || !HAS3) return;
-  const r = new THREE.WebGLRenderer({canvas: cv, antialias: true, alpha: true, powerPreference: 'high-performance'}); r.setPixelRatio(Math.min(innerWidth < 700 ? 1.75 : 2, dprOf()));
+  const r = new THREE.WebGLRenderer({canvas: cv, antialias: true, alpha: true, powerPreference: 'high-performance'}); r.setPixelRatio(Math.min(1.5, dprOf()));
   if (THREE.sRGBEncoding) r.outputEncoding = THREE.sRGBEncoding;
   r.toneMapping = THREE.ACESFilmicToneMapping; r.toneMappingExposure = 1.15;
   const scene = new THREE.Scene(); scene.fog = new THREE.Fog(0x05060a, 10, 26); scene.environment = studioEnv(r);
@@ -1121,6 +1151,7 @@ if ('IntersectionObserver' in window && !REDUCED) {
 
 const hero = $('.hero'), planet = $('#planet'), heroIn = $('.hero-in'), hz = $('#idee');
 let lastY = scrollY, ticking = false, mqX = 0, vel = 0;
+const PAR = $$('[data-par]').map(el => [el, +el.dataset.par || .05]);
 function onScroll() {
   ticking = false;
   const y = scrollY, dy = y - lastY; lastY = y;
@@ -1132,6 +1163,7 @@ function onScroll() {
     const r = hz.getBoundingClientRect();
     if (r.top < innerHeight && r.bottom > 0) { const p = clamp((innerHeight - r.top) / (r.height + innerHeight), 0, 1); hz.style.setProperty('--hy', `${lerp(16, -8, p).toFixed(2)}vh`); }
     Die.scroll(dy); vel += dy;
+    const vh = innerHeight; PAR.forEach(([el, k]) => { const b = el.getBoundingClientRect(); if (b.bottom < -200 || b.top > vh + 200) return; el.style.transform = `translate3d(0, ${((b.top + b.height / 2 - vh / 2) * -k).toFixed(1)}px, 0)`; });
   }
 }
 addEventListener('scroll', () => { if (!ticking) { ticking = true; requestAnimationFrame(onScroll); } }, {passive: true});
@@ -1201,79 +1233,71 @@ $$('[data-copy]').forEach(b => b.addEventListener('click', () => copyText(b.data
   el.addEventListener('click', leave); setTimeout(leave, 2000);
 })();
 
-/* ---------- sound: everything synthesised live (no files), off until the visitor turns it on ---------- */
+/* ---------- sound: subtle, synthesised live, tied to the text animations only (no music, no button) ----------
+   Browsers only allow sound after the visitor's first touch, click or key press: it switches itself on then. */
 const Sound = (() => {
-  const btn = $('#snd'); let AC = null, master = null, verb = null, on = false, amb = null;
-  function noiseBuf(sec) { const b = AC.createBuffer(1, AC.sampleRate * sec, AC.sampleRate), d = b.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1; return b; }
-  function init() {
-    if (AC) return; AC = new (window.AudioContext || window.webkitAudioContext)();
-    master = AC.createGain(); master.gain.value = 0; master.connect(AC.destination);
-    /* long dark reverb from a decaying noise impulse */
-    verb = AC.createConvolver(); const L = AC.sampleRate * 3.2, ir = AC.createBuffer(2, L, AC.sampleRate);
-    for (let c = 0; c < 2; c++) { const d = ir.getChannelData(c); for (let i = 0; i < L; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / L, 2.6); }
-    verb.buffer = ir; const wet = AC.createGain(); wet.gain.value = .55; verb.connect(wet); wet.connect(master);
+  let AC = null, out = null, verb = null;
+  function unlock() {
+    if (AC) { if (AC.state !== 'running') AC.resume(); return; }
+    const C = window.AudioContext || window.webkitAudioContext; if (!C) return;
+    AC = new C(); out = AC.createGain(); out.gain.value = .55;
+    const comp = AC.createDynamicsCompressor(); comp.threshold.value = -24; comp.ratio.value = 4; out.connect(comp); comp.connect(AC.destination);
+    verb = AC.createConvolver(); const L = AC.sampleRate * 2.2, ir = AC.createBuffer(2, L, AC.sampleRate);
+    for (let c = 0; c < 2; c++) { const d = ir.getChannelData(c); for (let i = 0; i < L; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / L, 3); }
+    verb.buffer = ir; const wet = AC.createGain(); wet.gain.value = .35; verb.connect(wet); wet.connect(out);
   }
-  /* ambience: a low, slowly breathing chord + filtered air, like the night side of the planet */
-  function ambience() {
-    const out = AC.createGain(); out.gain.value = 0; out.connect(master); out.connect(verb);
-    const lp = AC.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 520; lp.Q.value = .7; lp.connect(out);
-    [[55, .32], [82.41, .2], [110, .12], [164.81, .07], [246.94, .035]].forEach(([f, v], i) => {
-      const o = AC.createOscillator(), g = AC.createGain(); o.type = i < 2 ? 'sine' : 'triangle'; o.frequency.value = f; o.detune.value = (i % 2 ? 6 : -6);
-      const lfo = AC.createOscillator(), lg = AC.createGain(); lfo.frequency.value = .05 + i * .021; lg.gain.value = v * .45; lfo.connect(lg); lg.connect(g.gain);
-      g.gain.value = v; o.connect(g); g.connect(lp); o.start(); lfo.start();
-    });
-    const n = AC.createBufferSource(); n.buffer = noiseBuf(4); n.loop = true;
-    const bp = AC.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 900; bp.Q.value = .6;
-    const ng = AC.createGain(); ng.gain.value = .018; n.connect(bp); bp.connect(ng); ng.connect(out); n.start();
-    const sweep = AC.createOscillator(), sg = AC.createGain(); sweep.frequency.value = .03; sg.gain.value = 500; sweep.connect(sg); sg.connect(bp.frequency); sweep.start();
-    const flt = AC.createOscillator(), fg = AC.createGain(); flt.frequency.value = .04; fg.gain.value = 180; flt.connect(fg); fg.connect(lp.frequency); flt.start();
-    out.gain.setTargetAtTime(.9, AC.currentTime, 2.5); return out;
+  ['pointerdown', 'touchend', 'keydown'].forEach(t => addEventListener(t, unlock, {capture: true, passive: true}));
+  const ready = () => AC && AC.state === 'running' && !document.hidden && !REDUCED;
+  let nb = null; const noise = () => { if (nb) return nb; nb = AC.createBuffer(1, AC.sampleRate * .3, AC.sampleRate); const d = nb.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1; return nb; };
+  /* one text line sliding in: a soft airy brush + a faint glassy ping */
+  function line(t, step, vol) {
+    const s = AC.createBufferSource(); s.buffer = noise();
+    const bp = AC.createBiquadFilter(); bp.type = 'bandpass'; bp.Q.value = .9; bp.frequency.setValueAtTime(1800 + step * 260, t); bp.frequency.exponentialRampToValueAtTime(5200 + step * 300, t + .22);
+    const g = AC.createGain(); g.gain.setValueAtTime(.0001, t); g.gain.exponentialRampToValueAtTime(.05 * vol, t + .05); g.gain.exponentialRampToValueAtTime(.0001, t + .32);
+    s.connect(bp); bp.connect(g); g.connect(out); s.start(t); s.stop(t + .34);
+    const o = AC.createOscillator(), og = AC.createGain(); o.type = 'sine'; o.frequency.value = [1046.5, 1174.7, 1318.5, 1568, 1760][step % 5];
+    og.gain.setValueAtTime(.0001, t + .04); og.gain.exponentialRampToValueAtTime(.018 * vol, t + .06); og.gain.exponentialRampToValueAtTime(.0001, t + .9);
+    o.connect(og); og.connect(out); og.connect(verb); o.start(t + .04); o.stop(t + 1);
   }
-  /* a die hitting a varnished surface: short filtered click + tiny wooden body */
-  function clack(t, vol = 1, pitch = 1) {
-    const s = AC.createBufferSource(); s.buffer = noiseBuf(.06);
-    const bp = AC.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 2600 * pitch; bp.Q.value = 3.5;
-    const g = AC.createGain(); g.gain.setValueAtTime(.0001, t); g.gain.exponentialRampToValueAtTime(.5 * vol, t + .002); g.gain.exponentialRampToValueAtTime(.0001, t + .05);
-    s.connect(bp); bp.connect(g); g.connect(master); g.connect(verb); s.start(t); s.stop(t + .07);
-    const o = AC.createOscillator(), og = AC.createGain(); o.type = 'triangle'; o.frequency.setValueAtTime(780 * pitch, t); o.frequency.exponentialRampToValueAtTime(420 * pitch, t + .04);
-    og.gain.setValueAtTime(.0001, t); og.gain.exponentialRampToValueAtTime(.12 * vol, t + .003); og.gain.exponentialRampToValueAtTime(.0001, t + .06);
-    o.connect(og); og.connect(master); o.start(t); o.stop(t + .08);
+  /* a tiny die tick, used while the big number counts up */
+  function tick(t, p) {
+    const s = AC.createBufferSource(); s.buffer = noise();
+    const bp = AC.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 2600 + p * 1600; bp.Q.value = 4;
+    const g = AC.createGain(); g.gain.setValueAtTime(.0001, t); g.gain.exponentialRampToValueAtTime(.07, t + .002); g.gain.exponentialRampToValueAtTime(.0001, t + .035);
+    s.connect(bp); bp.connect(g); g.connect(out); s.start(t); s.stop(t + .05);
   }
-  function roll(n = 3, vol = .8) { const t = AC.currentTime; for (let i = 0; i < n; i++) clack(t + i * (.045 + Math.random() * .05) + i * i * .012, vol * (1 - i * .18), .85 + Math.random() * .35); }
-  function tick() { clack(AC.currentTime, .22, 1.5); }
-  function whoosh(dur = 1.2, vol = .35) {
-    const t = AC.currentTime, s = AC.createBufferSource(); s.buffer = noiseBuf(dur);
-    const bp = AC.createBiquadFilter(); bp.type = 'bandpass'; bp.Q.value = 1.2; bp.frequency.setValueAtTime(300, t); bp.frequency.exponentialRampToValueAtTime(3200, t + dur * .6); bp.frequency.exponentialRampToValueAtTime(900, t + dur);
-    const g = AC.createGain(); g.gain.setValueAtTime(.0001, t); g.gain.exponentialRampToValueAtTime(vol, t + dur * .45); g.gain.exponentialRampToValueAtTime(.0001, t + dur);
-    s.connect(bp); bp.connect(g); g.connect(master); g.connect(verb); s.start(t);
+  /* headings: one sound per line, in step with the CSS stagger (90 ms) */
+  const seen = new WeakSet();
+  new MutationObserver(ms => ms.forEach(m => {
+    const el = m.target; if (!el.classList.contains('in') || seen.has(el)) return; seen.add(el);
+    if (!ready() || document.documentElement.classList.contains('intro-on')) return;
+    const n = $$('.ln', el).length || 1, t = AC.currentTime + .02, big = el.classList.contains('d1') ? 1.2 : 1;
+    for (let i = 0; i < n; i++) line(t + i * .09, i, big);
+  })).observe(document.body, {subtree: true, attributes: true, attributeFilter: ['class']});
+  /* count-up: ticks that speed up and rise */
+  $$('[data-count]').forEach(el => { let last = 0, k = 0; new MutationObserver(() => { if (!ready()) return; const now = performance.now(); if (now - last < 55) return; last = now; k = Math.min(1, k + .04); tick(AC.currentTime, k); }).observe(el, {childList: true, characterData: true, subtree: true}); });
+  return {unlock};
+})();
+
+/* ---------- smooth, weighted scrolling with the mouse wheel (desktop); touch keeps its native feel ---------- */
+(() => {
+  if (REDUCED || !matchMedia('(hover: hover) and (pointer: fine)').matches) return;
+  const root = document.documentElement; let target = scrollY, cur = scrollY, run = false;
+  const max = () => root.scrollHeight - innerHeight;
+  function step() {
+    cur += (target - cur) * .1;
+    if (Math.abs(target - cur) < .4) { cur = target; run = false; }
+    root.style.scrollBehavior = 'auto'; scrollTo(0, cur); root.style.scrollBehavior = '';
+    if (run) requestAnimationFrame(step);
   }
-  function chime() { /* soft glassy "ice" note, used when the sound is switched on */
-    const t = AC.currentTime; [[880, .07], [1318.5, .045], [1760, .025]].forEach(([f, v], i) => { const o = AC.createOscillator(), g = AC.createGain(); o.type = 'sine'; o.frequency.value = f;
-      g.gain.setValueAtTime(.0001, t + i * .06); g.gain.exponentialRampToValueAtTime(v, t + i * .06 + .02); g.gain.exponentialRampToValueAtTime(.0001, t + i * .06 + 2.2); o.connect(g); g.connect(master); g.connect(verb); o.start(t + i * .06); o.stop(t + 2.5); });
-  }
-  function set(v) {
-    on = v; btn.setAttribute('aria-pressed', String(on)); btn.setAttribute('aria-label', T(on ? 'a.sndOff' : 'a.snd'));
-    try { localStorage.setItem('jlf-sound', on ? '1' : '0'); } catch (e) {}
-    if (on) { init(); AC.resume(); if (!amb) amb = ambience(); master.gain.cancelScheduledValues(AC.currentTime); master.gain.setTargetAtTime(.5, AC.currentTime, .6); chime(); roll(3, .6); }
-    else if (AC) { master.gain.cancelScheduledValues(AC.currentTime); master.gain.setTargetAtTime(0, AC.currentTime, .25); }
-  }
-  if (btn) btn.addEventListener('click', () => set(!on));
-  /* remembered choice: start again at the visitor's first touch (browsers forbid sound before it) */
-  let want = false; try { want = localStorage.getItem('jlf-sound') === '1'; } catch (e) {}
-  if (want) { const first = () => { removeEventListener('pointerdown', first, true); removeEventListener('keydown', first, true); if (!on) set(true); }; addEventListener('pointerdown', first, true); addEventListener('keydown', first, true); }
-  /* interaction sounds */
-  document.addEventListener('click', e => { if (!on) return; const el = e.target.closest('a, button, summary'); if (!el || el === btn) return;
-    if (el.closest('.lang')) tick(); else if (el.tagName === 'SUMMARY') roll(2, .5); else if (el.matches('.btn, .cc-copy, .totop')) roll(3, .75); else tick(); }, true);
-  if (matchMedia('(hover: hover)').matches) document.addEventListener('pointerover', e => { if (!on) return; const el = e.target.closest('.btn, .card, .nav-links a, .cc-copy'); if (el && !el.contains(e.relatedTarget)) tick(); });
-  /* a breath of air when a new section comes in, a few dice clinks in the contact section */
-  if ('IntersectionObserver' in window) {
-    const seen = new WeakSet(), io = new IntersectionObserver(es => es.forEach(x => { if (x.isIntersecting && on && !seen.has(x.target)) { seen.add(x.target); whoosh(1.1, .22); } }), {threshold: .35});
-    $$('main > section').forEach(s => io.observe(s));
-    let clinks = 0; const fin = $('.final');
-    if (fin) new IntersectionObserver(es => { clearInterval(clinks); if (es[0].isIntersecting) clinks = setInterval(() => { if (on && !document.hidden && Math.random() < .55) clack(AC.currentTime, .1 + Math.random() * .12, .8 + Math.random() * .6); }, 900); }).observe(fin);
-  }
-  document.addEventListener('visibilitychange', () => { if (AC && on) document.hidden ? AC.suspend() : AC.resume(); });
-  return {set};
+  addEventListener('wheel', e => {
+    if (e.ctrlKey || e.defaultPrevented || Math.abs(e.deltaX) > Math.abs(e.deltaY) || e.target.closest('textarea, select, .menu')) return;
+    e.preventDefault();
+    if (!run) cur = target = scrollY;
+    target = clamp(target + e.deltaY * (e.deltaMode === 1 ? 36 : e.deltaMode === 2 ? innerHeight : 1), 0, max());
+    if (!run) { run = true; requestAnimationFrame(step); }
+  }, {passive: false});
+  addEventListener('scroll', () => { if (!run) cur = target = scrollY; }, {passive: true});
 })();
 
 })();
