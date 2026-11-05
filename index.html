@@ -439,6 +439,8 @@ html:not(.intro-on) .intro { display: none; }
 
 @media (min-width: 900px) { .mf-mid { grid-template-columns: 1fr; } }
 .faces-row, .faces figcaption { max-width: 640px; }
+.qdone.bad { background: #FFF1EE; border-color: rgba(194, 54, 43, .35); }
+.qdone em { font-style: normal; font-family: var(--f-mono); font-size: .8rem; }
 
 </style>
 <script>(function(){var d=document.documentElement;d.classList.add("js");try{if(!sessionStorage.getItem("jlf-intro")&&!matchMedia("(prefers-reduced-motion: reduce)").matches)d.classList.add("intro-on")}catch(e){d.classList.add("intro-on")}})()</script>
@@ -647,9 +649,7 @@ html:not(.intro-on) .intro { display: none; }
         <input type="hidden" name="_subject" id="q-subj" value="Nouvelle demande de devis · JLF D!CE">
         <input type="hidden" name="_template" value="table">
         <input type="hidden" name="_captcha" value="false">
-        <input type="hidden" name="_next" id="q-next" value="https://jlfdice.fr/?merci=1#devis">
-        <input type="hidden" name="Langue" id="q-lang" value="fr">
-        <input type="text" name="_honey" tabindex="-1" autocomplete="off" aria-hidden="true" style="position:absolute;left:-9999px;width:1px;height:1px;opacity:0">
+                <input type="hidden" name="Langue" id="q-lang" value="fr">
         <fieldset class="qf-full">
           <legend data-i="q.who">Vous êtes</legend>
           <div class="seg"><label class="opt"><input type="radio" name="Profil" value="Particulier" checked><span data-i="q.part">Particulier</span></label><label class="opt"><input type="radio" name="Profil" value="Professionnel"><span data-i="q.pro">Professionnel</span></label></div>
@@ -924,7 +924,7 @@ const EN = {
   'q.note': 'Your request comes straight to my inbox. I reply with the format, price and lead time.', 'q.send': 'Send my request',
   'q.d1': 'Thank you, your request has been sent.', 'q.d2': 'I will reply by email as soon as possible.', 'q.copied': 'Copied ✓',
   'q.photo': 'Your photo', 'q.photoh': '10 MB max.', 'q.ePhoto': 'This photo is over 10 MB: please send a lighter version, or the original by email.', 'q.subj': 'New quote request', 'q.sending': 'Sending…',
-  'q.pv1': 'Preview only.', 'q.pv2': 'Sending works once the site is online at jlfdice.fr: the request will arrive directly at jlfdice@gmail.com.',
+  'q.fail': 'The request could not be sent.', 'q.failp': 'Please write directly to <b>jlfdice@gmail.com</b> or on Instagram <b>@jlf2ice</b>, with your photo.', 'q.pv1': 'Preview only.', 'q.pv2': 'Sending works once the site is online at jlfdice.fr: the request will arrive directly at jlfdice@gmail.com.',
   'q.eName': 'Please enter your name.', 'q.eMail': 'Please enter a valid email address.', 'q.eMsg': 'Tell me a few words about your project.',
   'z.or': 'Or by email:', 'ft.quote': 'Quote',
   'mq': ['Every die counts', 'Handmade', 'One of a kind', 'Up to 10,000 dice'],
@@ -932,7 +932,7 @@ const EN = {
 };
 const FR = {'q.copied': 'Copié ✓', 'q.eName': 'Indiquez votre nom.', 'q.eMail': 'Indiquez une adresse e-mail valide.', 'q.eMsg': 'Dites-moi quelques mots sur votre projet.',
   'q.ePhoto': 'Cette photo dépasse 10 Mo : envoyez une version plus légère, ou l’originale par e-mail.', 'q.subj': 'Nouvelle demande de devis', 'q.sending': 'Envoi…',
-  'q.pv1': 'Aperçu uniquement.', 'q.pv2': 'L’envoi fonctionnera une fois le site en ligne sur jlfdice.fr : la demande arrivera directement sur jlfdice@gmail.com.', mq: ['Chaque dé compte', 'Fait main', 'Pièce unique', 'Jusqu’à 10 000 dés'], title: 'JLF D!CE · Œuvres en dés sur mesure', 'a.menuX': 'Fermer le menu'};
+  'q.fail': 'La demande n’a pas pu être envoyée.', 'q.failp': 'Écrivez directement à <b>jlfdice@gmail.com</b> ou sur Instagram <b>@jlf2ice</b>, avec votre photo.', 'q.pv1': 'Aperçu uniquement.', 'q.pv2': 'L’envoi fonctionnera une fois le site en ligne sur jlfdice.fr : la demande arrivera directement sur jlfdice@gmail.com.', mq: ['Chaque dé compte', 'Fait main', 'Pièce unique', 'Jusqu’à 10 000 dés'], title: 'JLF D!CE · Œuvres en dés sur mesure', 'a.menuX': 'Fermer le menu'};
 $$('[data-i]').forEach(e => { FR[e.dataset.i] = e.innerHTML; });
 $$('[data-ia]').forEach(e => { FR[e.dataset.ia] = e.getAttribute('aria-label'); });
 $$('[data-ip]').forEach(e => { FR[e.dataset.ip] = e.getAttribute('placeholder'); });
@@ -1150,12 +1150,21 @@ $$('[data-copy]').forEach(b => b.addEventListener('click', () => copyText(b.data
     return first;
   }
   ['q-name', 'q-mail', 'q-msg', 'q-photo'].forEach(id => $('#' + id).addEventListener(id === 'q-photo' ? 'change' : 'blur', () => { if (id === 'q-photo' || $('#' + id).getAttribute('aria-invalid') === 'true') check(); }));
-  f.addEventListener('submit', ev => {
-    const bad = check(); if (bad) { ev.preventDefault(); bad.focus(); return; }
+  const showDone = (t, p, ok) => { done.hidden = false; done.classList.toggle('bad', !ok); $('#qd-t').innerHTML = t; $('#qd-p').innerHTML = p; done.scrollIntoView({behavior: REDUCED ? 'auto' : 'smooth', block: 'nearest'}); };
+  f.addEventListener('submit', async ev => {
+    ev.preventDefault();
+    const bad = check(); if (bad) { bad.focus(); return; }
     $('#q-lang').value = LANG; $('#q-subj').value = T('q.subj') + ' · ' + $('#q-name').value.trim();
-    $('#q-next').value = `${location.origin}${location.pathname}?merci=1#devis`;
-    if (!live) { ev.preventDefault(); done.hidden = false; $('#qd-t').innerHTML = T('q.pv1'); $('#qd-p').innerHTML = T('q.pv2'); return; }
-    const btn = $('#q-send'); btn.disabled = true; btn.innerHTML = T('q.sending');
+    if (!live) { showDone(T('q.pv1'), T('q.pv2'), true); return; }
+    const btn = $('#q-send'), label = btn.innerHTML; btn.disabled = true; btn.innerHTML = T('q.sending');
+    try {
+      const res = await fetch('https://formsubmit.co/ajax/jlfdice@gmail.com', {method: 'POST', headers: {Accept: 'application/json'}, body: new FormData(f)});
+      let j = {}; try { j = await res.json(); } catch (e) {}
+      const ok = res.ok && String(j.success) === 'true';
+      if (ok) { showDone(T('q.d1'), T('q.d2'), true); f.reset(); org.hidden = true; }
+      else showDone(T('q.fail'), (j.message ? `<em>${String(j.message).replace(/</g, '&lt;')}</em><br>` : '') + T('q.failp'), false);
+    } catch (e) { showDone(T('q.fail'), T('q.failp'), false); }
+    btn.disabled = false; btn.innerHTML = label;
   });
   if (/[?&]merci=1/.test(location.search)) { done.hidden = false; setTimeout(() => $('#devis').scrollIntoView(), 2300); history.replaceState(null, '', location.pathname + '#devis'); }
 })();
