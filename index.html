@@ -506,6 +506,134 @@ html:not(.intro-on) .intro { display: none; }
 .foot .logo svg { height: 36px; }
 @media (max-width: 899px) { .logo svg { height: 23px; } }
 
+/* =====================================================================
+   unslop pass — direction: nocturnal, precise, handmade.
+   World: the studio at night, varnished dice, a projector, cream paper.
+   Moments: the dice planet (hero) and the dice rain (contact). All else quiet.
+   Signature: a die face as the section number.
+   (unslop by Damir Sokolovsky, @heydamir, CC BY 4.0)
+   ===================================================================== */
+:root {
+  --e: cubic-bezier(.22, 1, .36, 1);
+  --t1: #1F1B16; --t2: #5E554A; --t3: #7B7266;          /* text on paper */
+  --d1: #F2F0EA; --d2: #A9AAB2; --d3: #82838C;          /* text on night */
+  --hl: rgba(31, 27, 22, .09); --hd: rgba(242, 240, 234, .09);
+  --ink-card: #101218; --ink-raised: #181B23;
+  --fade: clamp(120px, 18vh, 200px);
+}
+.light, .quote { color: var(--t1); }
+
+/* spacing rhythm */
+.sec { padding-block: clamp(96px, 10vw, 128px); }
+.band, #etapes { padding-top: calc(var(--fade) + 32px); }
+
+/* type: only the hero keeps the heavy capitals */
+.disp { font-stretch: 100%; font-variation-settings: "wdth" 100; font-weight: 500; text-transform: none; letter-spacing: -.025em; line-height: 1.04; }
+.d1 { font-size: clamp(2.6rem, 6vw, 4.6rem); }
+.d2 { font-size: clamp(2.1rem, 4.2vw, 3.6rem); }
+.d3 { font-size: clamp(1.5rem, 2.2vw, 2rem); line-height: 1.1; }
+.hero .d1 { font-stretch: 125%; font-variation-settings: "wdth" 125; font-weight: 850; text-transform: uppercase; letter-spacing: -.012em; line-height: .94; font-size: clamp(3.1rem, 8.6vw, 8.8rem); }
+.lede { font-size: clamp(1.05rem, 1.2vw, 1.15rem); line-height: 1.6; }
+.light .lede, .light p, .faq details p, .step p { color: var(--t2); }
+.band .lede, .band p { color: var(--d2); }
+
+/* eyebrows: sentence case + the die signature */
+.eyebrow { font-family: var(--f-body); font-size: .9rem; font-weight: 500; letter-spacing: 0; text-transform: none; gap: 10px; color: var(--d2); }
+.eyebrow::before, .eyebrow[data-n]::before { content: none; }
+.light .eyebrow, .quote .eyebrow { color: var(--t2); }
+.hero .eyebrow, .final .eyebrow, .horizon .eyebrow, .band-head .eyebrow { color: var(--d2); }
+.ed { width: 18px; height: 18px; flex: none; color: var(--d1); }
+.ed .pip { fill: var(--night); }
+.light .ed { color: var(--t1); } .light .ed .pip { fill: var(--paper); }
+
+/* small labels: no more uppercase tracked mono */
+.specs, .faces figcaption, .cc-k, .foot-col h4, .mf-big span, .menu a::before, .work-info .num, .tag, .o-m {
+  text-transform: none !important; letter-spacing: 0 !important; }
+.specs { display: flex; flex-wrap: wrap; gap: 4px 20px; font-family: var(--f-body); font-size: .9rem; color: var(--d2); }
+.specs li { gap: 0; }
+.specs li + li::before { content: ""; width: 4px; height: 4px; border-radius: 1px; background: var(--d3); align-self: center; margin-right: 20px; }
+.scroll-cue { display: none !important; }
+.mf-big span { font-family: var(--f-body); font-size: .95rem; color: var(--t2); }
+.mf-big b, .big-n { font-weight: 500; letter-spacing: -.04em; font-variant-numeric: tabular-nums; }
+.faces figcaption { font-family: var(--f-body); font-size: .85rem; color: var(--t3); }
+.stats { grid-template-columns: repeat(3, minmax(0, 1fr)); border-top-color: var(--hl); }
+.stats dt { font-weight: 500; letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
+.stats dd { color: var(--t2); }
+@media (min-width: 900px) { .stats > div { border-left-color: var(--hl); } }
+@media (max-width: 899px) { .stats { grid-template-columns: 1fr; } .stats > div { padding: 20px 0; border-bottom: 1px solid var(--hl); } .stats dt { font-size: 2.2rem; } }
+
+/* offers: one quiet list instead of four look-alike cards */
+.offers { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--hd); }
+.offer { display: grid; grid-template-columns: 28px minmax(0, 1fr); gap: 8px 16px; padding: 24px 0; border-bottom: 1px solid var(--hd); align-items: baseline; transition: background-color .16s var(--e); }
+.offer .o-n { grid-row: span 2; align-self: start; padding-top: 2px; }
+.od { width: 24px; height: 24px; color: var(--d1); display: block; } .od .pip { fill: var(--night); }
+.offer h3 { margin: 0; font-size: 1.2rem; font-weight: 500; letter-spacing: -.01em; color: var(--d1); }
+.offer p { margin: 0; color: var(--d2); font-size: .98rem; max-width: 38em; }
+.offer .o-m { grid-column: 2; font-family: var(--f-mono); font-size: .8rem; color: var(--d3); }
+@media (min-width: 900px) {
+  .offer { grid-template-columns: 40px minmax(0, 1fr) minmax(0, 2fr) 180px; gap: 24px; padding: 28px 0; align-items: center; }
+  .offer .o-n { grid-row: auto; padding: 0; }
+  .offer .o-m { grid-column: auto; text-align: right; }
+}
+
+/* steps */
+.steps { border-top-color: var(--hl); }
+.step { border-top-color: var(--hl); }
+.step::before { content: none !important; }
+.step h3 { font-weight: 500; text-transform: none; font-size: 1.15rem; letter-spacing: -.01em; font-stretch: 100%; font-variation-settings: "wdth" 100; }
+.step .n { font-family: var(--f-mono); font-size: .8rem; color: var(--t3); }
+.faq-list, .faq details { border-color: var(--hl); }
+.faq summary { font-weight: 500; }
+
+/* buttons and controls: radius by size, not pills */
+.btn { border-radius: 12px; min-height: 48px; font-weight: 600; transition: background-color .16s var(--e), border-color .16s var(--e), color .16s var(--e), transform .16s var(--e); }
+.btn:active { transform: scale(.98); }
+.btn .ar { border-radius: 6px; }
+.nav .btn { min-height: 36px; border-radius: 10px; }
+.btn-ghost { border-color: var(--hd); }
+.btn-ghost:hover { border-color: rgba(242, 240, 234, .3); background: rgba(242, 240, 234, .04); }
+.burger { border-radius: 10px; border-color: var(--hd); }
+.lang { border-radius: 10px; border-color: var(--hd); }
+.lang button { border-radius: 7px; font-family: var(--f-body); font-size: .8rem; font-weight: 500; letter-spacing: 0; }
+.nav.solid { background: rgba(7, 8, 11, .9); -webkit-backdrop-filter: none; backdrop-filter: none; border-bottom-color: var(--hd); }
+
+/* contact: plain raised surfaces, no glass */
+.contact-cards.dark .cc { background: var(--ink-card); border: 1px solid var(--hd); -webkit-backdrop-filter: none; backdrop-filter: none; border-radius: 16px; padding: 16px 16px 16px 20px; }
+.contact-cards.dark .cc-k { font-family: var(--f-body); font-size: .85rem; color: var(--d3); }
+.cc-copy { border-radius: 8px !important; min-height: 40px; }
+.contact-cards.dark .cc-copy { border-color: var(--hd); }
+
+/* neutral fades between paper and night */
+.band::before { background: linear-gradient(180deg, var(--paper) 0%, #D8D3CA 16%, #8E8A84 40%, #34343A 66%, #121317 86%, var(--night) 100%) !important; }
+#etapes::before { background: linear-gradient(180deg, var(--night) 0%, #121317 14%, #34343A 34%, #8E8A84 60%, #D8D3CA 84%, var(--paper) 100%) !important; }
+.final::after { background: linear-gradient(180deg, var(--paper) 0%, #D8D3CA 16%, #8E8A84 38%, #34343A 62%, #121317 82%, rgba(7, 8, 11, 0) 100%) !important; }
+.horizon .hz-arc { background: radial-gradient(closest-side, var(--paper) 0, var(--paper) 88%, #FFFFFF 88.25%, rgba(235, 238, 245, .7) 88.7%, rgba(200, 205, 215, .3) 90.5%, rgba(140, 145, 160, .1) 93.5%, rgba(40, 42, 50, 0) 100%) !important; }
+.hz-sun { background: radial-gradient(closest-side, rgba(255, 255, 255, .45), rgba(220, 225, 235, .12) 45%, transparent 75%) !important; }
+
+/* bottom: the blue stays on the planet's rim, the interior sinks into the night of the footer */
+.final::before { background: radial-gradient(closest-side, var(--night) 0, var(--night) 72%, #0B1030 80%, #0F1C68 84.5%, #1733B8 86.6%, #2D57E8 87.6%, #9DD0FF 88.05%, #F2FAFF 88.2%, rgba(150, 200, 255, .5) 88.7%, rgba(70, 115, 250, .22) 90.6%, rgba(40, 70, 210, .08) 94%, rgba(20, 40, 160, 0) 100%) !important; }
+.final .f-melt { background: linear-gradient(180deg, rgba(7, 8, 11, 0), var(--night)) !important; }
+.foot { background: var(--night) !important; color: var(--d1); border-top: 1px solid var(--hd); }
+.foot-col h4 { font-family: var(--f-body); font-size: .85rem; font-weight: 500; color: var(--d3); }
+.foot-col a { color: var(--d2); } .foot-col a:hover { color: var(--d1); }
+.foot .btn-light { background: var(--d1); color: var(--ink); }
+.foot .btn-light .ar { background: var(--ink); color: var(--d1); }
+.foot .lang { border-color: var(--hd); } .foot .lang button { color: var(--d2); } .foot .lang button[aria-pressed="true"] { background: var(--d1); color: var(--ink); }
+.foot-mark { color: var(--d1); opacity: 1; }
+.foot-bot { border-top-color: var(--hd); color: var(--d3); opacity: 1; }
+.totop { border-radius: 10px; border-color: var(--hd); color: var(--d2); }
+
+/* motion: one easing, one short fade-and-rise, nothing that loops or follows the cursor */
+.js [data-fade] { transform: translateY(12px); transition: opacity .5s var(--e), transform .5s var(--e); transition-delay: calc(var(--d, 0) * 50ms); }
+.js .reveal .ln > span { transform: none !important; transition: none !important; }
+.js .reveal { opacity: 0; transform: translateY(12px); transition: opacity .5s var(--e), transform .5s var(--e); }
+.js .reveal.in { opacity: 1; transform: none; }
+.js.intro-on .hero .reveal { opacity: 0; }
+.glow { display: none !important; }
+@media (prefers-reduced-motion: reduce) { .js .reveal { opacity: 1 !important; transform: none !important; } }
+:focus-visible { outline-color: var(--ice); }
+@media (max-width: 899px) { .specs { flex-direction: column; gap: 2px; } .specs li + li::before { content: none; } }
+
 </style>
 <script>(function(){var d=document.documentElement;d.classList.add("js");try{if(!sessionStorage.getItem("jlf-intro")&&!matchMedia("(prefers-reduced-motion: reduce)").matches)d.classList.add("intro-on")}catch(e){d.classList.add("intro-on")}})()</script>
 </head>
@@ -516,7 +644,6 @@ html:not(.intro-on) .intro { display: none; }
     <div class="intro-bar"><i></i></div>
   </div>
 </div>
-<div class="glow" id="glow" aria-hidden="true"></div>
 <header class="nav" id="nav">
   <div class="wrap">
     <a class="logo" href="#top" data-ia="a.home" aria-label="JLF D!CE, retour en haut"><svg aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg" viewBox="-36 -12 478 126"><defs><clipPath id="lgT"><path d="M-40,-40 L484,-40 L484,35.78 L-40,51.50 Z"/></clipPath><clipPath id="lgB"><path d="M-40,54.90 L484,39.18 L484,140 L-40,140 Z"/></clipPath></defs><g fill="currentColor" stroke="currentColor" stroke-width="1.4" fill-rule="evenodd"><g transform="skewX(-14)"><g clip-path="url(#lgT)"><g transform="translate(4,0)"><path d="M30,0 L52,0 L52,80 L32,100 L0,100 L10,78 L30,78 Z M58,0 L80,0 L80,78 L100,78 L118,100 L58,100 Z M124,0 L182,0 L171,20 L146,20 L146,40 L167,40 L159,58 L146,58 L146,100 L124,100 Z M208,0 L244,0 L264,20 L264,80 L244,100 L208,100 Z M230,21 L237,21 L242,26 L242,74 L237,79 L230,79 Z M270,0 L292,0 L285,64 L277,64 Z M320,0 L360,0 L349,20 L329,20 L324,25 L324,75 L329,80 L349,80 L360,100 L320,100 L302,82 L302,18 Z M366,0 L424,0 L413,20 L388,20 L388,40 L409,40 L401,58 L388,58 L388,80 L413,80 L424,100 L366,100 Z"/></g></g><g clip-path="url(#lgB)"><path d="M30,0 L52,0 L52,80 L32,100 L0,100 L10,78 L30,78 Z M58,0 L80,0 L80,78 L100,78 L118,100 L58,100 Z M124,0 L182,0 L171,20 L146,20 L146,40 L167,40 L159,58 L146,58 L146,100 L124,100 Z M208,0 L244,0 L264,20 L264,80 L244,100 L208,100 Z M230,21 L237,21 L242,26 L242,74 L237,79 L230,79 Z M270,0 L292,0 L285,64 L277,64 Z M320,0 L360,0 L349,20 L329,20 L324,25 L324,75 L329,80 L349,80 L360,100 L320,100 L302,82 L302,18 Z M366,0 L424,0 L413,20 L388,20 L388,40 L409,40 L401,58 L388,58 L388,80 L413,80 L424,100 L366,100 Z"/></g></g></g><g transform="rotate(-15 259.31 87)"><rect x="246.31" y="74" width="26" height="26" rx="5.2" fill="#0A0A0B" stroke="currentColor" stroke-width="3"></rect><g fill="currentColor"><circle cx="253.33" cy="81.02" r="2.73"></circle><circle cx="265.29" cy="81.02" r="2.73"></circle><circle cx="259.31" cy="87.00" r="2.73"></circle><circle cx="253.33" cy="92.98" r="2.73"></circle><circle cx="265.29" cy="92.98" r="2.73"></circle></g></g></svg></a>
@@ -553,7 +680,7 @@ html:not(.intro-on) .intro { display: none; }
       <h1 class="disp d1 reveal">
         <span class="ln"><span data-i="h.l1">Chaque</span></span>
         <span class="ln"><span style="--d:1" data-i="h.l2">dé</span></span>
-        <span class="ln"><span style="--d:2" data-i="h.l3">compte.</span></span>
+        <span class="ln"><span style="--d:2" data-i="h.l3">compte</span></span>
       </h1>
       <p class="lede" data-fade style="--d:3" data-i="h.lede">JLF D!CE transforme une photo en tableau composé de milliers de dés noirs à points blancs, posés un par un, à la main.</p>
       <div class="ctas" data-fade style="--d:4">
@@ -563,22 +690,21 @@ html:not(.intro-on) .intro { display: none; }
     </div>
     <div class="hero-foot wrap">
       <ul class="specs" data-fade style="--d:5">
-        <li><b>01</b><span data-i="h.s1">Jusqu’à 10 000 dés</span></li>
-        <li><b>02</b><span data-i="h.s2">Dés de 10, 12, 14 ou 16 mm</span></li>
-        <li><b>03</b><span data-i="h.s3">Pièce unique, signée</span></li>
+        <li><span data-i="h.s1">Jusqu’à 10 000 dés</span></li>
+        <li><span data-i="h.s2">Dés de 10, 12, 14 ou 16 mm</span></li>
+        <li><span data-i="h.s3">Pièce unique, signée</span></li>
       </ul>
-      <a class="scroll-cue" href="#idee"><i aria-hidden="true"></i><span data-i="h.scroll">Défiler</span></a>
     </div>
   </section>
 
   <section class="horizon" id="idee" aria-labelledby="idee-t">
     <div class="wrap">
-      <p class="eyebrow" data-n="01" data-fade data-i="i.eye">L’idée</p>
+      <p class="eyebrow" data-die="1" data-fade><span data-i="i.eye">L’idée</span></p>
       <h2 class="disp d2 reveal" id="idee-t">
-        <span class="ln"><span data-i="i.l1">Une photo.</span></span>
-        <span class="ln"><span style="--d:1" data-i="i.l2">Des milliers</span></span>
-        <span class="ln"><span style="--d:2" data-i="i.l3">de dés.</span></span>
-        <span class="ln"><span style="--d:3" data-i="i.l4">Une seule œuvre.</span></span>
+        <span class="ln"><span data-i="i.l1">Une photo,</span></span>
+        <span class="ln"><span style="--d:1" data-i="i.l2">des milliers</span></span>
+        <span class="ln"><span style="--d:2" data-i="i.l3">de dés,</span></span>
+        <span class="ln"><span style="--d:3" data-i="i.l4">une seule œuvre</span></span>
       </h2>
     </div>
     <div class="hz-sun" aria-hidden="true"></div>
@@ -587,11 +713,11 @@ html:not(.intro-on) .intro { display: none; }
 
   <section class="light sec" id="manifeste" data-ia="a.tech" aria-label="La technique">
     <div class="wrap mf">
-      <p class="eyebrow" data-n="02" data-fade data-i="m.eye">La technique</p>
-      <div class="mf-top" data-par=".05">
+      <p class="eyebrow" data-die="2" data-fade><span data-i="m.eye">La technique</span></p>
+      <div class="mf-top">
         <div class="mf-big" data-fade>
           <span data-i="m.upto">Jusqu’à</span>
-          <b data-count="10000">10 000</b>
+          <b class="big-n">10&#8239;000</b>
           <span data-i="m.per">dés par tableau</span>
         </div>
         <div class="mf-text">
@@ -605,63 +731,43 @@ html:not(.intro-on) .intro { display: none; }
         </figure>
       </div>
       <dl class="stats">
-        <div data-fade><dt>7</dt><dd data-i="m.st1">nuances, du dé tout noir au six</dd></div>
-        <div data-fade style="--d:1"><dt>4</dt><dd data-i="m.st2">tailles de dés&nbsp;: 10, 12, 14 ou 16&nbsp;mm</dd></div>
-        <div data-fade style="--d:2"><dt>1/1</dt><dd data-i="m.st3">chaque œuvre est unique et signée</dd></div>
-        <div data-fade style="--d:3"><dt>100&nbsp;%</dt><dd data-i="m.st4">assemblé à la main, dé par dé</dd></div>
+        <div data-fade><dt>4</dt><dd data-i="m.st2">tailles de dés&nbsp;: 10, 12, 14 ou 16&nbsp;mm</dd></div>
+        <div data-fade style="--d:1"><dt>1/1</dt><dd data-i="m.st3">chaque œuvre est unique et signée</dd></div>
+        <div data-fade style="--d:2"><dt>100&nbsp;%</dt><dd data-i="m.st4">assemblé à la main, dé par dé</dd></div>
       </dl>
     </div>
   </section>
 
   <section class="band sec" id="sur-mesure" aria-labelledby="sm-t">
     <div class="wrap">
-      <div class="band-head" data-par=".06">
+      <div class="band-head">
         <div style="display:grid;gap:24px">
-          <p class="eyebrow" data-n="03" data-fade data-i="s.eye">Sur mesure</p>
+          <p class="eyebrow" data-die="3" data-fade><span data-i="s.eye">Sur mesure</span></p>
           <h2 class="disp d2 reveal" id="sm-t">
             <span class="ln"><span data-i="s.l1">De l’œuvre intime</span></span>
             <span class="ln"><span style="--d:1" data-i="s.l2">à la pièce</span></span>
-            <span class="ln"><span style="--d:2" data-i="s.l3">maîtresse.</span></span>
+            <span class="ln"><span style="--d:2" data-i="s.l3">maîtresse</span></span>
           </h2>
         </div>
         <p class="lede" data-fade data-i="s.lede">Chaque tableau est conçu à partir de votre photo. Le cadrage, le nombre de dés et leur taille sont fixés ensemble avant le début de l’assemblage.</p>
       </div>
-      <div class="cards">
-        <article class="card" data-fade>
-          <svg class="ic" viewBox="0 0 44 44" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><rect x="3" y="3" width="38" height="38" rx="7"/><circle cx="22" cy="17" r="6"/><path d="M10 37c1.6-6.5 6.3-10 12-10s10.4 3.5 12 10"/></svg>
-          <h3 data-i="c1.t">Œuvre sur mesure</h3>
-          <p data-i="c1.p">Un proche, un souvenir, un visage qui compte&nbsp;: votre photo devient une pièce unique, signée.</p>
-          <span class="tag" data-i="c1.g">À partir de votre photo</span>
-        </article>
-        <article class="card" data-fade style="--d:1">
-          <svg class="ic" viewBox="0 0 44 44" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><rect x="3" y="3" width="11" height="11" rx="2.5"/><rect x="16.5" y="3" width="11" height="11" rx="2.5"/><rect x="30" y="3" width="11" height="11" rx="2.5"/><rect x="3" y="16.5" width="11" height="11" rx="2.5"/><rect x="16.5" y="16.5" width="11" height="11" rx="2.5"/><rect x="30" y="16.5" width="11" height="11" rx="2.5"/><rect x="3" y="30" width="11" height="11" rx="2.5"/><rect x="16.5" y="30" width="11" height="11" rx="2.5"/><rect x="30" y="30" width="11" height="11" rx="2.5"/></svg>
-          <h3 data-i="c2.t">Grand format</h3>
-          <p data-i="c2.p">Jusqu’à 10&nbsp;000 dés pour un maximum de détails et une présence qui ne passe pas inaperçue.</p>
-          <span class="tag" data-i="c2.g">Jusqu’à 10 000 dés</span>
-        </article>
-        <article class="card" data-fade style="--d:2">
-          <svg class="ic" viewBox="0 0 44 44" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><rect x="10" y="10" width="24" height="24" rx="5"/><circle cx="17" cy="17" r="1.8" fill="currentColor"/><circle cx="27" cy="27" r="1.8" fill="currentColor"/><path d="M3 9V3h6M41 9V3h-6M3 35v6h6M41 35v6h-6"/></svg>
-          <h3 data-i="c3.t">Format compact</h3>
-          <p data-i="c3.p">Des œuvres plus petites et plus accessibles, réalisées avec la même technique et le même soin.</p>
-          <span class="tag" data-i="c3.g">Plus accessible</span>
-        </article>
-        <article class="card" data-fade style="--d:3">
-          <svg class="ic" viewBox="0 0 44 44" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M4 41h36M7 41V18L22 6l15 12v23"/><rect x="16" y="22" width="12" height="12" rx="2.5"/><circle cx="22" cy="28" r="1.6" fill="currentColor"/></svg>
-          <h3 data-i="c4.t">Professionnels</h3>
-          <p data-i="c4.p">Hôtels, domaines, lieux de réception&nbsp;: une œuvre originale créée pour votre établissement.</p>
-          <span class="tag" data-i="c4.g">Sur devis</span>
-        </article>
+      <ul class="offers">
+        <li class="offer" data-fade><span class="o-n" data-v="1"></span><h3 data-i="c1.t">Œuvre sur mesure</h3><p data-i="c1.p">Un proche, un souvenir, un visage qui compte&nbsp;: votre photo devient une pièce unique, signée.</p><span class="o-m" data-i="c1.g">À partir de votre photo</span></li>
+        <li class="offer" data-fade><span class="o-n" data-v="2"></span><h3 data-i="c2.t">Grand format</h3><p data-i="c2.p">Jusqu’à 10&nbsp;000 dés pour un maximum de détails et une présence qui ne passe pas inaperçue.</p><span class="o-m" data-i="c2.g">Jusqu’à 10 000 dés</span></li>
+        <li class="offer" data-fade><span class="o-n" data-v="3"></span><h3 data-i="c3.t">Format compact</h3><p data-i="c3.p">Des œuvres plus petites et plus accessibles, réalisées avec la même technique et le même soin.</p><span class="o-m" data-i="c3.g">Plus accessible</span></li>
+        <li class="offer" data-fade><span class="o-n" data-v="4"></span><h3 data-i="c4.t">Professionnels</h3><p data-i="c4.p">Hôtels, domaines, lieux de réception&nbsp;: une œuvre originale créée pour votre établissement.</p><span class="o-m" data-i="c4.g">Sur devis</span></li>
+      </ul>
       </div>
     </div>
   </section>
 
   <section class="light sec" id="etapes" aria-labelledby="et-t">
     <div class="wrap">
-      <div class="steps-head" data-par=".06">
-        <p class="eyebrow" data-n="04" data-fade data-i="e.eye">Comment ça marche</p>
+      <div class="steps-head">
+        <p class="eyebrow" data-die="4" data-fade><span data-i="e.eye">Comment ça marche</span></p>
         <h2 class="disp d2 reveal" id="et-t">
           <span class="ln"><span data-i="e.l1">De la photo</span></span>
-          <span class="ln"><span style="--d:1" data-i="e.l2">à l’œuvre.</span></span>
+          <span class="ln"><span style="--d:1" data-i="e.l2">à l’œuvre</span></span>
         </h2>
       </div>
       <ol class="steps" id="steps">
@@ -673,8 +779,8 @@ html:not(.intro-on) .intro { display: none; }
       </ol>
       <div class="faq" id="faq">
         <div style="display:grid;gap:18px;align-content:start">
-          <p class="eyebrow" data-n="05" data-fade data-i="f.eye">Questions fréquentes</p>
-          <h3 class="disp d3" data-fade data-i="f.t">Ce qu’on demande souvent.</h3>
+          <p class="eyebrow" data-die="5" data-fade><span data-i="f.eye">Questions fréquentes</span></p>
+          <h3 class="disp d3" data-fade data-i="f.t">Ce qu’on demande souvent</h3>
         </div>
         <div class="faq-list" data-fade>
           <details><summary data-i="f1.q">Comment commander&nbsp;?</summary><p data-i="f1.a">Écrivez par e-mail à jlfdice@gmail.com ou sur Instagram à @jlf2ice, avec votre photo et quelques mots sur votre projet. Tout se décide ensemble, avant le moindre engagement.</p></details>
@@ -692,10 +798,10 @@ html:not(.intro-on) .intro { display: none; }
     <div class="f-sun" aria-hidden="true"></div>
     <div class="f-melt" aria-hidden="true"></div>
     <div class="wrap">
-      <p class="eyebrow" data-n="06" data-fade data-i="z.eye">Contact</p>
-      <h2 class="disp d1 reveal" id="fi-t">
+      <p class="eyebrow" data-die="6" data-fade><span data-i="z.eye">Contact</span></p>
+      <h2 class="disp d2 reveal" id="fi-t">
         <span class="ln"><span data-i="z.l1">Votre œuvre,</span></span>
-        <span class="ln"><span style="--d:1" data-i="z.l2">dé par dé.</span></span>
+        <span class="ln"><span style="--d:1" data-i="z.l2">dé par dé</span></span>
       </h2>
       <p class="lede" data-fade data-i="z.lede">Le contact se fait par e-mail ou sur Instagram. Envoyez votre photo et quelques mots sur votre projet&nbsp;: format, prix et délai sont confirmés avant tout engagement.</p>
       <div class="contact-cards dark" data-fade>
@@ -718,7 +824,7 @@ html:not(.intro-on) .intro { display: none; }
   <div class="wrap">
     <div class="foot-grid">
       <div class="foot-col lead">
-        <p data-i="ft.lead">Des œuvres en dés, uniques et faites main.</p>
+        <p data-i="ft.lead">Des œuvres en dés, uniques et faites main</p>
         <div><a class="btn btn-light" href="#contact"><span data-i="z.cta2">Me contacter</span> <span class="ar" aria-hidden="true">→</span></a></div>
       </div>
       <div class="foot-col">
@@ -912,33 +1018,33 @@ const Planet = (() => {
 const EN = {
   'a.home': 'JLF D!CE, back to top', 'a.menu': 'Open menu', 'a.menuX': 'Close menu', 'a.hero': 'JLF D!CE, dice artworks', 'a.tech': 'The technique',
   'n.idea': 'The idea', 'n.custom': 'Commissions', 'n.steps': 'Process', 'n.faq': 'Questions', 'n.order': 'Order',
-  'h.eye': 'Dice art · Custom artworks', 'h.l1': 'Every', 'h.l2': 'die', 'h.l3': 'counts.',
+  'h.eye': 'Dice art · Custom artworks', 'h.l1': 'Every', 'h.l2': 'die', 'h.l3': 'counts',
   'h.lede': 'JLF D!CE turns a photo into a painting made of thousands of black dice with white pips, placed one by one, by hand.',
   'h.cta1': 'Order my artwork', 'h.cta2': 'Discover', 'h.s1': 'Up to 10,000 dice', 'h.s2': '10, 12, 14 or 16 mm dice', 'h.s3': 'One-of-a-kind, signed', 'h.scroll': 'Scroll',
-  'i.eye': 'The idea', 'i.l1': 'One photo.', 'i.l2': 'Thousands', 'i.l3': 'of dice.', 'i.l4': 'A single work.',
+  'i.eye': 'The idea', 'i.l1': 'One photo,', 'i.l2': 'thousands', 'i.l3': 'of dice,', 'i.l4': 'a single work',
   'm.eye': 'The technique', 'm.upto': 'Up to', 'm.per': 'dice per painting',
   'm.lede': 'Each face of a die brings its own shade: the all-black die for shadows, the six for light, and every value in between. Assembled by the thousands, they form an image that only truly reveals itself from a few steps back.',
   'm.dark': 'Shadow', 'm.seven': '7 shades', 'm.light': 'Light', 'm.hint': 'Give it a spin ↻',
   'm.st1': 'shades, from the all-black die to the six', 'm.st2': 'die sizes: 10, 12, 14 or 16&nbsp;mm', 'm.st3': 'every work is unique and signed', 'm.st4': 'assembled by hand, die by die',
-  's.eye': 'Commissions', 's.l1': 'From intimate', 's.l2': 'piece to', 's.l3': 'centrepiece.',
+  's.eye': 'Commissions', 's.l1': 'From intimate', 's.l2': 'piece to', 's.l3': 'centrepiece',
   's.lede': 'Every painting is designed from your photo. Framing, number of dice and their size are agreed together before assembly begins.',
   'c1.t': 'Custom artwork', 'c1.p': 'A loved one, a memory, a face that matters: your photo becomes a unique, signed piece.', 'c1.g': 'From your photo',
   'c2.t': 'Large format', 'c2.p': 'Up to 10,000 dice for maximum detail and a presence that never goes unnoticed.', 'c2.g': 'Up to 10,000 dice',
   'c3.t': 'Compact format', 'c3.p': 'Smaller, more accessible artworks, made with the same technique and the same care.', 'c3.g': 'More accessible',
   'c4.t': 'Businesses', 'c4.p': 'Hotels, estates, venues: an original work created for your establishment.', 'c4.g': 'On quotation',
-  'e.eye': 'How it works', 'e.l1': 'From photo', 'e.l2': 'to artwork.',
+  'e.eye': 'How it works', 'e.l1': 'From photo', 'e.l2': 'to artwork',
   'e1.t': 'Your photo', 'e1.p': 'Send it by email or on Instagram in full quality: sharp, well lit, with the face clearly visible.',
   'e2.t': 'The format', 'e2.p': 'Number of dice, die size, vertical or square: we set the final dimensions together.',
   'e3.t': 'The quote', 'e3.p': 'Price and lead time are confirmed before any commitment.',
   'e4.t': 'Assembly', 'e4.p': 'The painting is assembled by hand, die after die, row after row, in the studio.',
   'e5.t': 'Delivery', 'e5.p': 'Your unique work, signed JLF D!CE, with its certificate of authenticity.',
-  'f.eye': 'FAQ', 'f.t': 'What people often ask.',
+  'f.eye': 'FAQ', 'f.t': 'What people often ask',
   'f1.q': 'How do I order?', 'f1.a': 'Write by email to jlfdice@gmail.com or on Instagram to @jlf2ice, with your photo and a few words about your project. Everything is agreed together, before any commitment.',
   'f2.q': 'How much does an artwork cost?', 'f2.a': 'The price depends on the number of dice and their size. You receive a quote before any commitment.',
   'f3.q': 'How big will the painting be?', 'f3.a': 'It depends on the number of dice and their size: for example, about 5,000 dice of 16&nbsp;mm make a painting of roughly 98 × 131&nbsp;cm. Exact dimensions are agreed with you.',
   'f4.q': 'Which photo should I send?', 'f4.a': 'A sharp, well-lit photo, face to camera, with as many pixels as possible. Avoid screenshots and photos compressed by messaging apps: send the original.',
-  'z.eye': 'Contact', 'z.l1': 'Your artwork,', 'z.l2': 'die by die.', 'z.lede': 'Contact is by email or on Instagram. Send your photo and a few words about your project: format, price and lead time are confirmed before any commitment.', 'z.cta': 'Request a quote',
-  'ft.lead': 'Dice artworks, one of a kind and handmade.', 'ft.nav': 'Explore', 'ft.contact': 'Contact', 'ft.lang': 'Language', 'ft.c': 'Original dice artworks · All rights reserved', 'ft.top': 'Back to top',
+  'z.eye': 'Contact', 'z.l1': 'Your artwork,', 'z.l2': 'die by die', 'z.lede': 'Contact is by email or on Instagram. Send your photo and a few words about your project: format, price and lead time are confirmed before any commitment.', 'z.cta': 'Request a quote',
+  'ft.lead': 'Dice artworks, one of a kind and handmade', 'ft.nav': 'Explore', 'ft.contact': 'Contact', 'ft.lang': 'Language', 'ft.c': 'Original dice artworks · All rights reserved', 'ft.top': 'Back to top',
   'n.quote': 'Contact', 'q.write': 'Write', 'z.cta2': 'Contact me', 'q.eye': 'Request a quote', 'q.l1': 'Let’s talk about', 'q.l2': 'your artwork.',
   'q.lede': 'Contact is by email or on Instagram. You can also fill in this form: your request and photo come straight to me.',
   'q.mail': 'Email', 'q.copy': 'Copy', 'q.dm': 'Message', 'q.who': 'You are', 'q.part': 'Private client', 'q.pro': 'Business',
@@ -971,7 +1077,7 @@ function setLang(l) {
   $$('[data-lang]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.lang === LANG)));
   if (!document.querySelector('title[data-keep]')) document.title = T('title');
   applyState(); buildMarquee();
-  $$('[data-count]').forEach(e => { if (/\d/.test(e.textContent)) e.textContent = (+e.dataset.count).toLocaleString(LANG === 'en' ? 'en-GB' : 'fr-FR').replace(/[\u202f\u00a0]/g, '\u202f'); });
+  $$('.big-n').forEach(e => { e.textContent = LANG === 'en' ? '10,000' : '10\u202f000'; });
   try { localStorage.setItem('jlf-lang', LANG); } catch (e) {}
 }
 $$('[data-lang]').forEach(b => b.addEventListener('click', () => setLang(b.dataset.lang)));
@@ -994,6 +1100,10 @@ function buildMarquee() {
   mq.innerHTML = one + one + one + one;
 }
 
+/* ---------- signature: die faces as section numbers ---------- */
+const dieSVG = (v, cls) => `<svg class="${cls}" viewBox="0 0 40 40" aria-hidden="true"><rect x="1.5" y="1.5" width="37" height="37" rx="8" fill="currentColor"/>${PIPS[v].map(([x, y]) => `<circle cx="${20 + x * 10}" cy="${20 + y * 10}" r="3.8" class="pip"/>`).join('')}</svg>`;
+$$('[data-die]').forEach(e => e.insertAdjacentHTML('afterbegin', dieSVG(+e.dataset.die, 'ed')));
+$$('.o-n').forEach(e => { e.innerHTML = dieSVG(+e.dataset.v, 'od'); });
 /* ---------- face legend ---------- */
 (() => {
   const row = $('#faces-row'); if (!row) return;
@@ -1121,17 +1231,6 @@ const Die = (() => {
   addEventListener('resize', size); size(); on = true; frame(0); on = false;
 })();
 
-/* ---------- card tilt + light ---------- */
-if (matchMedia('(hover: hover)').matches && !REDUCED) $$('.card').forEach(c => {
-  c.addEventListener('pointermove', e => { const b = c.getBoundingClientRect(), x = (e.clientX - b.left) / b.width, y = (e.clientY - b.top) / b.height;
-    c.style.transform = `rotateX(${(.5 - y) * 8}deg) rotateY(${(x - .5) * 10}deg)`; c.style.setProperty('--mx', x * 100 + '%'); c.style.setProperty('--my', y * 100 + '%'); });
-  c.addEventListener('pointerleave', () => { c.style.transform = ''; });
-});
-
-/* ---------- cursor glow ---------- */
-const glow = $('#glow');
-if (glow && matchMedia('(hover: hover)').matches && !REDUCED) addEventListener('pointermove', e => { glow.classList.add('on'); glow.style.setProperty('--gx', e.clientX + 'px'); glow.style.setProperty('--gy', e.clientY + 'px'); }, {passive: true});
-
 /* ---------- nav, menu, reveals, counters, scroll motion ---------- */
 const nav = $('#nav'), menu = $('#menu'), burger = $('#burger');
 function setMenu(o) { nav.classList.toggle('open', o); menu.classList.toggle('open', o); burger.setAttribute('aria-expanded', String(o)); burger.setAttribute('aria-label', T(o ? 'a.menuX' : 'a.menu')); document.body.style.overflow = o ? 'hidden' : ''; if (o) nav.classList.remove('hide'); }
@@ -1142,18 +1241,10 @@ $('#totop').addEventListener('click', () => scrollTo({top: 0, behavior: REDUCED 
 if ('IntersectionObserver' in window && !REDUCED) {
   const io = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); } }), {threshold: .12, rootMargin: '0px 0px -6% 0px'});
   $$('.reveal, [data-fade]').forEach(el => io.observe(el));
-  const cio = new IntersectionObserver(es => es.forEach(e => {
-    if (!e.isIntersecting) return; cio.unobserve(e.target);
-    const el = e.target, to = +el.dataset.count, t0 = performance.now(), loc = LANG === 'en' ? 'en-GB' : 'fr-FR';
-    const step = t => { const k = clamp((t - t0) / 1600, 0, 1); el.textContent = Math.round(to * (1 - Math.pow(1 - k, 3)) / 10 * 10).toLocaleString(loc).replace(/[  ]/g, ' '); if (k < 1) requestAnimationFrame(step); };
-    requestAnimationFrame(step);
-  }), {threshold: .5});
-  $$('[data-count]').forEach(el => cio.observe(el));
 } else $$('.reveal, [data-fade]').forEach(el => el.classList.add('in'));
 
 const hero = $('.hero'), planet = $('#planet-wrap'), heroIn = $('.hero-in'), hz = $('#idee');
 let lastY = scrollY, ticking = false, mqX = 0, vel = 0;
-const PAR = $$('[data-par]').map(el => [el, +el.dataset.par || .05]);
 function onScroll() {
   ticking = false;
   const y = scrollY, dy = y - lastY; lastY = y;
@@ -1161,11 +1252,8 @@ function onScroll() {
   if (!menu.classList.contains('open')) { if (dy > 6 && y > 500) nav.classList.add('hide'); else if (dy < -6 || y < 200) nav.classList.remove('hide'); }
   if (!REDUCED) {
     const hh = hero.offsetHeight;
-    if (y < hh * 1.2) { planet.style.transform = `translate3d(0, ${(y * .32).toFixed(1)}px, 0)`; heroIn.style.opacity = clamp(1 - y / (hh * .7), 0, 1).toFixed(3); Planet.kick(dy * .00002); }
-    const r = hz.getBoundingClientRect();
-    if (r.top < innerHeight && r.bottom > 0) { const p = clamp((innerHeight - r.top) / (r.height + innerHeight), 0, 1); hz.style.setProperty('--hy', `${lerp(16, -8, p).toFixed(2)}vh`); }
+    if (y < hh * 1.2) Planet.kick(dy * .00002);
     Die.scroll(dy); vel += dy;
-    const vh = innerHeight; PAR.forEach(([el, k]) => { const b = el.getBoundingClientRect(); if (b.bottom < -200 || b.top > vh + 200) return; el.style.transform = `translate3d(0, ${((b.top + b.height / 2 - vh / 2) * -k).toFixed(1)}px, 0)`; });
   }
 }
 addEventListener('scroll', () => { if (!ticking) { ticking = true; requestAnimationFrame(onScroll); } }, {passive: true});
@@ -1237,26 +1325,7 @@ $$('[data-copy]').forEach(b => b.addEventListener('click', () => copyText(b.data
 
 
 
-/* ---------- smooth, weighted scrolling with the mouse wheel (desktop); touch keeps its native feel ---------- */
-(() => {
-  if (REDUCED || !matchMedia('(hover: hover) and (pointer: fine)').matches) return;
-  const root = document.documentElement; let target = scrollY, cur = scrollY, run = false;
-  const max = () => root.scrollHeight - innerHeight;
-  function step() {
-    cur += (target - cur) * .1;
-    if (Math.abs(target - cur) < .4) { cur = target; run = false; }
-    root.style.scrollBehavior = 'auto'; scrollTo(0, cur); root.style.scrollBehavior = '';
-    if (run) requestAnimationFrame(step);
-  }
-  addEventListener('wheel', e => {
-    if (e.ctrlKey || e.defaultPrevented || Math.abs(e.deltaX) > Math.abs(e.deltaY) || e.target.closest('textarea, select, .menu')) return;
-    e.preventDefault();
-    if (!run) cur = target = scrollY;
-    target = clamp(target + e.deltaY * (e.deltaMode === 1 ? 36 : e.deltaMode === 2 ? innerHeight : 1), 0, max());
-    if (!run) { run = true; requestAnimationFrame(step); }
-  }, {passive: false});
-  addEventListener('scroll', () => { if (!run) cur = target = scrollY; }, {passive: true});
-})();
+
 
 })();
 </script>
