@@ -650,6 +650,7 @@ html:not(.intro-on) .intro { display: none; }
         <input type="hidden" name="_template" value="table">
         <input type="hidden" name="_captcha" value="false">
                 <input type="hidden" name="Langue" id="q-lang" value="fr">
+        <input type="hidden" name="_next" id="q-next" value="https://jlfdice.fr/?merci=1#devis">
         <fieldset class="qf-full">
           <legend data-i="q.who">Vous êtes</legend>
           <div class="seg"><label class="opt"><input type="radio" name="Profil" value="Particulier" checked><span data-i="q.part">Particulier</span></label><label class="opt"><input type="radio" name="Profil" value="Professionnel"><span data-i="q.pro">Professionnel</span></label></div>
@@ -1159,11 +1160,15 @@ $$('[data-copy]').forEach(b => b.addEventListener('click', () => copyText(b.data
     const btn = $('#q-send'), label = btn.innerHTML; btn.disabled = true; btn.innerHTML = T('q.sending');
     try {
       const res = await fetch('https://formsubmit.co/ajax/jlfdice@gmail.com', {method: 'POST', headers: {Accept: 'application/json'}, body: new FormData(f)});
-      let j = {}; try { j = await res.json(); } catch (e) {}
-      const ok = res.ok && String(j.success) === 'true';
-      if (ok) { showDone(T('q.d1'), T('q.d2'), true); f.reset(); org.hidden = true; }
-      else showDone(T('q.fail'), (j.message ? `<em>${String(j.message).replace(/</g, '&lt;')}</em><br>` : '') + T('q.failp'), false);
-    } catch (e) { showDone(T('q.fail'), T('q.failp'), false); }
+      let j = null; try { j = await res.json(); } catch (e) {}
+      if (j && String(j.success) === 'true') { showDone(T('q.d1'), T('q.d2'), true); f.reset(); org.hidden = true; }
+      else if (j && j.message) showDone(T('q.fail'), `<em>${String(j.message).replace(/</g, '&lt;')}</em><br>` + T('q.failp'), false);
+      else throw new Error('no json');
+    } catch (e) {
+      /* the background request was blocked (browser shield, network, service): fall back to a classic form post, which FormSubmit always accepts */
+      $('#q-next').value = `${location.origin}${location.pathname}?merci=1#devis`;
+      HTMLFormElement.prototype.submit.call(f); return;
+    }
     btn.disabled = false; btn.innerHTML = label;
   });
   if (/[?&]merci=1/.test(location.search)) { done.hidden = false; setTimeout(() => $('#devis').scrollIntoView(), 2300); history.replaceState(null, '', location.pathname + '#devis'); }
