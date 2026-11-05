@@ -466,6 +466,18 @@ html:not(.intro-on) .intro { display: none; }
 .final .wrap { padding-top: calc(var(--fade) + 6vh); }
 .foot { background: radial-gradient(90% 260px at 50% 0, #0F24AA 0%, rgba(15, 36, 170, 0) 100%), linear-gradient(180deg, #0D1E98 0%, #0B1983 22%, #0A1678 45%, #0A1678 100%); }
 
+/* ---------- sound toggle ---------- */
+.snd { width: 42px; height: 42px; border-radius: 50%; border: 1px solid var(--line-d); background: none; cursor: pointer; display: grid; place-items: center; flex: none; transition: border-color .25s, background .25s; }
+.snd:hover { border-color: rgba(255, 255, 255, .45); }
+.snd .bars { display: flex; align-items: center; gap: 2px; height: 14px; }
+.snd .bars i { width: 2px; height: 3px; border-radius: 1px; background: var(--paper); opacity: .7; transition: height .3s; }
+.snd[aria-pressed="true"] { border-color: var(--ice); }
+.snd[aria-pressed="true"] .bars i { background: var(--ice); opacity: 1; animation: eq 1.1s ease-in-out infinite; }
+.snd[aria-pressed="true"] .bars i:nth-child(2) { animation-delay: -.3s; } .snd[aria-pressed="true"] .bars i:nth-child(3) { animation-delay: -.6s; } .snd[aria-pressed="true"] .bars i:nth-child(4) { animation-delay: -.85s; }
+@keyframes eq { 0%, 100% { height: 3px; } 50% { height: 14px; } }
+@media (prefers-reduced-motion: reduce) { .snd[aria-pressed="true"] .bars i { animation: none; height: 10px; } }
+@media (max-width: 420px) { .nav-right { gap: 6px; } .lang button { min-width: 34px; } }
+
 </style>
 <script>(function(){var d=document.documentElement;d.classList.add("js");try{if(!sessionStorage.getItem("jlf-intro")&&!matchMedia("(prefers-reduced-motion: reduce)").matches)d.classList.add("intro-on")}catch(e){d.classList.add("intro-on")}})()</script>
 </head>
@@ -488,6 +500,7 @@ html:not(.intro-on) .intro { display: none; }
       <li><a href="#contact" data-i="n.quote">Contact</a></li>
     </ul>
     <div class="nav-right">
+      <button class="snd" id="snd" type="button" aria-pressed="false" data-ia="a.snd" aria-label="Activer le son"><span class="bars" aria-hidden="true"><i></i><i></i><i></i><i></i></span></button>
       <div class="lang" role="group" aria-label="Langue / Language"><button type="button" data-lang="fr" aria-pressed="true">FR</button><button type="button" data-lang="en" aria-pressed="false">EN</button></div>
       <a class="btn btn-light" href="#contact" data-i="n.order">Commander</a>
       <button class="burger" id="burger" type="button" data-ia="a.menu" aria-label="Ouvrir le menu" aria-expanded="false" aria-controls="menu"><span></span></button>
@@ -865,7 +878,7 @@ const Planet = (() => {
 
 /* ---------- languages ---------- */
 const EN = {
-  'a.home': 'JLF D!CE, back to top', 'a.menu': 'Open menu', 'a.menuX': 'Close menu', 'a.hero': 'JLF D!CE, dice artworks', 'a.tech': 'The technique',
+  'a.home': 'JLF D!CE, back to top', 'a.snd': 'Turn sound on', 'a.sndOff': 'Turn sound off', 'a.menu': 'Open menu', 'a.menuX': 'Close menu', 'a.hero': 'JLF D!CE, dice artworks', 'a.tech': 'The technique',
   'n.idea': 'The idea', 'n.custom': 'Commissions', 'n.steps': 'Process', 'n.faq': 'Questions', 'n.order': 'Order',
   'h.eye': 'Dice art · Custom artworks', 'h.l1': 'Every', 'h.l2': 'die', 'h.l3': 'counts.',
   'h.lede': 'JLF D!CE turns a photo into a painting made of thousands of black dice with white pips, placed one by one, by hand.',
@@ -909,7 +922,7 @@ const EN = {
   'mq': ['Every die counts', 'Handmade', 'One of a kind', 'Up to 10,000 dice'],
   'title': 'JLF D!CE · Custom dice artworks'
 };
-const FR = {'q.copied': 'Copié ✓', 'q.eName': 'Indiquez votre nom.', 'q.eMail': 'Indiquez une adresse e-mail valide.', 'q.eMsg': 'Dites-moi quelques mots sur votre projet.',
+const FR = {'a.sndOff': 'Couper le son', 'q.copied': 'Copié ✓', 'q.eName': 'Indiquez votre nom.', 'q.eMail': 'Indiquez une adresse e-mail valide.', 'q.eMsg': 'Dites-moi quelques mots sur votre projet.',
   'q.ePhoto': 'Cette photo dépasse 10 Mo : envoyez une version plus légère, ou l’originale par e-mail.', 'q.subj': 'Nouvelle demande de devis', 'q.sending': 'Envoi…',
   'q.fail': 'La demande n’a pas pu être envoyée.', 'q.failp': 'Écrivez directement à <b>jlfdice@gmail.com</b> ou sur Instagram <b>@jlf2ice</b>, avec votre photo.', 'q.pv1': 'Aperçu uniquement.', 'q.pv2': 'L’envoi fonctionnera une fois le site en ligne sur jlfdice.fr : la demande arrivera directement sur jlfdice@gmail.com.', mq: ['Chaque dé compte', 'Fait main', 'Pièce unique', 'Jusqu’à 10 000 dés'], title: 'JLF D!CE · Œuvres en dés sur mesure', 'a.menuX': 'Fermer le menu'};
 $$('[data-i]').forEach(e => { FR[e.dataset.i] = e.innerHTML; });
@@ -1186,6 +1199,81 @@ $$('[data-copy]').forEach(b => b.addEventListener('click', () => copyText(b.data
   let gone = false;
   const leave = () => { if (gone) return; gone = true; el.classList.add('out'); setTimeout(() => root.classList.remove('intro-on'), 250); setTimeout(() => el.remove(), 1000); };
   el.addEventListener('click', leave); setTimeout(leave, 2000);
+})();
+
+/* ---------- sound: everything synthesised live (no files), off until the visitor turns it on ---------- */
+const Sound = (() => {
+  const btn = $('#snd'); let AC = null, master = null, verb = null, on = false, amb = null;
+  function noiseBuf(sec) { const b = AC.createBuffer(1, AC.sampleRate * sec, AC.sampleRate), d = b.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1; return b; }
+  function init() {
+    if (AC) return; AC = new (window.AudioContext || window.webkitAudioContext)();
+    master = AC.createGain(); master.gain.value = 0; master.connect(AC.destination);
+    /* long dark reverb from a decaying noise impulse */
+    verb = AC.createConvolver(); const L = AC.sampleRate * 3.2, ir = AC.createBuffer(2, L, AC.sampleRate);
+    for (let c = 0; c < 2; c++) { const d = ir.getChannelData(c); for (let i = 0; i < L; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / L, 2.6); }
+    verb.buffer = ir; const wet = AC.createGain(); wet.gain.value = .55; verb.connect(wet); wet.connect(master);
+  }
+  /* ambience: a low, slowly breathing chord + filtered air, like the night side of the planet */
+  function ambience() {
+    const out = AC.createGain(); out.gain.value = 0; out.connect(master); out.connect(verb);
+    const lp = AC.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 520; lp.Q.value = .7; lp.connect(out);
+    [[55, .32], [82.41, .2], [110, .12], [164.81, .07], [246.94, .035]].forEach(([f, v], i) => {
+      const o = AC.createOscillator(), g = AC.createGain(); o.type = i < 2 ? 'sine' : 'triangle'; o.frequency.value = f; o.detune.value = (i % 2 ? 6 : -6);
+      const lfo = AC.createOscillator(), lg = AC.createGain(); lfo.frequency.value = .05 + i * .021; lg.gain.value = v * .45; lfo.connect(lg); lg.connect(g.gain);
+      g.gain.value = v; o.connect(g); g.connect(lp); o.start(); lfo.start();
+    });
+    const n = AC.createBufferSource(); n.buffer = noiseBuf(4); n.loop = true;
+    const bp = AC.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 900; bp.Q.value = .6;
+    const ng = AC.createGain(); ng.gain.value = .018; n.connect(bp); bp.connect(ng); ng.connect(out); n.start();
+    const sweep = AC.createOscillator(), sg = AC.createGain(); sweep.frequency.value = .03; sg.gain.value = 500; sweep.connect(sg); sg.connect(bp.frequency); sweep.start();
+    const flt = AC.createOscillator(), fg = AC.createGain(); flt.frequency.value = .04; fg.gain.value = 180; flt.connect(fg); fg.connect(lp.frequency); flt.start();
+    out.gain.setTargetAtTime(.9, AC.currentTime, 2.5); return out;
+  }
+  /* a die hitting a varnished surface: short filtered click + tiny wooden body */
+  function clack(t, vol = 1, pitch = 1) {
+    const s = AC.createBufferSource(); s.buffer = noiseBuf(.06);
+    const bp = AC.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 2600 * pitch; bp.Q.value = 3.5;
+    const g = AC.createGain(); g.gain.setValueAtTime(.0001, t); g.gain.exponentialRampToValueAtTime(.5 * vol, t + .002); g.gain.exponentialRampToValueAtTime(.0001, t + .05);
+    s.connect(bp); bp.connect(g); g.connect(master); g.connect(verb); s.start(t); s.stop(t + .07);
+    const o = AC.createOscillator(), og = AC.createGain(); o.type = 'triangle'; o.frequency.setValueAtTime(780 * pitch, t); o.frequency.exponentialRampToValueAtTime(420 * pitch, t + .04);
+    og.gain.setValueAtTime(.0001, t); og.gain.exponentialRampToValueAtTime(.12 * vol, t + .003); og.gain.exponentialRampToValueAtTime(.0001, t + .06);
+    o.connect(og); og.connect(master); o.start(t); o.stop(t + .08);
+  }
+  function roll(n = 3, vol = .8) { const t = AC.currentTime; for (let i = 0; i < n; i++) clack(t + i * (.045 + Math.random() * .05) + i * i * .012, vol * (1 - i * .18), .85 + Math.random() * .35); }
+  function tick() { clack(AC.currentTime, .22, 1.5); }
+  function whoosh(dur = 1.2, vol = .35) {
+    const t = AC.currentTime, s = AC.createBufferSource(); s.buffer = noiseBuf(dur);
+    const bp = AC.createBiquadFilter(); bp.type = 'bandpass'; bp.Q.value = 1.2; bp.frequency.setValueAtTime(300, t); bp.frequency.exponentialRampToValueAtTime(3200, t + dur * .6); bp.frequency.exponentialRampToValueAtTime(900, t + dur);
+    const g = AC.createGain(); g.gain.setValueAtTime(.0001, t); g.gain.exponentialRampToValueAtTime(vol, t + dur * .45); g.gain.exponentialRampToValueAtTime(.0001, t + dur);
+    s.connect(bp); bp.connect(g); g.connect(master); g.connect(verb); s.start(t);
+  }
+  function chime() { /* soft glassy "ice" note, used when the sound is switched on */
+    const t = AC.currentTime; [[880, .07], [1318.5, .045], [1760, .025]].forEach(([f, v], i) => { const o = AC.createOscillator(), g = AC.createGain(); o.type = 'sine'; o.frequency.value = f;
+      g.gain.setValueAtTime(.0001, t + i * .06); g.gain.exponentialRampToValueAtTime(v, t + i * .06 + .02); g.gain.exponentialRampToValueAtTime(.0001, t + i * .06 + 2.2); o.connect(g); g.connect(master); g.connect(verb); o.start(t + i * .06); o.stop(t + 2.5); });
+  }
+  function set(v) {
+    on = v; btn.setAttribute('aria-pressed', String(on)); btn.setAttribute('aria-label', T(on ? 'a.sndOff' : 'a.snd'));
+    try { localStorage.setItem('jlf-sound', on ? '1' : '0'); } catch (e) {}
+    if (on) { init(); AC.resume(); if (!amb) amb = ambience(); master.gain.cancelScheduledValues(AC.currentTime); master.gain.setTargetAtTime(.5, AC.currentTime, .6); chime(); roll(3, .6); }
+    else if (AC) { master.gain.cancelScheduledValues(AC.currentTime); master.gain.setTargetAtTime(0, AC.currentTime, .25); }
+  }
+  if (btn) btn.addEventListener('click', () => set(!on));
+  /* remembered choice: start again at the visitor's first touch (browsers forbid sound before it) */
+  let want = false; try { want = localStorage.getItem('jlf-sound') === '1'; } catch (e) {}
+  if (want) { const first = () => { removeEventListener('pointerdown', first, true); removeEventListener('keydown', first, true); if (!on) set(true); }; addEventListener('pointerdown', first, true); addEventListener('keydown', first, true); }
+  /* interaction sounds */
+  document.addEventListener('click', e => { if (!on) return; const el = e.target.closest('a, button, summary'); if (!el || el === btn) return;
+    if (el.closest('.lang')) tick(); else if (el.tagName === 'SUMMARY') roll(2, .5); else if (el.matches('.btn, .cc-copy, .totop')) roll(3, .75); else tick(); }, true);
+  if (matchMedia('(hover: hover)').matches) document.addEventListener('pointerover', e => { if (!on) return; const el = e.target.closest('.btn, .card, .nav-links a, .cc-copy'); if (el && !el.contains(e.relatedTarget)) tick(); });
+  /* a breath of air when a new section comes in, a few dice clinks in the contact section */
+  if ('IntersectionObserver' in window) {
+    const seen = new WeakSet(), io = new IntersectionObserver(es => es.forEach(x => { if (x.isIntersecting && on && !seen.has(x.target)) { seen.add(x.target); whoosh(1.1, .22); } }), {threshold: .35});
+    $$('main > section').forEach(s => io.observe(s));
+    let clinks = 0; const fin = $('.final');
+    if (fin) new IntersectionObserver(es => { clearInterval(clinks); if (es[0].isIntersecting) clinks = setInterval(() => { if (on && !document.hidden && Math.random() < .55) clack(AC.currentTime, .1 + Math.random() * .12, .8 + Math.random() * .6); }, 900); }).observe(fin);
+  }
+  document.addEventListener('visibilitychange', () => { if (AC && on) document.hidden ? AC.suspend() : AC.resume(); });
+  return {set};
 })();
 
 })();
