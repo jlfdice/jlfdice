@@ -442,6 +442,17 @@ html:not(.intro-on) .intro { display: none; }
 .qdone.bad { background: #FFF1EE; border-color: rgba(194, 54, 43, .35); }
 .qdone em { font-style: normal; font-family: var(--f-mono); font-size: .8rem; }
 
+.contact-cards.dark { width: min(560px, 100%); text-align: left; margin-top: 6px; }
+.contact-cards.dark .cc { background: rgba(10, 10, 14, .62); border-color: var(--line-d); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); grid-template-areas: "k a" "v a"; }
+.contact-cards.dark .cc-k { color: var(--mut-d); }
+.contact-cards.dark .cc-v { color: var(--paper); }
+.cc-acts { grid-area: a; display: flex; gap: 8px; }
+.cc-acts .cc-copy { grid-area: auto; }
+.contact-cards.dark .cc-copy { color: var(--paper); border-color: var(--line-d); }
+.contact-cards.dark .cc-copy:hover { background: rgba(255, 255, 255, .08); }
+.contact-cards.dark .cc-copy.solid { background: var(--paper); color: var(--ink); border-color: var(--paper); }
+@media (max-width: 480px) { .contact-cards.dark .cc { grid-template-areas: "k" "v" "a"; grid-template-columns: 1fr; gap: 6px; } .cc-acts { margin-top: 8px; } .cc-acts .cc-copy { flex: 1; justify-content: center; } }
+
 </style>
 <script>(function(){var d=document.documentElement;d.classList.add("js");try{if(!sessionStorage.getItem("jlf-intro")&&!matchMedia("(prefers-reduced-motion: reduce)").matches)d.classList.add("intro-on")}catch(e){d.classList.add("intro-on")}})()</script>
 </head>
@@ -461,11 +472,11 @@ html:not(.intro-on) .intro { display: none; }
       <li><a href="#sur-mesure" data-i="n.custom">Sur mesure</a></li>
       <li><a href="#etapes" data-i="n.steps">Étapes</a></li>
       <li><a href="#faq" data-i="n.faq">Questions</a></li>
-      <li><a href="#devis" data-i="n.quote">Devis</a></li>
+      <li><a href="#contact" data-i="n.quote">Contact</a></li>
     </ul>
     <div class="nav-right">
       <div class="lang" role="group" aria-label="Langue / Language"><button type="button" data-lang="fr" aria-pressed="true">FR</button><button type="button" data-lang="en" aria-pressed="false">EN</button></div>
-      <a class="btn btn-light" href="#devis" data-i="n.order">Commander</a>
+      <a class="btn btn-light" href="#contact" data-i="n.order">Commander</a>
       <button class="burger" id="burger" type="button" data-ia="a.menu" aria-label="Ouvrir le menu" aria-expanded="false" aria-controls="menu"><span></span></button>
     </div>
   </div>
@@ -476,7 +487,7 @@ html:not(.intro-on) .intro { display: none; }
     <li><a href="#sur-mesure" data-i="n.custom">Sur mesure</a></li>
     <li><a href="#etapes" data-i="n.steps">Étapes</a></li>
     <li><a href="#faq" data-i="n.faq">Questions</a></li>
-    <li><a href="#devis" data-i="n.quote">Devis</a></li>
+    <li><a href="#contact" data-i="n.quote">Contact</a></li>
   </ol>
   <p class="mono">jlfdice@gmail.com · Instagram @<span data-handle>jlf2ice</span></p>
 </nav>
@@ -493,7 +504,7 @@ html:not(.intro-on) .intro { display: none; }
       </h1>
       <p class="lede" data-fade style="--d:3" data-i="h.lede">JLF D!CE transforme une photo en tableau composé de milliers de dés noirs à points blancs, posés un par un, à la main.</p>
       <div class="ctas" data-fade style="--d:4">
-        <a class="btn btn-light" href="#devis"><span data-i="h.cta1">Commander mon œuvre</span> <span class="ar" aria-hidden="true">→</span></a>
+        <a class="btn btn-light" href="#contact"><span data-i="h.cta1">Commander mon œuvre</span> <span class="ar" aria-hidden="true">→</span></a>
         <a class="btn btn-ghost" href="#idee" data-i="h.cta2">Découvrir</a>
       </div>
     </div>
@@ -613,7 +624,7 @@ html:not(.intro-on) .intro { display: none; }
           <h3 class="disp d3" data-fade data-i="f.t">Ce qu’on demande souvent.</h3>
         </div>
         <div class="faq-list" data-fade>
-          <details><summary data-i="f1.q">Comment commander&nbsp;?</summary><p data-i="f1.a">Remplissez la demande de devis ci-dessous, ou écrivez directement par e-mail à jlfdice@gmail.com ou sur Instagram à @jlf2ice, avec votre photo. Tout se décide ensemble, avant le moindre engagement.</p></details>
+          <details><summary data-i="f1.q">Comment commander&nbsp;?</summary><p data-i="f1.a">Écrivez par e-mail à jlfdice@gmail.com ou sur Instagram à @jlf2ice, avec votre photo et quelques mots sur votre projet. Tout se décide ensemble, avant le moindre engagement.</p></details>
           <details><summary data-i="f2.q">Combien coûte une œuvre&nbsp;?</summary><p data-i="f2.a">Le prix dépend du nombre de dés et de leur taille. Il vous est communiqué sur devis, avant tout engagement.</p></details>
           <details><summary data-i="f3.q">Quelle taille fera le tableau&nbsp;?</summary><p data-i="f3.a">Elle dépend du nombre de dés et de leur taille&nbsp;: par exemple, environ 5&nbsp;000 dés de 16&nbsp;mm donnent un tableau d’environ 98 × 131&nbsp;cm. Les dimensions exactes sont fixées avec vous.</p></details>
           <details><summary data-i="f4.q">Quelle photo envoyer&nbsp;?</summary><p data-i="f4.a">Une photo nette, bien éclairée, avec le visage de face et le plus de pixels possible. Évitez les captures d’écran et les photos compressées par les messageries&nbsp;: envoyez l’original.</p></details>
@@ -623,73 +634,27 @@ html:not(.intro-on) .intro { display: none; }
   </section>
 
 
-  <section class="quote sec" id="devis" aria-labelledby="dv-t">
-    <div class="wrap qt">
-      <div class="qt-side">
-        <p class="eyebrow" data-n="06" data-fade data-i="q.eye">Demande de devis</p>
-        <h2 class="disp d2 reveal" id="dv-t">
-          <span class="ln"><span data-i="q.l1">Parlons de</span></span>
-          <span class="ln"><span style="--d:1" data-i="q.l2">votre œuvre.</span></span>
-        </h2>
-        <p class="lede" data-fade data-i="q.lede">Le contact se fait par e-mail ou sur Instagram. Vous pouvez aussi remplir ce formulaire&nbsp;: votre demande et votre photo m’arrivent directement.</p>
-        <div class="contact-cards" data-fade>
-          <div class="cc">
-            <span class="cc-k" data-i="q.mail">E-mail</span>
-            <a class="cc-v sel" href="mailto:jlfdice@gmail.com">jlfdice@gmail.com</a>
-            <button class="cc-copy" type="button" data-copy="jlfdice@gmail.com" data-i="q.copy">Copier</button>
-          </div>
-          <div class="cc">
-            <span class="cc-k">Instagram</span>
-            <a class="cc-v" data-ig-profile href="https://www.instagram.com/jlf2ice/" target="_blank" rel="noopener">@<span data-handle>jlf2ice</span></a>
-            <a class="cc-copy" data-ig-dm href="https://ig.me/m/jlf2ice" target="_blank" rel="noopener" data-i="q.dm">Écrire</a>
-          </div>
-        </div>
-      </div>
-      <form class="qform" id="qform" action="https://formsubmit.co/jlfdice@gmail.com" method="POST" enctype="multipart/form-data" novalidate data-fade>
-        <input type="hidden" name="_subject" id="q-subj" value="Nouvelle demande de devis · JLF D!CE">
-        <input type="hidden" name="_template" value="table">
-        <input type="hidden" name="_captcha" value="false">
-                <input type="hidden" name="Langue" id="q-lang" value="fr">
-        <input type="hidden" name="_next" id="q-next" value="https://jlfdice.fr/?merci=1#devis">
-        <fieldset class="qf-full">
-          <legend data-i="q.who">Vous êtes</legend>
-          <div class="seg"><label class="opt"><input type="radio" name="Profil" value="Particulier" checked><span data-i="q.part">Particulier</span></label><label class="opt"><input type="radio" name="Profil" value="Professionnel"><span data-i="q.pro">Professionnel</span></label></div>
-        </fieldset>
-        <div class="qf"><label for="q-name" data-i="q.name">Nom et prénom</label><input id="q-name" name="Nom" autocomplete="name" required><small class="err" id="e-name"></small></div>
-        <div class="qf"><label for="q-mail" data-i="q.email">E-mail</label><input id="q-mail" name="email" type="email" autocomplete="email" inputmode="email" required><small class="err" id="e-mail"></small></div>
-        <div class="qf"><label for="q-tel"><span data-i="q.tel">Téléphone</span> <em data-i="q.opt">facultatif</em></label><input id="q-tel" name="Téléphone" type="tel" autocomplete="tel" inputmode="tel"></div>
-        <div class="qf" id="f-org" hidden><label for="q-org" data-i="q.org">Établissement</label><input id="q-org" name="Établissement" autocomplete="organization"></div>
-        <div class="qf"><label for="q-size" data-i="q.size">Format souhaité</label>
-          <select id="q-size" name="Format"><option value="Je ne sais pas encore" data-i="q.s0">Je ne sais pas encore</option><option value="Format compact" data-i="q.s1">Format compact</option><option value="Environ 5 000 dés" data-i="q.s2">Environ 5 000 dés</option><option value="Environ 7 500 dés" data-i="q.s3">Environ 7 500 dés</option><option value="Jusqu’à 10 000 dés" data-i="q.s4">Jusqu’à 10 000 dés</option></select></div>
-        <div class="qf"><label for="q-die" data-i="q.die">Taille des dés</label>
-          <select id="q-die" name="Taille des dés"><option value="Je ne sais pas encore" data-i="q.s0">Je ne sais pas encore</option><option>10 mm</option><option>12 mm</option><option>14 mm</option><option>16 mm</option></select></div>
-        <div class="qf"><label for="q-when"><span data-i="q.when">Pour quand&nbsp;?</span> <em data-i="q.opt">facultatif</em></label><input id="q-when" name="Délai souhaité" data-ip="q.whenph" placeholder="ex. avant Noël, pour un anniversaire…"></div>
-        <div class="qf"><label for="q-photo"><span data-i="q.photo">Votre photo</span> <em data-i="q.photoh">10 Mo max.</em></label><input id="q-photo" name="Photo" type="file" accept="image/*" class="file"><small class="err" id="e-photo"></small></div>
-        <div class="qf qf-full"><label for="q-msg" data-i="q.msg">Votre projet</label><textarea id="q-msg" name="Projet" rows="5" required data-ip="q.msgph" placeholder="La photo, l’occasion, l’endroit où sera l’œuvre…"></textarea><small class="err" id="e-msg"></small></div>
-        <p class="qf-full qnote" data-i="q.note">Votre demande m’arrive directement par e-mail. Je vous réponds avec le format, le prix et le délai.</p>
-        <div class="qf-full ctas"><button class="btn btn-dark" type="submit" id="q-send"><span data-i="q.send">Envoyer ma demande</span> <span class="ar" aria-hidden="true">→</span></button></div>
-        <div class="qdone qf-full" id="qdone" hidden role="status">
-          <b id="qd-t" data-i="q.d1">Merci, votre demande est bien envoyée.</b>
-          <p id="qd-p" data-i="q.d2">Je vous réponds par e-mail dans les meilleurs délais.</p>
-        </div>
-      </form>
-    </div>
-  </section>
-
-  <section class="final" aria-labelledby="fi-t">
+  <section class="final" id="contact" aria-labelledby="fi-t">
     <canvas id="rain" aria-hidden="true"></canvas>
     <div class="wrap">
-      <p class="eyebrow" data-n="07" data-fade data-i="z.eye">Votre tour</p>
+      <p class="eyebrow" data-n="06" data-fade data-i="z.eye">Contact</p>
       <h2 class="disp d1 reveal" id="fi-t">
         <span class="ln"><span data-i="z.l1">Votre œuvre,</span></span>
         <span class="ln"><span style="--d:1" data-i="z.l2">dé par dé.</span></span>
       </h2>
-      <p class="lede" data-fade data-i="z.lede">Une photo suffit pour commencer. Envoyez-la par e-mail ou sur Instagram&nbsp;: format, prix et délai sont confirmés avant tout engagement.</p>
-      <div class="ctas" data-fade>
-        <a class="btn btn-light" href="#devis"><span data-i="z.cta">Demander un devis</span> <span class="ar" aria-hidden="true">→</span></a>
-        <a class="btn btn-ghost" data-ig-dm href="https://ig.me/m/jlf2ice" target="_blank" rel="noopener">Instagram</a>
+      <p class="lede" data-fade data-i="z.lede">Le contact se fait par e-mail ou sur Instagram. Envoyez votre photo et quelques mots sur votre projet&nbsp;: format, prix et délai sont confirmés avant tout engagement.</p>
+      <div class="contact-cards dark" data-fade>
+        <div class="cc">
+          <span class="cc-k" data-i="q.mail">E-mail</span>
+          <a class="cc-v sel" href="mailto:jlfdice@gmail.com">jlfdice@gmail.com</a>
+          <div class="cc-acts"><button class="cc-copy" type="button" data-copy="jlfdice@gmail.com" data-i="q.copy">Copier</button><a class="cc-copy solid" href="mailto:jlfdice@gmail.com" data-i="q.write">Écrire</a></div>
+        </div>
+        <div class="cc">
+          <span class="cc-k">Instagram</span>
+          <a class="cc-v" data-ig-profile href="https://www.instagram.com/jlf2ice/" target="_blank" rel="noopener">@<span data-handle>jlf2ice</span></a>
+          <div class="cc-acts"><a class="cc-copy solid" data-ig-dm href="https://ig.me/m/jlf2ice" target="_blank" rel="noopener" data-i="q.dm">Écrire</a></div>
+        </div>
       </div>
-      <p class="handle" data-fade><span data-i="z.or">Ou par e-mail&nbsp;:</span> <b class="sel">jlfdice@gmail.com</b></p>
     </div>
   </section>
 </main>
@@ -699,7 +664,7 @@ html:not(.intro-on) .intro { display: none; }
     <div class="foot-grid">
       <div class="foot-col lead">
         <p data-i="ft.lead">Des œuvres en dés, uniques et faites main.</p>
-        <div><a class="btn btn-light" href="#devis"><span data-i="z.cta">Demander un devis</span> <span class="ar" aria-hidden="true">→</span></a></div>
+        <div><a class="btn btn-light" href="#contact"><span data-i="z.cta2">Me contacter</span> <span class="ar" aria-hidden="true">→</span></a></div>
       </div>
       <div class="foot-col">
         <h4 data-i="ft.nav">Explorer</h4>
@@ -707,7 +672,7 @@ html:not(.intro-on) .intro { display: none; }
         <a href="#sur-mesure" data-i="n.custom">Sur mesure</a>
         <a href="#etapes" data-i="n.steps">Étapes</a>
         <a href="#faq" data-i="n.faq">Questions</a>
-        <a href="#devis" data-i="n.quote">Devis</a>
+        <a href="#contact" data-i="n.quote">Contact</a>
       </div>
       <div class="foot-col">
         <h4 data-i="ft.contact">Contact</h4>
@@ -910,13 +875,13 @@ const EN = {
   'e4.t': 'Assembly', 'e4.p': 'The painting is assembled by hand, die after die, row after row, in the studio.',
   'e5.t': 'Delivery', 'e5.p': 'Your unique work, signed JLF D!CE, with its certificate of authenticity.',
   'f.eye': 'FAQ', 'f.t': 'What people often ask.',
-  'f1.q': 'How do I order?', 'f1.a': 'Fill in the quote request below, or write directly by email to jlfdice@gmail.com or on Instagram to @jlf2ice, with your photo. Everything is agreed together, before any commitment.',
+  'f1.q': 'How do I order?', 'f1.a': 'Write by email to jlfdice@gmail.com or on Instagram to @jlf2ice, with your photo and a few words about your project. Everything is agreed together, before any commitment.',
   'f2.q': 'How much does an artwork cost?', 'f2.a': 'The price depends on the number of dice and their size. You receive a quote before any commitment.',
   'f3.q': 'How big will the painting be?', 'f3.a': 'It depends on the number of dice and their size: for example, about 5,000 dice of 16&nbsp;mm make a painting of roughly 98 × 131&nbsp;cm. Exact dimensions are agreed with you.',
   'f4.q': 'Which photo should I send?', 'f4.a': 'A sharp, well-lit photo, face to camera, with as many pixels as possible. Avoid screenshots and photos compressed by messaging apps: send the original.',
-  'z.eye': 'Your turn', 'z.l1': 'Your artwork,', 'z.l2': 'die by die.', 'z.lede': 'One photo is all it takes. Send it by email or on Instagram: format, price and lead time are confirmed before any commitment.', 'z.cta': 'Request a quote',
+  'z.eye': 'Contact', 'z.l1': 'Your artwork,', 'z.l2': 'die by die.', 'z.lede': 'Contact is by email or on Instagram. Send your photo and a few words about your project: format, price and lead time are confirmed before any commitment.', 'z.cta': 'Request a quote',
   'ft.lead': 'Dice artworks, one of a kind and handmade.', 'ft.nav': 'Explore', 'ft.contact': 'Contact', 'ft.lang': 'Language', 'ft.c': 'Original dice artworks · All rights reserved', 'ft.top': 'Back to top',
-  'n.quote': 'Quote', 'q.eye': 'Request a quote', 'q.l1': 'Let’s talk about', 'q.l2': 'your artwork.',
+  'n.quote': 'Contact', 'q.write': 'Write', 'z.cta2': 'Contact me', 'q.eye': 'Request a quote', 'q.l1': 'Let’s talk about', 'q.l2': 'your artwork.',
   'q.lede': 'Contact is by email or on Instagram. You can also fill in this form: your request and photo come straight to me.',
   'q.mail': 'Email', 'q.copy': 'Copy', 'q.dm': 'Message', 'q.who': 'You are', 'q.part': 'Private client', 'q.pro': 'Business',
   'q.name': 'Full name', 'q.email': 'Email', 'q.tel': 'Phone', 'q.opt': 'optional', 'q.org': 'Company / venue', 'q.size': 'Preferred format',

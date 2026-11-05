@@ -2,7 +2,7 @@
 
 Site de la collection de tableaux en dés JLF D'ICE.
 
-- `index.html` : le site (intro animée, planète de dés, offres sur mesure, étapes, FAQ, formulaire de devis FR/EN)
+- `index.html` : le site (intro animée, planète de dés, offres sur mesure, étapes, FAQ, contact par e-mail et Instagram, FR/EN)
 - `etat.json` : statut des œuvres (`dispo`, `reserve`, `vendu`, `privee`, `bientot`) et nom Instagram
 - `manifest.webmanifest` + `icon-*.png` : installation sur l'écran d'accueil
 
