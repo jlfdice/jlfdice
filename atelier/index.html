@@ -152,7 +152,7 @@ input:focus-visible, button:focus-visible { outline: 2px solid var(--holo); outl
 <h2 id="crophead">Cadrage</h2>
 <div id="arwarn" class="warn" hidden></div>
 <div id="cwrap"><canvas id="ccv" aria-label="Cadrage : glisse pour déplacer, pince pour zoomer"></canvas></div>
-<div id="cropbox"><div class="row"><span class="zl">ZOOM</span><input id="czoom" type="range" min="1" max="3" step="0.01" value="1" aria-label="Zoom du cadrage"></div><div class="hint">Déplace le cadre lumineux sur la zone à garder · tire ses coins pour l'agrandir ou le réduire · aperçu en dés ci-dessous</div><canvas id="cpv" aria-hidden="true"></canvas><label class="chk"><input type="checkbox" id="o-orient" checked> <span><b>Détail max : orienter les dés 2, 3 et 6</b><small>Les points suivent les contours du visage (lunettes, yeux, bouche…). Le plan indique le sens de chaque dé par de petits traits.</small></span></label><div id="mixbox"><label>Dés utilisés</label><div class="chips" id="o-white" role="radiogroup" aria-label="Dés utilisés"></div><div class="hint" id="o-white-h"></div>
+<div id="cropbox"><div class="row"><span class="zl">ZOOM</span><input id="czoom" type="range" min="1" max="3" step="0.01" value="1" aria-label="Zoom du cadrage"></div><div class="hint">Déplace le cadre lumineux sur la zone à garder · tire ses coins pour l'agrandir ou le réduire · aperçu en dés ci-dessous</div><canvas id="cpv" aria-hidden="true"></canvas><label class="chk"><input type="checkbox" id="o-orient" checked> <span><b>Détail max : orienter les dés 2, 3 et 6</b><small>Les points suivent les contours du visage (lunettes, yeux, bouche…). Le plan indique le sens de chaque dé par de petits traits.</small></span></label><label class="chk"><input type="checkbox" id="o-cut"> <span><b>Détourer le sujet : fond blanc sans dés</b><small>Seul le personnage est en dés, le mur derrière disparaît (fond blanc du tableau). Idéal pour une photo prise devant un mur uni. Les dés de toute la gamme sont réservés au sujet : plus de détails sur le visage.</small></span></label><div id="cutbox" hidden><label>Tolérance du fond</label><div class="chips" id="o-cutt" role="radiogroup" aria-label="Tolérance du fond"></div><div class="hint">Augmente si un bout de mur reste en dés, baisse si une partie du sujet disparaît (vêtement clair, bandes blanches…).</div></div><div id="mixbox"><label>Dés utilisés</label><div class="chips" id="o-white" role="radiogroup" aria-label="Dés utilisés"></div><div class="hint" id="o-white-h"></div>
 <label>Dés de couleur pour les détails</label><div class="chips" id="o-cols" role="group" aria-label="Dés de couleur"></div>
 <div id="o-amtw" hidden><label>Quantité de couleur</label><div class="chips" id="o-amt" role="radiogroup" aria-label="Quantité de couleur"></div></div>
 <div class="hint">Seules les couleurs cochées sont utilisées, et uniquement là où la photo a vraiment cette couleur (yeux, lèvres, vêtements…). Le reste reste en noir et blanc. Le plan, l’image HD, la 3D et le mode chantier en tiennent compte.</div></div><div class="row" style="margin-top:10px"><span class="info" id="cropstate"></span><button class="btn" id="cropreset" type="button">Revenir au cadrage du client</button></div></div>
@@ -353,7 +353,7 @@ function labOf(r, g, b) {
 }
 /* mix (optional, workshop only): {tonal: [[type, face, level]…], hi: brightest level, colors: [{t, a, b, lv: [7 levels]}], thr: min chroma}
    → black + white dice share one tonal scale; strongly coloured areas get a coloured die (no error spread, so they stay crisp details) */
-function diceFaces(img, sx, sy, sw, sh, C, R, K = 4, orient = false, mix = null) {
+function diceFaces(img, sx, sy, sw, sh, C, R, K = 4, orient = false, mix = null, M = null) {
   const W = C * K, H = R * K, cv = document.createElement('canvas'); cv.width = W; cv.height = H;
   const g = cv.getContext('2d', {willReadFrequently: true}); g.imageSmoothingQuality = 'high';
   drawSrc(g, img, sx, sy, sw, sh, 0, 0, W, H);
@@ -364,7 +364,8 @@ function diceFaces(img, sx, sy, sw, sh, C, R, K = 4, orient = false, mix = null)
   for (let y = 0; y < R; y++) for (let x = 0; x < C; x++) { let a = 0; for (let j = 0; j < K; j++) for (let i = 0; i < K; i++) a += L[(y * K + j) * W + x * K + i]; G[y * C + x] = a / (K * K); }
   const B = blurGrid(G, C, R, 1.0);
   for (let i = 0; i < G.length; i++) G[i] = G[i] + .9 * (G[i] - B[i]);
-  const srt = Array.from(G).sort((a, b) => a - b), lo = srt[Math.floor(srt.length * .02)], hi = srt[Math.floor(srt.length * .98)];
+  /* tone range from the subject only when the background is cut out, so the face gets the full scale */
+  const srt = (M ? Array.from(G).filter((v, i) => !M[i]) : Array.from(G)).sort((a, b) => a - b), lo = srt[Math.floor(srt.length * .02)], hi = srt[Math.floor(srt.length * .98)];
   const V = new Float32Array(C * R), T = new Float64Array(C * R), F = new Uint8Array(C * R), D = new Uint8Array(C * R), a = FACE_LV[0], b = mix && mix.hi ? mix.hi : FACE_LV[6];
   if (mix && mix.colors && mix.colors.length) {
     const S = new Float32Array(C * R * 3);
@@ -384,6 +385,7 @@ function diceFaces(img, sx, sy, sw, sh, C, R, K = 4, orient = false, mix = null)
     const dir = y % 2 ? -1 : 1;
     for (let n = 0; n < C; n++) {
       const x = dir > 0 ? n : C - 1 - n, i = y * C + x, o = T[i]; let k = 0, best = 9, e;
+      if (M && M[i]) { F[i] = 7; continue; }
       if (D[i]) {   /* coloured die: its own face scale, no error spread */
         const lv = mix.colors.find(c => c.t === D[i]).lv, mn = Math.min(...lv), mx = Math.max(...lv), tg = mn + V[i] * (mx - mn);
         for (let f = 0; f < 7; f++) { const q = Math.abs(lv[f] - tg); if (q < best) { best = q; k = f; } }
@@ -396,8 +398,9 @@ function diceFaces(img, sx, sy, sw, sh, C, R, K = 4, orient = false, mix = null)
         for (let f = 0; f < 7; f++) { const q = Math.abs(FACE_LV[f] - o); if (q < best) { best = q; k = f; } }
         F[i] = k; e = (o - FACE_LV[k]) * .75;
       }
-      if (x + dir >= 0 && x + dir < C) T[i + dir] += e * 7 / 16;
-      if (y + 1 < R) { if (x - dir >= 0 && x - dir < C) T[i + C - dir] += e * 3 / 16; T[i + C] += e * 5 / 16; if (x + dir >= 0 && x + dir < C) T[i + C + dir] += e / 16; }
+      const sp = M ? (j => !M[j]) : (() => true);
+      if (x + dir >= 0 && x + dir < C && sp(i + dir)) T[i + dir] += e * 7 / 16;
+      if (y + 1 < R) { if (x - dir >= 0 && x - dir < C && sp(i + C - dir)) T[i + C - dir] += e * 3 / 16; if (sp(i + C)) T[i + C] += e * 5 / 16; if (x + dir >= 0 && x + dir < C && sp(i + C + dir)) T[i + C + dir] += e / 16; }
     }
   }
   let O = null;
@@ -499,9 +502,9 @@ const clamp = (v, a = 0, b = 1) => Math.max(a, Math.min(b, v));
 const fmt = n => String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
 const cm1 = (n, mm) => (n * mm / 10).toFixed(1).replace('.', ',');
 const mk = (w, h) => { const c = document.createElement('canvas'); c.width = w; c.height = h; return c; };
-const PIPS = {0: [], 1: [[0, 0]], 2: [[-1, -1], [1, 1]], 3: [[-1, -1], [0, 0], [1, 1]], 4: [[-1, -1], [1, -1], [-1, 1], [1, 1]], 5: [[-1, -1], [1, -1], [0, 0], [-1, 1], [1, 1]], 6: [[-1, -1], [1, -1], [-1, 0], [1, 0], [-1, 1], [1, 1]]};
+const PIPS = {7: [], 0: [], 1: [[0, 0]], 2: [[-1, -1], [1, 1]], 3: [[-1, -1], [0, 0], [1, 1]], 4: [[-1, -1], [1, -1], [-1, 1], [1, 1]], 5: [[-1, -1], [1, -1], [0, 0], [-1, 1], [1, 1]], 6: [[-1, -1], [1, -1], [-1, 0], [1, 0], [-1, 1], [1, 1]]};
 const DICE_OPTS = [5000, 6000, 7500, 9000, 10000], SIZE_OPTS = [10, 12, 14, 16];
-const COL = {0: ['#000000', '#ffffff'], 1: ['#3d1c6e', '#ffffff'], 2: ['#1f5fc4', '#ffffff'], 3: ['#14a39a', '#ffffff'], 4: ['#74c24a', '#111111'], 5: ['#f3c623', '#111111'], 6: ['#f7f7f5', '#111111']};
+const COL = {7: ['#ececea', '#ececea'], 0: ['#000000', '#ffffff'], 1: ['#3d1c6e', '#ffffff'], 2: ['#1f5fc4', '#ffffff'], 3: ['#14a39a', '#ffffff'], 4: ['#74c24a', '#111111'], 5: ['#f3c623', '#111111'], 6: ['#f7f7f5', '#111111']};
 const SITE = 'jlfdice.fr';
 /* dice bodies: 0 = black with white pips (the classic), 1 = white with black pips, 2+ = coloured dice for details */
 const DTYPES = [
@@ -546,9 +549,50 @@ function cropRect(img, ar, cr) {
 }
 /* photo → faces (+ orientation) with the detail pipeline of detail.js */
 const ORIENT = () => !!($('o-orient') && $('o-orient').checked);
+/* ---- cut-out: the background (plain wall) gets no dice, only the subject is built ----
+   region growing from the edges of the frame: a pixel joins the background when it is close to the wall colour
+   AND close to its background neighbour, so soft gradients on the wall are followed but the subject's edge stops it. */
+const CUT_TOL = {low: [6, 40], mid: [10, 62], high: [15, 92]};
+function bgMask(img, sx, sy, sw, sh, C, R, K, tol) {
+  const W = C * K, H = R * K, cv = mk(W, H), g = cv.getContext('2d', {willReadFrequently: true}); g.imageSmoothingQuality = 'high';
+  drawSrc(g, img, sx, sy, sw, sh, 0, 0, W, H);
+  const d = g.getImageData(0, 0, W, H).data, iw = img.naturalWidth || img.width, ih = img.naturalHeight || img.height;
+  const out = new Uint8Array(W * H);
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) { const X = sx + (x + .5) / W * sw, Y = sy + (y + .5) / H * sh; if (X < 0 || Y < 0 || X >= iw || Y >= ih) out[y * W + x] = 1; }
+  /* wall colour = median of the frame's border pixels that lie inside the photo */
+  const bd = []; for (let x = 0; x < W; x++) for (const y of [0, 1, H - 2, H - 1]) bd.push(y * W + x); for (let y = 0; y < H; y++) for (const x of [0, 1, W - 2, W - 1]) bd.push(y * W + x);
+  const ins = bd.filter(i => !out[i]); if (!ins.length) return new Uint8Array(C * R);
+  const med = k => { const a = ins.map(i => d[i * 4 + k]).sort((p, q) => p - q); return a[a.length >> 1]; }, ref = [med(0), med(1), med(2)];
+  const [step, glob] = CUT_TOL[tol] || CUT_TOL.mid, dist = (i, r) => Math.hypot(d[i * 4] - r[0], d[i * 4 + 1] - r[1], d[i * 4 + 2] - r[2]);
+  const bg = new Uint8Array(W * H), q = new Int32Array(W * H); let qh = 0, qt = 0;
+  for (const i of bd) if (!bg[i] && (out[i] || dist(i, ref) < glob)) { bg[i] = 1; q[qt++] = i; }
+  while (qh < qt) {
+    const i = q[qh++], x = i % W, y = (i - x) / W, here = [d[i * 4], d[i * 4 + 1], d[i * 4 + 2]];
+    for (const j of [x > 0 ? i - 1 : -1, x < W - 1 ? i + 1 : -1, y > 0 ? i - W : -1, y < H - 1 ? i + W : -1]) {
+      if (j < 0 || bg[j]) continue;
+      if (out[j] || (dist(j, ref) < glob && (out[i] || dist(j, here) < step))) { bg[j] = 1; q[qt++] = j; }
+    }
+  }
+  /* per die: empty when most of it is background, then clean the edge so no die stands alone */
+  const M = new Uint8Array(C * R);
+  for (let y = 0; y < R; y++) for (let x = 0; x < C; x++) { let a = 0; for (let j = 0; j < K; j++) for (let i = 0; i < K; i++) a += bg[(y * K + j) * W + x * K + i]; M[y * C + x] = a * 2 > K * K ? 1 : 0; }
+  const nb = (i, v) => { const x = i % C, y = (i - x) / C; let n = 0; if (x > 0 && M[i - 1] === v) n++; if (x < C - 1 && M[i + 1] === v) n++; if (y > 0 && M[i - C] === v) n++; if (y < R - 1 && M[i + C] === v) n++; return n; };
+  for (let pass = 0; pass < 2; pass++) { const N2 = M.slice(); for (let i = 0; i < C * R; i++) { if (!M[i] && nb(i, 0) < 2) N2[i] = 1; else if (M[i] && nb(i, 0) >= 3) N2[i] = 0; } M.set(N2); }
+  /* keep the largest subject piece; fill small enclosed background holes */
+  const lab = new Int32Array(C * R).fill(-1), sizes = []; const flood = (s, v, id) => { const st = [s]; lab[s] = id; let n = 0; while (st.length) { const i = st.pop(); n++; const x = i % C, y = (i - x) / C; for (const j of [x > 0 ? i - 1 : -1, x < C - 1 ? i + 1 : -1, y > 0 ? i - C : -1, y < R - 1 ? i + C : -1]) if (j >= 0 && lab[j] < 0 && M[j] === v) { lab[j] = id; st.push(j); } } return n; };
+  for (let i = 0; i < C * R; i++) if (lab[i] < 0) sizes.push([flood(i, M[i], sizes.length), M[i], i]);
+  let big = -1, bs = 0; sizes.forEach(([n, v], id) => { if (!v && n > bs) { bs = n; big = id; } });
+  if (big < 0) return new Uint8Array(C * R);
+  const touches = id => { for (let x = 0; x < C; x++) if (lab[x] === id || lab[(R - 1) * C + x] === id) return true; for (let y = 0; y < R; y++) if (lab[y * C] === id || lab[y * C + C - 1] === id) return true; return false; };
+  sizes.forEach(([n, v], id) => { if (!v && id !== big) for (let i = 0; i < C * R; i++) if (lab[i] === id) M[i] = 1; if (v && !touches(id) && n < C * R * .015) for (let i = 0; i < C * R; i++) if (lab[i] === id) M[i] = 0; });
+  return M;
+}
+const CUT = () => !!($('o-cut') && $('o-cut').checked);
+let cutTol = 'mid';
 function computeGrid(img, C, R, cr, KK) {
   const [sx, sy, sw, sh] = cropRect(img, C / R, cr);
-  const mp = mixParams(), r = diceFaces(img, sx, sy, sw, sh, C, R, KK || 4, ORIENT(), mp);
+  const M = CUT() ? bgMask(img, sx, sy, sw, sh, C, R, KK || 4, cutTol) : null;
+  const mp = mixParams(), r = diceFaces(img, sx, sy, sw, sh, C, R, KK || 4, ORIENT(), mp, M);
   return {G: r.F, O: r.O, D: mp ? r.D : null};
 }
 function cropCanvas(img, C, R, cr, maxSide = 3000) {
@@ -600,9 +644,11 @@ function diceTile(v, s, k, turn, t = 0) {
   g.restore();
   const out = mk(s, s), tg = out.getContext('2d'); tg.imageSmoothingQuality = 'high'; tg.drawImage(c, 0, 0, s, s); return out;
 }
+const BOARD = '#f4f3ef';   /* colour of the board where a cut-out piece has no dice */
 function tiles(s, t = 0) {
   const key = s + '_' + t;
-  if (!tileCache.has(key)) tileCache.set(key, [0, 1, 2, 3, 4, 5, 6].map(v => Array.from({length: VARS * 2}, (_, k) => k < VARS || v === 2 || v === 3 || v === 6 ? diceTile(v, s, k % VARS, k >= VARS, t) : null)));
+  if (!tileCache.has(key)) { const L = [0, 1, 2, 3, 4, 5, 6].map(v => Array.from({length: VARS * 2}, (_, k) => k < VARS || v === 2 || v === 3 || v === 6 ? diceTile(v, s, k % VARS, k >= VARS, t) : null));
+    const blank = mk(s, s), bg2 = blank.getContext('2d'); bg2.fillStyle = BOARD; bg2.fillRect(0, 0, s, s); L.push(Array.from({length: VARS * 2}, () => blank)); tileCache.set(key, L); }
   return tileCache.get(key);
 }
 function diceRender(G, C, R, px, O, D) {
@@ -733,7 +779,7 @@ async function blueprint(J) {
     const cell = Math.min((PW - left - right - 12 * MM) / C, (PH - top - bottom) / rows);
     const gw = cell * C, gh = cell * rows, gx = (PW - gw) / 2, gyT = PH - top;
     pdf.fill(INK).text(`Plan de fabrication ${part}/2 · ${title}`, 16 * MM, PH - 14 * MM, 16, true);
-    pdf.fill(GREY).text(`Réf. #${ref} · ${code} · ${fmt(C * R)} dés de ${die} mm · grille ${C} × ${R} · format ${cm1(C, die)} × ${cm1(R, die)} cm · ${today}`, 16 * MM, PH - 20 * MM, 8.5);
+    pdf.fill(GREY).text(`Réf. #${ref} · ${code} · ${fmt(G.reduce((a, v) => a + (v !== 7), 0))} dés de ${die} mm${G.includes(7) ? ' (détouré, cases grises = sans dé)' : ''} · grille ${C} × ${R} · format ${cm1(C, die)} × ${cm1(R, die)} cm · ${today}`, 16 * MM, PH - 20 * MM, 8.5);
     pdf.text(`Rangées ${r0 + 1} à ${r1} · 1 case = 1 dé · vue de face, coin haut-gauche = colonne 1, rangée 1 · traits rouges = repères tous les ${GS} dés`, 16 * MM, PH - 25 * MM, 8.5);
     if (O) pdf.fill(RED).text('Sens des dés : sur les faces 2, 3 et 6, les petits traits aux bords de la case montrent la direction des points (diagonale \\ ou /, colonnes | ou rangées —).', 16 * MM, PH - 30 * MM, 8.5, true);
     const th = 24 * MM, tw = th * C / R;
@@ -768,7 +814,7 @@ async function blueprint(J) {
         else if (turned) { pdf.line(x, yy, x + t, yy + t); pdf.line(x + cell - t, yy + cell - t, x + cell, yy + cell); }
         else { pdf.line(x, yy + cell, x + t, yy + cell - t); pdf.line(x + cell - t, yy + t, x + cell, yy); }
       }
-      pdf.fill(fg).op(`BT /F2 ${fs.toFixed(2)} Tf ${(x + cell / 2 - dw / 2).toFixed(2)} ${(yy + cell * .28).toFixed(2)} Td (${v}) Tj ET`);
+      if (v !== 7) pdf.fill(fg).op(`BT /F2 ${fs.toFixed(2)} Tf ${(x + cell / 2 - dw / 2).toFixed(2)} ${(yy + cell * .28).toFixed(2)} Td (${v}) Tj ET`);
       const tp = D ? D[r * C + col] : 0;
       if (tp) { const k2 = cell * .44; pdf.fill(DTYPES[tp].body).stroke(tp === 1 || tp === 5 ? '#111316' : '#ffffff').lw(Math.max(.2, cell * .05)).op(`${x.toFixed(2)} ${(yy + cell).toFixed(2)} m ${(x + k2).toFixed(2)} ${(yy + cell).toFixed(2)} l ${x.toFixed(2)} ${(yy + cell - k2).toFixed(2)} l h B`); }
     }
@@ -881,9 +927,9 @@ $('code').addEventListener('input', () => {
 $('paste').addEventListener('click', async () => { try { $('code').value = await navigator.clipboard.readText(); $('code').dispatchEvent(new Event('input')); } catch (e) { toast('Colle le code à la main (appui long → Coller)', true); } });
 
 /* the grid being framed: the client's order, or my own settings */
-const SHAPE_AR = {rect: .75, square: 1};
+const SHAPE_AR = {rect: .75, square: 1, m120: 100 / 120};
 const curAR = () => MODE === 'order' && ORDER ? ORDER.C / ORDER.R : SHAPE_AR[shape] || CROP.ar || .75;
-const dims = () => MODE === 'order' && ORDER ? [ORDER.C, ORDER.R] : gridFor(diceN, curAR());
+const dims = () => MODE === 'order' && ORDER ? [ORDER.C, ORDER.R] : shape === 'm120' ? [Math.round(1000 / dieMM), Math.round(1200 / dieMM)] : gridFor(diceN, curAR());
 let cropEdited = false;
 function orderCrop() { CROP = ORDER && ORDER.crop ? {...ORDER.crop} : {px: .5, py: .46, z: 1}; cropEdited = false; $('czoom').value = CROP.z; }
 /* does the photo received have the proportions of the one the client framed? */
@@ -928,13 +974,14 @@ function renderOpts() {
   const offs = DICE_OPTS.filter(n => bad[n]);
   $('o-warn').hidden = !offs.length; $('o-warn').textContent = offs.length ? `Indisponible : ${offs.map(fmt).join(' · ')} — ${bad[offs[0]] === 'thin' ? 'format trop étroit, moins de 45 dés sur le petit côté' : 'image pas assez détaillée pour autant de dés'}.` : '';
   const iw = IMG ? IMG.naturalWidth : 3, ih = IMG ? IMG.naturalHeight : 4, full = shape === 'free' && CROP.z <= 1.001 && Math.abs((CROP.ar || 0) - iw / ih) < .01;
-  chips('o-s', ['full', 'free', 'rect', 'square'], full ? 'full' : shape, v => ({full: 'Toute l’image', free: 'Libre', rect: '3:4', square: 'Carré'})[v], v => {
+  chips('o-s', ['full', 'free', 'rect', 'square', 'm120'], full ? 'full' : shape, v => ({full: 'Toute l’image', free: 'Libre', rect: '3:4', square: 'Carré', m120: '1 m × 1,20 m'})[v], v => {
     if (v === 'full') { shape = 'free'; CROP = {px: .5, py: .5, z: 1, ar: iw / ih}; } else { shape = v; if (SHAPE_AR[v]) CROP = {...CROP, ar: SHAPE_AR[v]}; }
     $('czoom').value = CROP.z; renderOpts(); drawCrop();
   });
-  chips('o-d', SIZE_OPTS, dieMM, v => v + ' mm', v => { dieMM = +v; renderOpts(); });
+  chips('o-d', SIZE_OPTS, dieMM, v => v + ' mm', v => { dieMM = +v; renderOpts(); drawCrop(); });
   const [C, R] = dims();
-  $('o-info').textContent = `${fmt(C * R)} dés · grille ${C} × ${R} · ≈ ${cm1(C, dieMM)} × ${cm1(R, dieMM)} cm`;
+  $('o-info').textContent = (CUT() ? `Grille ${C} × ${R} (détouré : les dés réels sont comptés au calcul)` : `${fmt(C * R)} dés · grille ${C} × ${R}`) + ` · ≈ ${cm1(C, dieMM)} × ${cm1(R, dieMM)} cm`;
+  if (shape === 'm120' && !CUT() && C * R > 10000) { $('o-warn').hidden = false; $('o-warn').textContent = `1 m × 1,20 m en dés de ${dieMM} mm = ${fmt(C * R)} cases : active « Détourer le sujet » (seul le personnage est en dés) ou choisis des dés plus gros pour rester sous 10 000 dés.`; }
 }
 /* framing editor for my own creations */
 const zMinNow = () => { if (!IMG) return 1; const [C, R] = dims(); return Math.min(1, zoomMin(IMG, C / R)); };
@@ -996,8 +1043,8 @@ async function run() {
     const F = {num: $('f-num').value.trim() || nextNum(), title: $('f-title').value.trim() || 'Portrait sur mesure', buyer: $('f-buyer').value.trim(), date: frDate($('f-date').value), place: $('f-place').value.trim(), sticker: $('f-sticker').value.trim()};
     store.set('jlfd-place', F.place);
     let s = step('Conversion de la photo en dés…'); await tick();
-    const {G, O, D} = computeGrid(IMG, C, R, crop), cntT = DTYPES.map(() => [0, 0, 0, 0, 0, 0, 0]); G.forEach((v, i) => cntT[D ? D[i] : 0][v]++); const cnt = cntT[0];
-    s.textContent = `✓ ${fmt(C * R)} dés calculés`;
+    const {G, O, D} = computeGrid(IMG, C, R, crop), cntT = DTYPES.map(() => [0, 0, 0, 0, 0, 0, 0]); G.forEach((v, i) => { if (v !== 7) cntT[D ? D[i] : 0][v]++; }); const cnt = cntT[0], nReal = G.reduce((a, v) => a + (v !== 7), 0);
+    s.textContent = `✓ ${fmt(nReal)} dés calculés` + (nReal < C * R ? ` (détouré : ${fmt(C * R - nReal)} cases sans dé)` : '');
     s = step('Image HD en dés…'); await tick();
     const px = hdPx(C, R), diceHD = diceRender(G, C, R, px, O, D), cropC = cropCanvas(IMG, C, R, crop);
     const diceSmall = mk(C * 8, R * 8); diceSmall.getContext('2d').drawImage(diceHD, 0, 0, C * 8, R * 8);
@@ -1015,7 +1062,7 @@ async function run() {
     if (!$('f-num').dataset.touched || F.num === nextNum()) { const n = parseInt(F.num.replace(/\D/g, ''), 10); if (n) store.set('jlfd-cert', String(n)); }
     $('f-num').dataset.touched = ''; refresh();
     const mark = i => !O || ![2, 3, 6].includes(G[i]) ? '' : G[i] === 6 ? (O[i] ? '-' : '|') : (O[i] ? '/' : '\\');
-    const csv = Array.from({length: R}, (_, r) => Array.from({length: C}, (_, x) => G[r * C + x] + (D ? DTYPES[D[r * C + x]].s : '') + mark(r * C + x)).join(';')).join('\n');
+    const csv = Array.from({length: R}, (_, r) => Array.from({length: C}, (_, x) => (G[r * C + x] === 7 ? '-' : G[r * C + x] + (D ? DTYPES[D[r * C + x]].s : '') + mark(r * C + x))).join(';')).join('\n');
     OUTF = [
       {name: `Plan_fabrication_${ref}.pdf`, blob: bp, label: 'Plan de fabrication', sub: 'PDF · 2 pages A3 paysage, code couleur'},
       {name: `version_des_HD_${ref}.png`, blob: hdBlob, label: 'Image HD en dés', sub: `PNG · ${diceHD.width} × ${diceHD.height}px`},
@@ -1028,7 +1075,7 @@ async function run() {
     $('res-img').src = URL.createObjectURL(mockBlob);
     if (window._hdURL) URL.revokeObjectURL(window._hdURL); window._hdURL = URL.createObjectURL(hdBlob);
     $('res-cert').src = URL.createObjectURL(cert.png);
-    $('res-info').textContent = `${fmt(C * R)} dés de ${die} mm · grille ${C} × ${R} · ≈ ${cm1(C, die)} × ${cm1(R, die)} cm · réf. #${ref}`;
+    $('res-info').textContent = `${fmt(nReal)} dés de ${die} mm · grille ${C} × ${R} · ≈ ${cm1(C, die)} × ${cm1(R, die)} cm · réf. #${ref}`;
     $('res-cnt').innerHTML = cntT.map((cn, t) => { const tot = cn.reduce((a, b) => a + b, 0); if (!tot) return '';
       return `<div class="cntrow"><em><i class="dt" style="background:${DTYPES[t].body};border-color:${t ? DTYPES[t].body : '#555'}"></i>Dés ${DTYPES[t].n}${DTYPES[t].n === 'orange' ? '' : 's'} · ${fmt(tot)}</em>` + cn.map((n, k) => n ? `<span><i style="background:${COL[k][0]};color:${COL[k][1]}">${k}</i>${fmt(n)} <b>→ ${fmt(Math.ceil(n * 1.03))}</b></span>` : '').join('') + '</div>'; }).join('');
     renderFiles(); studioReady({G, O, D, C, R, die, ref, title: F.title, client});
@@ -1063,6 +1110,10 @@ $('zimg').addEventListener('click', e => {
 $('zclose').addEventListener('click', () => { $('zoom').hidden = true; $('zimg').removeAttribute('src'); });
 try { $('o-orient').checked = store.get('jlfd-orient', '1') === '1'; } catch (e) {}
 $('o-orient').addEventListener('change', () => { store.set('jlfd-orient', $('o-orient').checked ? '1' : '0'); drawCrop(); });
+try { $('o-cut').checked = store.get('jlfd-cut', '0') === '1'; cutTol = store.get('jlfd-cutt', 'mid'); } catch (e) {}
+function renderCut() { $('cutbox').hidden = !CUT(); chips('o-cutt', ['low', 'mid', 'high'], cutTol, v => ({low: 'Faible', mid: 'Moyenne', high: 'Forte'})[v], v => { cutTol = v; store.set('jlfd-cutt', v); renderCut(); drawCrop(); }); }
+$('o-cut').addEventListener('change', () => { store.set('jlfd-cut', CUT() ? '1' : '0'); renderCut(); renderOpts(); drawCrop(); });
+renderCut();
 function renderMix() {
   chips('o-white', ['0', '1'], MIX.white ? '1' : '0', v => v === '1' ? 'Noirs + blancs' : 'Noirs uniquement', v => { MIX.white = v === '1'; saveMix(); renderMix(); drawCrop(); });
   $('o-white-h').textContent = MIX.white ? 'Dés blancs à points noirs pour les zones claires : plus de contraste et des blancs lumineux.' : '';
@@ -1092,7 +1143,7 @@ const S3 = (() => {
     const D = Math.max(6, Math.min(16, Math.floor(2048 / Math.max(C, R)))), c = mk(C * D, R * D), g = c.getContext('2d');
     g.fillStyle = '#050506'; g.fillRect(0, 0, c.width, c.height);
     for (let y = 0; y < R; y++) for (let x = 0; x < C; x++) {
-      const i = y * C + x, v = G[i], X = x * D, Y = y * D, ty = DTYPES[Dt ? Dt[i] : 0]; g.fillStyle = Dt && Dt[i] ? ty.body : '#121214'; g.fillRect(X + .5, Y + .5, D - 1, D - 1); g.fillStyle = Dt && Dt[i] ? ty.pip : '#f0efea';
+      const i = y * C + x, v = G[i], X = x * D, Y = y * D, ty = DTYPES[Dt ? Dt[i] : 0]; if (v === 7) { g.fillStyle = BOARD; g.fillRect(X, Y, D, D); continue; } g.fillStyle = Dt && Dt[i] ? ty.body : '#121214'; g.fillRect(X + .5, Y + .5, D - 1, D - 1); g.fillStyle = Dt && Dt[i] ? ty.pip : '#f0efea';
       for (let [px, py] of PIPS[v]) { if (O && O[i]) [px, py] = v === 6 ? [py, px] : [-px, py]; g.beginPath(); g.arc(X + D / 2 + px * D * .26, Y + D / 2 + py * D * .26, D * .095, 0, 7); g.fill(); }
     }
     return c;
@@ -1133,6 +1184,7 @@ const S3 = (() => {
       const cx = i % C, cy = Math.floor(i / C), h = k => { const z = Math.sin((i + 1) * 12.9898 + k * 78.233) * 43758.5453; return z - Math.floor(z) - .5; };
       e.set(h(1) * .06, h(2) * .06, h(3) * .05); q.setFromEuler(e);
       m4.compose(v.set((cx + .5 - C / 2 + h(4) * .05) * u, (R / 2 - cy - .5 + h(5) * .05) * u, (.32 + h(6) * .03) * u), q, s);
+      if (G[i] === 7) m4.makeScale(0, 0, 0);
       mesh.setMatrixAt(i, m4); cell[i * 2] = cx; cell[i * 2 + 1] = cy; face[i] = G[i]; rot[i] = O ? O[i] : 0; const [cb, cp] = lin[Dt ? Dt[i] : 0]; bodyA.set([cb.r, cb.g, cb.b], i * 3); pipA.set([cp.r, cp.g, cp.b], i * 3);
     }
     geo.setAttribute('aCell', new THREE.InstancedBufferAttribute(cell, 2)); geo.setAttribute('aFace', new THREE.InstancedBufferAttribute(face, 1)); geo.setAttribute('aRot', new THREE.InstancedBufferAttribute(rot, 1)); geo.setAttribute('aBody', new THREE.InstancedBufferAttribute(bodyA, 3)); geo.setAttribute('aPip', new THREE.InstancedBufferAttribute(pipA, 3));
@@ -1319,7 +1371,7 @@ async function recordReel() {
 /* ---------- chantier: guided build, ten dice at a time ---------- */
 const CH = {i: 0, job: null, key: '', paces: [], lastT: 0, speak: false, wake: null};
 const ORW = {2: ['descendant', 'montant'], 3: ['descendant', 'montant'], 6: ['debout', 'couché']};
-const NUMW = ['vide', 'un', 'deux', 'trois', 'quatre', 'cinq', 'six'];
+const NUMW = ['vide', 'un', 'deux', 'trois', 'quatre', 'cinq', 'six', 'sans dé'];
 function chOpen() {
   if (!LASTJOB) return; CH.job = LASTJOB; CH.key = 'jlfd-chantier-' + LASTJOB.ref;
   CH.i = +store.get(CH.key, '0') || 0; CH.paces = []; CH.lastT = performance.now();
@@ -1350,7 +1402,7 @@ function fmtDur(sec) { const h = Math.floor(sec / 3600), m = Math.round((sec % 3
 function chMini(s) {
   const {G, C, R} = CH.job, cv = $('chmini'), k = Math.max(1, Math.floor(260 / Math.max(C, R))), g = cv.getContext('2d');
   if (cv.width !== C * k) { cv.width = C * k; cv.height = R * k; }
-  if (!CH.mini || CH.mini.job !== CH.job) { const m = mk(C, R), mg = m.getContext('2d'), id = mg.createImageData(C, R), LV = [10, 50, 85, 120, 160, 200, 240]; const Dt = CH.job.D; for (let i = 0; i < C * R; i++) { const t = Dt ? Dt[i] : 0; if (t > 1) { id.data.set([...hexRgb(DTYPES[t].body), 255], i * 4); continue; } const v = t === 1 ? 255 - LV[G[i]] * .35 : LV[G[i]]; id.data.set([v, v, v, 255], i * 4); } mg.putImageData(id, 0, 0); CH.mini = {job: CH.job, cv: m}; }
+  if (!CH.mini || CH.mini.job !== CH.job) { const m = mk(C, R), mg = m.getContext('2d'), id = mg.createImageData(C, R), LV = [10, 50, 85, 120, 160, 200, 240, 250]; const Dt = CH.job.D; for (let i = 0; i < C * R; i++) { const t = Dt ? Dt[i] : 0; if (t > 1) { id.data.set([...hexRgb(DTYPES[t].body), 255], i * 4); continue; } const v = t === 1 ? 255 - LV[G[i]] * .35 : LV[G[i]]; id.data.set([v, v, v, 255], i * 4); } mg.putImageData(id, 0, 0); CH.mini = {job: CH.job, cv: m}; }
   g.imageSmoothingEnabled = false; g.drawImage(CH.mini.cv, 0, 0, C * k, R * k);
   g.fillStyle = 'rgba(0,0,0,.55)'; g.fillRect(0, (s.row + 1) * k, C * k, (R - s.row - 1) * k); g.fillRect(s.c1 * k, s.row * k, (C - s.c1) * k, k);
   g.strokeStyle = '#ffb347'; g.lineWidth = 2; g.strokeRect(s.c0 * k - 1, s.row * k - 1, (s.c1 - s.c0) * k + 2, k + 2);
