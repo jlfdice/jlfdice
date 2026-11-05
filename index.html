@@ -499,6 +499,7 @@ html:not(.intro-on) .intro { display: none; }
 .final { padding-bottom: 0; }
 .final .f-melt { position: absolute; left: 0; right: 0; bottom: 0; height: clamp(90px, 14vh, 160px); background: linear-gradient(180deg, rgba(10, 22, 120, 0) 0%, rgba(10, 22, 120, .65) 55%, var(--sea) 100%); pointer-events: none; z-index: 1; }
 .foot { margin-top: -1px; }
+@media (max-width: 899px) { .hero-foot::before { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 150px; background: linear-gradient(180deg, transparent, rgba(5, 5, 6, .85) 70%); z-index: -1; pointer-events: none; } }
 
 </style>
 <script>(function(){var d=document.documentElement;d.classList.add("js");try{if(!sessionStorage.getItem("jlf-intro")&&!matchMedia("(prefers-reduced-motion: reduce)").matches)d.classList.add("intro-on")}catch(e){d.classList.add("intro-on")}})()</script>
@@ -792,7 +793,7 @@ const Planet = (() => {
   const cv = $('#planet'), cbg = $('#planet-bg'), cfx = $('#planet-fx'); if (!cv) return {kick() {}};
   const g = cv.getContext('2d');
   const nrm = v => { const l = Math.hypot(v[0], v[1], v[2]); return v.map(a => a / l); };
-  const L = nrm([-.36, -.82, -.44]), Hh = nrm([L[0], L[1], L[2] + 1]);
+  const L = nrm([-.56, -.62, .55]), Hh = nrm([L[0], L[1], L[2] + 1]);
   const lxy = Math.hypot(L[0], L[1]), Lx = L[0] / lxy, Ly = L[1] / lxy;
   const TX = [Math.cos(.42), Math.sin(.42)], TZ = [Math.cos(-.28), Math.sin(-.28)];
   let W = 0, H = 0, cw = 0, ch = 0, R, cx, cy, die, N = 0, CL, SL, CO, SO, FC, sp, glint, back, glow, stars = [], theta = .6, vis = true, raf = 0, lastT = 0, spin = 0, slow = 0, odd = false, dpr = 1;
@@ -814,7 +815,7 @@ const Planet = (() => {
     const wide = cw >= 900; let Rc, X, Y;
     if (wide) { Rc = Math.max(ch * .62, cw * .33); X = cw * .84; Y = ch * .78; }
     else { Rc = Math.max(cw * .9, 320); X = cw * .64; Y = ch + Rc * .36; }
-    R = Rc * dpr; cx = X * dpr; cy = Y * dpr; die = (wide ? 15 : 11) * dpr;
+    R = Rc * dpr; cx = X * dpr; cy = Y * dpr; die = (wide ? 18 : 12) * dpr;
     const ang = die / R, rings = Math.floor(Math.PI / ang), tmp = [];
     for (let i = 0; i < rings; i++) {
       const lat = -Math.PI / 2 + (i + .5) * Math.PI / rings, cl = Math.cos(lat), sl = Math.sin(lat), n = Math.max(1, Math.floor(2 * Math.PI * cl / ang));
@@ -828,42 +829,32 @@ const Planet = (() => {
     }
     const spx = Math.ceil(die * 1.15); sp = [0, 1, 2, 3, 4, 5, 6].map(v => gloss(v, spx));
     glint = mk(64, 64); { const q = glint.getContext('2d'), gr = q.createRadialGradient(32, 32, 0, 32, 32, 32); gr.addColorStop(0, 'rgba(255,255,255,1)'); gr.addColorStop(.25, 'rgba(220,240,255,.55)'); gr.addColorStop(1, 'rgba(160,210,255,0)'); q.fillStyle = gr; q.fillRect(0, 0, 64, 64); }
-    /* back: deep space with a hint of nebula, then the sphere's night side */
+    /* back: dark studio, the projector's beam coming from the top left, then the sphere body shaded by the spot */
     back = cbg; let q = back.getContext('2d');
-    let gr = q.createLinearGradient(0, 0, 0, H); gr.addColorStop(0, '#05060A'); gr.addColorStop(1, '#060607'); q.fillStyle = gr; q.fillRect(0, 0, W, H);
-    gr = q.createRadialGradient(cx + Lx * R * 1.15, cy + Ly * R * 1.15, 0, cx + Lx * R * 1.15, cy + Ly * R * 1.15, R * 1.3);
-    gr.addColorStop(0, 'rgba(40,70,160,.20)'); gr.addColorStop(.5, 'rgba(25,40,110,.08)'); gr.addColorStop(1, 'rgba(10,15,40,0)'); q.fillStyle = gr; q.fillRect(0, 0, W, H);
+    let gr = q.createLinearGradient(0, 0, 0, H); gr.addColorStop(0, '#07080B'); gr.addColorStop(1, '#050506'); q.fillStyle = gr; q.fillRect(0, 0, W, H);
     let seed = 7; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
     stars = [];
-    for (let i = 0; i < 230; i++) { const x = rnd() * W, y = rnd() * H; if (Math.hypot(x - cx, y - cy) < R * 1.04) continue; stars.push([x, y, (rnd() * 1.2 + .4) * dpr, .05 + rnd() * .4, rnd() * 6.28, .4 + rnd() * 1.6]); }
+    for (let i = 0; i < 160; i++) { const x = rnd() * W, y = rnd() * H; if (Math.hypot(x - cx, y - cy) < R * 1.02) continue; stars.push([x, y, (rnd() * 1.1 + .4) * dpr, .04 + rnd() * .22]); }
     q.fillStyle = '#EAF2FF'; for (const [x, y, z, a] of stars) { q.globalAlpha = a; q.fillRect(x, y, z, z); } q.globalAlpha = 1;
-    gr = q.createRadialGradient(cx + Lx * R * .55, cy + Ly * R * .55, R * .05, cx, cy, R);
-    gr.addColorStop(0, '#141826'); gr.addColorStop(.55, '#08090D'); gr.addColorStop(1, '#030304');
+    /* beam: a soft cone of light from the projector (outside the frame, top left) to the lit side of the planet */
+    const sx = -W * .08, sy = -H * .12, tx = cx + L[0] * R * .62, ty = cy + L[1] * R * .62, bang = Math.atan2(ty - sy, tx - sx), dist = Math.hypot(tx - sx, ty - sy);
+    q.save(); q.translate(sx, sy); q.rotate(bang); q.globalCompositeOperation = 'lighter';
+    gr = q.createLinearGradient(0, 0, dist * 1.15, 0); gr.addColorStop(0, 'rgba(235,242,255,.16)'); gr.addColorStop(.6, 'rgba(210,228,255,.07)'); gr.addColorStop(1, 'rgba(200,220,255,0)');
+    q.fillStyle = gr; q.filter = `blur(${(30 * dpr).toFixed(0)}px)`; q.beginPath(); q.moveTo(0, -dist * .02); q.lineTo(dist * 1.15, -R * .95); q.lineTo(dist * 1.15, R * .95); q.lineTo(0, dist * .02); q.closePath(); q.fill(); q.filter = 'none';
+    q.restore(); q.globalCompositeOperation = 'source-over';
+    /* sphere body: lit like a black varnished ball under a spot */
+    const hx = cx + L[0] * R * .58, hy = cy + L[1] * R * .58;
+    gr = q.createRadialGradient(hx, hy, R * .02, cx + L[0] * R * .2, cy + L[1] * R * .2, R * 1.05);
+    gr.addColorStop(0, '#3A3E4A'); gr.addColorStop(.25, '#1A1C23'); gr.addColorStop(.6, '#09090C'); gr.addColorStop(1, '#030304');
     q.fillStyle = gr; q.beginPath(); q.arc(cx, cy, R, 0, 2 * Math.PI); q.fill();
-    /* glow: scattering ring + fresnel rim toward the light, a cool back-rim on the far side, sunrise flare */
+    /* fx: soft bloom on the hot spot, a thin light edge on the lit limb, and a faint cool rim so the dark side still reads */
     glow = cfx; q = glow.getContext('2d'); q.clearRect(0, 0, W, H);
-    gr = q.createRadialGradient(cx, cy, R * .99, cx, cy, R * 1.3);
-    gr.addColorStop(0, 'rgba(200,236,255,.9)'); gr.addColorStop(.04, 'rgba(130,190,255,.55)'); gr.addColorStop(.16, 'rgba(70,115,255,.25)'); gr.addColorStop(.45, 'rgba(40,70,210,.08)'); gr.addColorStop(1, 'rgba(20,40,160,0)');
-    q.fillStyle = gr; q.beginPath(); q.arc(cx, cy, R * 1.3, 0, 2 * Math.PI); q.arc(cx, cy, R * .99, 0, 2 * Math.PI, true); q.fill();
-    gr = q.createRadialGradient(cx, cy, R * .7, cx, cy, R);
-    gr.addColorStop(0, 'rgba(90,150,255,0)'); gr.addColorStop(.8, 'rgba(110,170,255,.08)'); gr.addColorStop(.96, 'rgba(180,225,255,.32)'); gr.addColorStop(1, 'rgba(230,246,255,.6)');
+    gr = q.createRadialGradient(hx, hy, 0, hx, hy, R * .5); gr.addColorStop(0, 'rgba(255,255,255,.22)'); gr.addColorStop(.35, 'rgba(225,235,255,.07)'); gr.addColorStop(1, 'rgba(200,220,255,0)');
     q.fillStyle = gr; q.beginPath(); q.arc(cx, cy, R, 0, 2 * Math.PI); q.fill();
-    q.globalCompositeOperation = 'destination-in';
-    const lg = q.createLinearGradient(cx - Lx * R * 1.3, cy - Ly * R * 1.3, cx + Lx * R * 1.3, cy + Ly * R * 1.3);
-    lg.addColorStop(0, 'rgba(0,0,0,.22)'); lg.addColorStop(.35, 'rgba(0,0,0,.06)'); lg.addColorStop(.6, 'rgba(0,0,0,.28)'); lg.addColorStop(.82, 'rgba(0,0,0,.8)'); lg.addColorStop(1, 'rgba(0,0,0,1)');
-    q.fillStyle = lg; q.fillRect(0, 0, W, H);
-    q.globalCompositeOperation = 'lighter';
-    const ll = q.createLinearGradient(cx - Lx * R, cy - Ly * R, cx + Lx * R, cy + Ly * R);
-    ll.addColorStop(0, 'rgba(120,170,255,.25)'); ll.addColorStop(.4, 'rgba(225,245,255,0)'); ll.addColorStop(.7, 'rgba(225,245,255,.2)'); ll.addColorStop(1, 'rgba(240,250,255,1)');
-    q.strokeStyle = ll; q.lineWidth = 1.6 * dpr; q.beginPath(); q.arc(cx, cy, R, 0, 2 * Math.PI); q.stroke();
-    q.filter = `blur(${(6 * dpr).toFixed(1)}px)`; q.lineWidth = 6 * dpr; q.globalAlpha = .55; q.beginPath(); q.arc(cx, cy, R, 0, 2 * Math.PI); q.stroke(); q.filter = 'none'; q.globalAlpha = 1;
-    const fx = cx + Lx * R, fy = cy + Ly * R, fr = R * .42;
-    gr = q.createRadialGradient(fx, fy, 0, fx, fy, fr);
-    gr.addColorStop(0, 'rgba(255,255,255,1)'); gr.addColorStop(.05, 'rgba(225,244,255,.7)'); gr.addColorStop(.2, 'rgba(130,185,255,.22)'); gr.addColorStop(.55, 'rgba(70,110,255,.07)'); gr.addColorStop(1, 'rgba(60,100,255,0)');
-    q.fillStyle = gr; q.fillRect(fx - fr, fy - fr, fr * 2, fr * 2);
-    [[.95, .028, .7], [1.6, .008, .35]].forEach(([len, th, a]) => { q.save(); q.translate(fx, fy); q.rotate(Math.atan2(Ly, Lx) + Math.PI / 2); q.scale(1, th);
-      const sg = q.createRadialGradient(0, 0, 0, 0, 0, R * len); sg.addColorStop(0, `rgba(230,245,255,${a})`); sg.addColorStop(1, 'rgba(120,170,255,0)'); q.fillStyle = sg; q.beginPath(); q.arc(0, 0, R * len, 0, 2 * Math.PI); q.fill(); q.restore(); });
-    q.globalCompositeOperation = 'source-over';
+    const ll = q.createLinearGradient(cx + Lx * R, cy + Ly * R, cx - Lx * R, cy - Ly * R);
+    ll.addColorStop(0, 'rgba(245,248,255,.75)'); ll.addColorStop(.35, 'rgba(230,240,255,.18)'); ll.addColorStop(.7, 'rgba(120,160,255,.06)'); ll.addColorStop(1, 'rgba(90,140,255,.22)');
+    q.strokeStyle = ll; q.lineWidth = 1.4 * dpr; q.beginPath(); q.arc(cx, cy, R, 0, 2 * Math.PI); q.stroke();
+    q.filter = `blur(${(5 * dpr).toFixed(1)}px)`; q.globalAlpha = .45; q.lineWidth = 5 * dpr; q.beginPath(); q.arc(cx, cy, R, 0, 2 * Math.PI); q.stroke(); q.filter = 'none'; q.globalAlpha = 1;
     draw(0);
   }
   function draw(t) {
@@ -877,7 +868,7 @@ const Planet = (() => {
       if (z1 < .015) continue;
       const x2 = x * TZ[0] - y1 * TZ[1], y2 = x * TZ[1] + y1 * TZ[0];
       const lit = x2 * L[0] + y2 * L[1] + z1 * L[2];
-      if (lit < .02) continue;
+      if (lit < .16) continue;
       const px = cx + x2 * R, py = cy + y2 * R;
       if (px < -die || py < -die || px > W + die || py > H + die) continue;
       /* tangent frame (east, north) → the die lies flat on the sphere, foreshortened toward the limb */
@@ -886,9 +877,9 @@ const Planet = (() => {
       const nx = -sl * sinL, ny = cl, nz = -sl * cosL, nY1 = ny * TX[0] - nz * TX[1];
       const nx2 = nx * TZ[0] - nY1 * TZ[1], ny2 = nx * TZ[1] + nY1 * TZ[0];
       const s = die * .5;
-      const a = Math.pow(lit, .85) * 1.2; g.globalAlpha = a > 1 ? 1 : a; const q2 = die * (.35 + .65 * Math.sqrt(z1));
+      const a = Math.pow(lit, 1.7) * 1.25; g.globalAlpha = a > 1 ? 1 : a; const q2 = die * (.35 + .65 * Math.sqrt(z1));
       g.drawImage(sp[FC[i]], px - q2 * .55, py - q2 * .55, q2 * 1.1, q2 * 1.1);
-      const sp3 = x2 * Hh[0] + y2 * Hh[1] + z1 * Hh[2]; if (sp3 > .9) gl.push(px, py, Math.pow((sp3 - .9) / .1, 3));
+      const sp3 = x2 * Hh[0] + y2 * Hh[1] + z1 * Hh[2]; if (sp3 > .93) gl.push(px, py, Math.pow((sp3 - .93) / .07, 2));
     }
     g.setTransform(1, 0, 0, 1, 0, 0); g.globalCompositeOperation = 'lighter';
     for (let i = 0; i < gl.length; i += 3) { const s = die * 1.6; g.globalAlpha = gl[i + 2] * .55; g.drawImage(glint, gl[i] - s / 2, gl[i + 1] - s / 2, s, s); }
